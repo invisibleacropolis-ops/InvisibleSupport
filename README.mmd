@@ -40,15 +40,14 @@ flowchart TD
   end
 
   %% Filters (vertical)
-  FX --> Filters
+  FX --> Spectrum
 
-  subgraph Filters ["🎭 Artistic Filters"]
+  subgraph FilterTools ["🎭 Artistic Filters"]
     Spectrum["Spectrum Pulse"]
-    Cycle["Color Cycle"]
-    Trails["Motion Trails"]
-    Sharpen["Sharpen"]
-    Edge["Edge Detect"]
-    Negate["Negate Colors"]
-    Flip["Flip H/V"]
-    Filters --> Spectrum --> Cycle --> Trails --> Sharpen --> Edge --> Negate --> Flip
+    Spectrum --> Cycle["Color Cycle"]
+    Cycle --> Trails["Motion Trails"]
+    Trails --> Sharpen["Sharpen"]
+    Sharpen --> Edge["Edge Detect"]
+    Edge --> Negate["Negate Colors"]
+    Negate --> Flip["Flip H/V"]
   end
