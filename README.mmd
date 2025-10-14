@@ -27,19 +27,18 @@ flowchart TD
   FinalGIF --> Save["💾 Save to Device"]
   FinalGIF --> Share["📤 Share to Social Media"]
 
-  %% Creative Toolkit (vertical stack)
-  L1_Adjust --> Toolkit
-  L2_Adjust --> Toolkit
+  %% Creative Toolkit
+  L1_Adjust --> Quality
+  L2_Adjust --> Quality
 
   subgraph Toolkit ["🎨 Adjustments Toolkit"]
     Quality["Quality & Size"]
-    Text["Text Overlay"]
-    Color["Color & Tone"]
-    FX["Artistic Filters"]
-    Toolkit --> Quality --> Text --> Color --> FX
+    Quality --> Text["Text Overlay"]
+    Text --> Color["Color & Tone"]
+    Color --> FX["Artistic Filters"]
   end
 
-  %% Filters (vertical)
+  %% Filters
   FX --> Spectrum
 
   subgraph FilterTools ["🎭 Artistic Filters"]
