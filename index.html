@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Invisible Support Portal</title>
+    <style>
+      /*
+        Design tokens create a consistent visual system for engineers and designers.
+        Tokens are exposed as CSS custom properties so themes can be swapped or extended.
+      */
+      :root {
+        color-scheme: light dark;
+        --color-surface: #ffffff;
+        --color-surface-muted: #f5f7fa;
+        --color-elevated: #ffffffee;
+        --color-border: #d8dee6;
+        --color-text: #1c2333;
+        --color-text-muted: #546173;
+        --color-accent: #4b6bfb;
+        --color-accent-strong: #2e51f0;
+        --color-success: #3bb273;
+        --color-danger: #f25757;
+        --color-immersive: 200 56% 16%;
+
+        --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
+
+        --space-2xs: 0.25rem;
+        --space-xs: 0.5rem;
+        --space-sm: 0.75rem;
+        --space-md: 1rem;
+        --space-lg: 1.5rem;
+        --space-xl: 2rem;
+        --space-2xl: 3rem;
+
+        --radius-sm: 0.5rem;
+        --radius-md: 0.75rem;
+        --radius-lg: 1.5rem;
+
+        --shadow-sm: 0 8px 20px rgba(28, 35, 51, 0.08);
+        --shadow-lg: 0 24px 60px rgba(28, 35, 51, 0.16);
+
+        --transition-base: 180ms ease;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --color-surface: #101321;
+          --color-surface-muted: #161a2d;
+          --color-elevated: rgba(18, 22, 38, 0.9);
+          --color-border: rgba(119, 131, 160, 0.3);
+          --color-text: #f5f7ff;
+          --color-text-muted: #a6b2d2;
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font-sans);
+        background: var(--color-surface-muted);
+        color: var(--color-text);
+      }
+
+      .theme {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .theme--immersive::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(
+            circle at 10% 20%,
+            hsla(var(--color-immersive) / 0.6) 0,
+            transparent 55%
+          ),
+          radial-gradient(
+            circle at 80% 10%,
+            hsla(220 60% 40% / 0.55) 0,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 50% 100%,
+            hsla(260 65% 45% / 0.45) 0,
+            transparent 60%
+          );
+        pointer-events: none;
+        opacity: 0.9;
+        z-index: -2;
+      }
+
+      .theme--immersive::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(12, 16, 28, 0.35) 0%,
+          rgba(12, 16, 28, 0.1) 35%,
+          rgba(12, 16, 28, 0.65) 100%
+        );
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .portal {
+        position: relative;
+        padding: var(--space-2xl) clamp(var(--space-md), 6vw, var(--space-2xl));
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xl);
+      }
+
+      .portal__header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        max-width: 48rem;
+      }
+
+      .portal__heading {
+        font-size: clamp(2rem, 3vw, 2.75rem);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+
+      .portal__lede {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-size: 1.05rem;
+        line-height: 1.6;
+      }
+
+      .portal__grid {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+        gap: var(--space-xl);
+        align-items: start;
+      }
+
+      @media (max-width: 960px) {
+        .portal__grid {
+          grid-template-columns: 1fr;
+        }
+
+        .portal__column--secondary {
+          order: -1;
+        }
+      }
+
+      /* Utility foundation */
+      .u-card {
+        background: var(--color-elevated);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-border);
+        box-shadow: var(--shadow-sm);
+        padding: var(--space-xl) clamp(var(--space-lg), 4vw, var(--space-xl));
+        backdrop-filter: blur(14px);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+      }
+
+      .u-card__header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+      }
+
+      .u-card__title {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .u-card__subtitle {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-size: 0.95rem;
+      }
+
+      .u-btn {
+        appearance: none;
+        border: none;
+        border-radius: var(--radius-md);
+        padding: var(--space-sm) var(--space-lg);
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: transform var(--transition-base),
+          box-shadow var(--transition-base),
+          background-color var(--transition-base);
+      }
+
+      .u-btn:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--color-accent) 60%, white 40%);
+        outline-offset: 2px;
+      }
+
+      .u-btn--primary {
+        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
+        color: white;
+        box-shadow: 0 12px 24px rgba(75, 107, 251, 0.32);
+      }
+
+      .u-btn--primary:hover {
+        transform: translateY(-1px);
+      }
+
+      .u-btn--ghost {
+        background: color-mix(in srgb, var(--color-accent) 12%, transparent 88%);
+        color: var(--color-accent-strong);
+        border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent 60%);
+      }
+
+      .u-input {
+        width: 100%;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-border);
+        background: color-mix(in srgb, var(--color-surface) 90%, transparent 10%);
+        padding: var(--space-sm) var(--space-md);
+        font-size: 1rem;
+        color: var(--color-text);
+        transition: border-color var(--transition-base), box-shadow var(--transition-base);
+      }
+
+      .u-input:focus {
+        border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border) 40%);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 16%, transparent 84%);
+        outline: none;
+      }
+
+      .u-input[type="file"] {
+        padding: var(--space-sm);
+      }
+
+      .u-tabs {
+        display: flex;
+        gap: var(--space-xs);
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--color-surface) 65%, transparent 35%);
+        padding: var(--space-2xs);
+      }
+
+      .u-tabs__trigger {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-md);
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        transition: background-color var(--transition-base), color var(--transition-base);
+      }
+
+      .u-tabs__trigger.is-active {
+        background: var(--color-surface);
+        color: var(--color-text);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+      }
+
+      .u-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        place-items: center;
+        padding: var(--space-xl);
+        background: rgba(12, 16, 28, 0.45);
+        backdrop-filter: blur(10px);
+      }
+
+      .u-modal.is-open {
+        display: grid;
+      }
+
+      .u-modal__dialog {
+        background: var(--color-elevated);
+        padding: var(--space-xl);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        max-width: 28rem;
+        width: min(100%, 28rem);
+      }
+
+      .u-copy {
+        display: flex;
+        gap: var(--space-sm);
+        align-items: center;
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-md);
+        border: 1px dashed color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+        background: color-mix(in srgb, var(--color-surface) 80%, transparent 20%);
+      }
+
+      .u-copy__value {
+        flex: 1 1 auto;
+        font-family: var(--font-mono);
+        font-size: 0.95rem;
+        overflow-wrap: anywhere;
+      }
+
+      .u-copy__button {
+        padding: var(--space-2xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--color-accent-strong);
+        border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent 65%);
+        cursor: pointer;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+      }
+
+      .stack--lg {
+        gap: var(--space-lg);
+      }
+
+      .upload-card__dropzone {
+        border-radius: var(--radius-lg);
+        border: 2px dashed color-mix(in srgb, var(--color-border) 70%, transparent 30%);
+        padding: clamp(var(--space-lg), 6vw, var(--space-2xl));
+        text-align: center;
+        display: grid;
+        gap: var(--space-md);
+        background: color-mix(
+          in srgb,
+          var(--color-surface) 85%,
+          rgba(255, 255, 255, 0.85) 15%
+        );
+      }
+
+      .upload-card__dropzone svg {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto;
+        color: var(--color-accent-strong);
+      }
+
+      .upload-card__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        justify-content: center;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: var(--space-md);
+      }
+
+      .form-grid--split {
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        gap: var(--space-md);
+      }
+
+      .library-card__list {
+        display: grid;
+        gap: var(--space-sm);
+        max-height: 18rem;
+        overflow: auto;
+        padding-right: var(--space-xs);
+      }
+
+      .library-card__item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: var(--space-sm);
+        align-items: center;
+        padding: var(--space-sm);
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--color-surface) 60%, transparent 40%);
+      }
+
+      .library-card__item > span:last-child {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+      }
+
+      .viewer-card__preview {
+        min-height: 14rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+        background: color-mix(in srgb, var(--color-surface) 70%, transparent 30%);
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: var(--space-xl);
+      }
+
+      .viewer-card__preview h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .viewer-card__meta {
+        display: grid;
+        gap: var(--space-sm);
+      }
+
+      footer {
+        text-align: center;
+        padding-bottom: var(--space-xl);
+        color: color-mix(in srgb, var(--color-text) 70%, white 30%);
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body class="theme theme--immersive">
+    <main class="portal" id="support-portal">
+      <header class="portal__header">
+        <p class="u-copy" role="status" aria-live="polite">
+          <span class="u-copy__value">Drop files or paste links to begin a support case.</span>
+          <button class="u-copy__button" type="button" data-copy="support@invisible.support">
+            Copy contact
+          </button>
+        </p>
+        <h1 class="portal__heading">Invisible Support Upload Hub</h1>
+        <p class="portal__lede">
+          Prioritize rich context uploads while staying immersed in your operations. Consolidate files,
+          notes, and case metadata without losing the cinematic feel of the workspace.
+        </p>
+      </header>
+
+      <div class="portal__grid">
+        <!-- Primary column: Upload workflow -->
+        <section class="portal__column portal__column--primary">
+          <article class="u-card upload-card" aria-labelledby="upload-workflow">
+            <div class="u-card__header">
+              <h2 class="u-card__title" id="upload-workflow">Upload workflow</h2>
+              <p class="u-card__subtitle">
+                Centralize artifacts by dragging, dropping, or linking your diagnostic assets.
+              </p>
+            </div>
+
+            <div class="upload-card__dropzone" role="region" aria-label="Upload dropzone">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 3c.55 0 1 .45 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4c0-.55.45-1 1-1Zm-7 9a1 1 0 0 1 1 1v4c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1 1-1Z"
+                />
+              </svg>
+              <div class="stack">
+                <p class="portal__lede" style="font-size: 1rem;">
+                  Drop files here or browse to upload.
+                </p>
+                <div class="upload-card__actions">
+                  <label class="u-btn u-btn--primary" for="primary-upload">Browse files</label>
+                  <button class="u-btn u-btn--ghost" type="button">Paste from clipboard</button>
+                </div>
+              </div>
+              <input class="u-input" type="file" id="primary-upload" multiple aria-label="Upload files" />
+            </div>
+
+            <form class="stack stack--lg" aria-label="Upload metadata">
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="case-id">
+                  <span class="u-card__subtitle">Case ID</span>
+                  <input class="u-input" type="text" id="case-id" name="case" placeholder="INC-2045" />
+                </label>
+                <label class="stack" for="urgency">
+                  <span class="u-card__subtitle">Urgency</span>
+                  <select class="u-input" id="urgency" name="urgency">
+                    <option>Standard</option>
+                    <option>Priority</option>
+                    <option>Critical</option>
+                  </select>
+                </label>
+              </div>
+
+              <label class="stack" for="context">
+                <span class="u-card__subtitle">Context notes</span>
+                <textarea
+                  class="u-input"
+                  id="context"
+                  name="context"
+                  placeholder="Describe symptoms, logs, reproduction steps..."
+                  rows="5"
+                ></textarea>
+              </label>
+
+              <div class="stack">
+                <span class="u-card__subtitle">Distribution</span>
+                <div class="u-copy" role="group" aria-label="Shareable case link">
+                  <span class="u-copy__value" id="case-link">https://support.invisible.support/case/INC-2045</span>
+                  <button class="u-copy__button" type="button" data-copy-target="#case-link">
+                    Copy link
+                  </button>
+                </div>
+              </div>
+
+              <div class="upload-card__actions">
+                <button class="u-btn u-btn--primary" type="submit">Create case package</button>
+                <button class="u-btn u-btn--ghost" type="button">Schedule follow-up</button>
+              </div>
+            </form>
+          </article>
+        </section>
+
+        <!-- Secondary column: Library and viewer panels -->
+        <section class="portal__column portal__column--secondary">
+          <article class="u-card library-card" aria-labelledby="asset-library">
+            <div class="u-card__header">
+              <h2 class="u-card__title" id="asset-library">Asset library</h2>
+              <p class="u-card__subtitle">
+                Reference previously uploaded artifacts to accelerate triage.
+              </p>
+            </div>
+
+            <div class="u-tabs" role="tablist" aria-label="Library filters">
+              <button class="u-tabs__trigger is-active" role="tab" aria-selected="true">Recent</button>
+              <button class="u-tabs__trigger" role="tab" aria-selected="false">Favorites</button>
+              <button class="u-tabs__trigger" role="tab" aria-selected="false">Shared</button>
+            </div>
+
+            <div class="library-card__list" role="list">
+              <div class="library-card__item" role="listitem">
+                <span aria-hidden="true">🗂️</span>
+                <span>Cluster diagnostics bundle</span>
+                <span>12 minutes ago</span>
+              </div>
+              <div class="library-card__item" role="listitem">
+                <span aria-hidden="true">🧪</span>
+                <span>Load-test session 18 logs</span>
+                <span>45 minutes ago</span>
+              </div>
+              <div class="library-card__item" role="listitem">
+                <span aria-hidden="true">🛰️</span>
+                <span>Telemetry stream capture</span>
+                <span>1 hour ago</span>
+              </div>
+              <div class="library-card__item" role="listitem">
+                <span aria-hidden="true">🎥</span>
+                <span>Walkthrough recording</span>
+                <span>Yesterday</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="u-card viewer-card" aria-labelledby="asset-viewer">
+            <div class="u-card__header">
+              <h2 class="u-card__title" id="asset-viewer">Asset viewer</h2>
+              <p class="u-card__subtitle">Preview assets inline or open them in immersive mode.</p>
+            </div>
+
+            <div class="viewer-card__preview">
+              <div>
+                <h3>Nothing selected yet</h3>
+                <p class="portal__lede" style="font-size: 0.95rem;">
+                  Choose an item from the library to load a preview, transcript, or streaming session.
+                </p>
+              </div>
+            </div>
+
+            <div class="viewer-card__meta">
+              <div class="stack">
+                <span class="u-card__subtitle">Playback controls</span>
+                <div class="upload-card__actions" style="justify-content: flex-start;">
+                  <button class="u-btn u-btn--ghost" type="button">Open immersive viewer</button>
+                  <button class="u-btn u-btn--ghost" type="button">Download asset</button>
+                </div>
+              </div>
+
+              <div class="stack">
+                <span class="u-card__subtitle">Annotations</span>
+                <textarea class="u-input" rows="3" placeholder="Note key findings for the team..."></textarea>
+              </div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <div class="u-modal" id="clipboard-confirm" role="dialog" aria-modal="true" aria-labelledby="clipboard-title">
+      <div class="u-modal__dialog">
+        <div class="stack">
+          <h2 class="u-card__title" id="clipboard-title">Copied to clipboard</h2>
+          <p class="u-card__subtitle" id="clipboard-description">
+            The requested value is available for sharing. Paste it into any chat or ticket.
+          </p>
+          <button class="u-btn u-btn--primary" type="button" data-close-modal>Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Invisible Support · Seamless context hand-offs for modern ops teams
+    </footer>
+
+    <script>
+      // Minimal progressive enhancement for copy-to-clipboard affordances.
+      const modal = document.getElementById("clipboard-confirm");
+      const modalClose = modal?.querySelector("[data-close-modal]");
+
+      function openModal() {
+        modal?.classList.add("is-open");
+        modalClose?.focus({ preventScroll: true });
+      }
+
+      function closeModal() {
+        modal?.classList.remove("is-open");
+      }
+
+      modalClose?.addEventListener("click", closeModal);
+      modal?.addEventListener("click", (event) => {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+
+      function resolveCopyValue(trigger) {
+        const explicit = trigger.getAttribute("data-copy");
+        if (explicit) return explicit;
+        const selector = trigger.getAttribute("data-copy-target");
+        if (!selector) return "";
+        const target = document.querySelector(selector);
+        return target ? target.textContent?.trim() ?? "" : "";
+      }
+
+      async function handleCopy(event) {
+        const trigger = event.currentTarget;
+        const value = resolveCopyValue(trigger);
+        if (!value) return;
+        try {
+          await navigator.clipboard.writeText(value);
+          openModal();
+        } catch (error) {
+          console.error("Copy failed", error);
+        }
+      }
+
+      document
+        .querySelectorAll("[data-copy], [data-copy-target]")
+        .forEach((button) => button.addEventListener("click", handleCopy));
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeModal();
+        }
+      });
+    </script>
+  </body>
+</html>
