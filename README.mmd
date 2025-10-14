@@ -1,53 +1,60 @@
 flowchart TD
-  Start@{ shape: circle, label: "Launch GifVision" }
+  Start("Launch GifVision")
 
-  subgraph L1 ["Layer 1 Workflow"]
-    Upload1["Upload Video"] --> Preview1["Preview + Clip"]
-    Preview1 --> Adjust1["Adjustments Panel"]
-    Adjust1 -->|Stream A| GenGIF1A["Generate GIF A"]
-    Adjust1 -->|Stream B| GenGIF1B["Generate GIF B"]
-    GenGIF1A --> Blend1["Blend A + B"]
-    GenGIF1B --> Blend1
-    Blend1 --> Output1["Layer 1 Output"]
+  subgraph Layer1 ["Layer 1 Workflow"]
+    U1["Upload Video"]
+    P1["Preview + Clip"]
+    A1["Adjustments Panel"]
+    G1A["Generate GIF A"]
+    G1B["Generate GIF B"]
+    B1["Blend A + B"]
+    O1["Layer 1 Output"]
+
+    U1 --> P1 --> A1
+    A1 -->|Stream A| G1A --> B1
+    A1 -->|Stream B| G1B --> B1
+    B1 --> O1
   end
 
-  subgraph L2 ["Layer 2 Workflow"]
-    Upload2["Upload Video"] --> Preview2["Preview + Clip"]
-    Preview2 --> Adjust2["Adjustments Panel"]
-    Adjust2 -->|Stream A| GenGIF2A["Generate GIF A"]
-    Adjust2 -->|Stream B| GenGIF2B["Generate GIF B"]
-    GenGIF2A --> Blend2["Blend A + B"]
-    GenGIF2B --> Blend2
-    Blend2 --> Output2["Layer 2 Output"]
+  subgraph Layer2 ["Layer 2 Workflow"]
+    U2["Upload Video"]
+    P2["Preview + Clip"]
+    A2["Adjustments Panel"]
+    G2A["Generate GIF A"]
+    G2B["Generate GIF B"]
+    B2["Blend A + B"]
+    O2["Layer 2 Output"]
+
+    U2 --> P2 --> A2
+    A2 -->|Stream A| G2A --> B2
+    A2 -->|Stream B| G2B --> B2
+    B2 --> O2
   end
 
-  Output1 --> MasterBlend["Master Blend"]
-  Output2 --> MasterBlend
-  MasterBlend --> FinalGIF["Generate Final GIF"]
-  FinalGIF --> Save["Save to Device"]
-  FinalGIF --> Share["Share on Social Media"]
+  O1 --> MB["Master Blend"]
+  O2 --> MB --> FG["Generate Final GIF"]
+  FG --> Save["Save to Device"]
+  FG --> Share["Share to Social Media"]
 
-  subgraph Adjustments ["Creative Toolkit"]
-    Adjust1 --> Quality["Quality & Size"]
-    Adjust1 --> Text["Text Overlay"]
-    Adjust1 --> ColorTone["Color & Tone"]
-    Adjust1 --> Effects["Artistic Filters"]
-    Adjust2 --> Quality
-    Adjust2 --> Text
-    Adjust2 --> ColorTone
-    Adjust2 --> Effects
+  subgraph Filters ["Creative Toolkit"]
+    Q["Quality & Size"]
+    T["Text Overlay"]
+    CT["Color & Tone"]
+    FX["Artistic Filters"]
+    A1 --> Q & T & CT & FX
+    A2 --> Q & T & CT & FX
   end
 
-  subgraph Filters["Artistic Filters"]
-    Spectrum["Spectrum Pulse"]
-    Cycle["Color Cycle"]
-    Trails["Motion Trails"]
-    Sharpen["Sharpen"]
-    Edge["Edge Detect"]
-    Negate["Negate Colors"]
-    Flip["Flip H/V"]
-    Effects --> Spectrum & Cycle & Trails & Sharpen & Edge & Negate & Flip
+  subgraph Effects ["Artistic Filters"]
+    SP["Spectrum Pulse"]
+    CC["Color Cycle"]
+    MT["Motion Trails"]
+    SH["Sharpen"]
+    ED["Edge Detect"]
+    NG["Negate Colors"]
+    FL["Flip H/V"]
+    FX --> SP & CC & MT & SH & ED & NG & FL
   end
 
-  Start --> L1
-  Start --> L2
+  Start --> Layer1
+  Start --> Layer2
