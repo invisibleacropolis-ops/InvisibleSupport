@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hyperspace Odyssey</title>
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #050608 0%, #000 65%, #010104 100%);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        main {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Soft vignette to concentrate the viewer's attention */
+        .vignette {
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.35) 65%, rgba(0, 0, 0, 0.9) 100%);
+            z-index: 10;
+        }
+
+        header {
+            position: absolute;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-transform: uppercase;
+            letter-spacing: 0.25rem;
+            font-size: 0.7rem;
+            color: rgba(180, 220, 255, 0.6);
+            text-align: center;
+            text-shadow: 0 0 12px rgba(120, 180, 255, 0.5);
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        header span {
+            display: block;
+            font-size: 0.65rem;
+            letter-spacing: 0.35rem;
+            color: rgba(255, 255, 255, 0.35);
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <canvas id="nebula-layer" aria-hidden="true"></canvas>
+        <canvas id="hyperspace-layer" aria-hidden="true"></canvas>
+        <canvas id="flare-layer" aria-hidden="true"></canvas>
+        <div class="vignette" aria-hidden="true"></div>
+        <header>
+            hyperspace
+            <span>sensorial overload protocol</span>
+        </header>
+    </main>
+    <script>
+        // =============================================================
+        // Hyperspace Odyssey — a layered reinterpretation of the 1990s
+        // "Hyperspace" screensaver and era-defining Winamp visualizers.
+        //
+        // This file creates three independent animation layers:
+        //   1. Nebula Layer: a drifting aurora-like plasma.
+        //   2. Hyperspace Layer: high-speed star tunnels with streaks.
+        //   3. Flare Layer: lens flare pulses and energy rings.
+        //
+        // Each layer is built as a self-contained system so future
+        // engineers can reason about or extend the visuals in isolation.
+        // =============================================================
+
+        const DPR = window.devicePixelRatio || 1;
+
+        /** Utility to resize a canvas with retina support. */
+        function resizeCanvas(canvas) {
+            const { clientWidth, clientHeight } = canvas;
+            canvas.width = Math.floor(clientWidth * DPR);
+            canvas.height = Math.floor(clientHeight * DPR);
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            return ctx;
+        }
+
+        /** Returns a seeded random number generator based on Mulberry32. */
+        function createRng(seed) {
+            return function mulberry32() {
+                let t = (seed += 0x6d2b79f5);
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        /** Linear interpolation helper. */
+        const lerp = (start, end, t) => start + (end - start) * t;
+
+        /** Wraps value around the interval [0, max). */
+        function wrap(value, max) {
+            return ((value % max) + max) % max;
+        }
+
+        // -------------------------------------------------------------
+        // 1. Nebula Layer — swirling aurora backdrop
+        // -------------------------------------------------------------
+
+        const nebulaCanvas = document.getElementById('nebula-layer');
+        const nebulaCtx = resizeCanvas(nebulaCanvas);
+
+        const nebula = {
+            time: 0,
+            blobs: Array.from({ length: 6 }, (_, idx) => {
+                const rng = createRng(idx * 101 + 7);
+                return {
+                    hue: rng() * 360,
+                    x: rng(),
+                    y: rng(),
+                    radius: 0.35 + rng() * 0.35,
+                    drift: { x: (rng() - 0.5) * 0.0006, y: (rng() - 0.5) * 0.0006 },
+                    pulseSpeed: 0.3 + rng() * 0.35,
+                };
+            }),
+        };
+
+        function renderNebula(delta) {
+            const { width, height } = nebulaCanvas;
+            const ctx = nebulaCtx;
+            ctx.clearRect(0, 0, width, height);
+
+            nebula.time += delta * 0.00008;
+
+            ctx.globalCompositeOperation = 'lighter';
+            nebula.blobs.forEach((blob, idx) => {
+                blob.x = wrap(blob.x + blob.drift.x * delta, 1);
+                blob.y = wrap(blob.y + blob.drift.y * delta, 1);
+
+                const baseRadius = Math.min(width, height) * blob.radius;
+                const pulse = 0.65 + Math.sin(nebula.time * blob.pulseSpeed + idx) * 0.25;
+                const radius = baseRadius * pulse;
+
+                const gradient = ctx.createRadialGradient(
+                    blob.x * width,
+                    blob.y * height,
+                    0,
+                    blob.x * width,
+                    blob.y * height,
+                    radius
+                );
+
+                const colorA = `hsla(${blob.hue}, 90%, 60%, 0.05)`;
+                const colorB = `hsla(${(blob.hue + 90) % 360}, 95%, 65%, 0)`;
+                gradient.addColorStop(0, colorA);
+                gradient.addColorStop(1, colorB);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(blob.x * width, blob.y * height, radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // -------------------------------------------------------------
+        // 2. Hyperspace Layer — central star tunnel with streaks
+        // -------------------------------------------------------------
+
+        const hyperspaceCanvas = document.getElementById('hyperspace-layer');
+        const hyperspaceCtx = resizeCanvas(hyperspaceCanvas);
+
+        const tunnel = {
+            stars: [],
+            ringCount: 1200,
+            fieldDepth: 240,
+            rotation: 0,
+            spinSpeed: 0.00012,
+        };
+
+        function initializeTunnel() {
+            tunnel.stars = Array.from({ length: tunnel.ringCount }, (_, idx) => {
+                const rng = createRng(idx * 17 + 23);
+                const radius = Math.pow(rng(), 1.4);
+                return {
+                    angle: rng() * Math.PI * 2,
+                    radius,
+                    depth: rng() * tunnel.fieldDepth,
+                    speed: 0.28 + rng() * 0.45,
+                    streak: 0.45 + rng() * 0.6,
+                    colorShift: rng() * 360,
+                };
+            });
+        }
+
+        initializeTunnel();
+
+        function renderHyperspace(delta) {
+            const ctx = hyperspaceCtx;
+            const { width, height } = hyperspaceCanvas;
+            ctx.clearRect(0, 0, width, height);
+            const halfW = width / 2;
+            const halfH = height / 2;
+            const fov = Math.min(width, height) * 0.5;
+
+            tunnel.rotation += tunnel.spinSpeed * delta;
+
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+
+            tunnel.stars.forEach((star, idx) => {
+                star.depth -= star.speed * delta * 0.005;
+                if (star.depth <= 0) {
+                    star.depth += tunnel.fieldDepth;
+                }
+
+                const angle = star.angle + tunnel.rotation + Math.sin(idx * 0.012 + tunnel.rotation * 12) * 0.15;
+                const radius = Math.pow(star.radius, 1.8) * fov * 0.9;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const perspective = fov / (star.depth + 1);
+                const screenX = halfW + x * perspective;
+                const screenY = halfH + y * perspective;
+                const streakScale = lerp(0.35, 1.8, 1 - star.depth / tunnel.fieldDepth);
+                const streakLength = star.streak * streakScale * 20;
+
+                const hue = (star.colorShift + (1 - star.depth / tunnel.fieldDepth) * 240) % 360;
+                const alpha = lerp(0.02, 0.9, perspective / 6);
+                ctx.strokeStyle = `hsla(${hue}, 95%, 70%, ${Math.min(alpha, 0.9)})`;
+
+                ctx.beginPath();
+                ctx.moveTo(screenX, screenY);
+                ctx.lineTo(screenX, screenY + streakLength);
+                ctx.stroke();
+            });
+
+            // Draw central warp aperture
+            const gradient = ctx.createRadialGradient(halfW, halfH, 0, halfW, halfH, fov * 0.95);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+            gradient.addColorStop(0.25, 'rgba(80, 140, 255, 0.2)');
+            gradient.addColorStop(0.45, 'rgba(20, 60, 160, 0.12)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(halfW, halfH, fov * 0.95, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // -------------------------------------------------------------
+        // 3. Flare Layer — lens flares and energy rings
+        // -------------------------------------------------------------
+
+        const flareCanvas = document.getElementById('flare-layer');
+        const flareCtx = resizeCanvas(flareCanvas);
+
+        const flares = {
+            orbs: Array.from({ length: 5 }, (_, idx) => ({
+                phase: idx * (Math.PI * 0.5),
+                radius: 0,
+                hue: 180 + idx * 28,
+            })),
+            rings: Array.from({ length: 6 }, (_, idx) => ({
+                startDelay: idx * 900,
+                duration: 4200 + idx * 700,
+                lineWidth: 1.5 + idx,
+            })),
+            sparks: Array.from({ length: 140 }, (_, idx) => {
+                const rng = createRng(9000 + idx * 31);
+                return {
+                    angle: rng() * Math.PI * 2,
+                    radius: rng(),
+                    speed: 0.0004 + rng() * 0.0009,
+                    phase: rng() * Math.PI * 2,
+                };
+            }),
+            time: 0,
+        };
+
+        function renderFlares(delta) {
+            const ctx = flareCtx;
+            const { width, height } = flareCanvas;
+            ctx.clearRect(0, 0, width, height);
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const maxRadius = Math.min(width, height) * 0.65;
+
+            flares.time += delta;
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.globalCompositeOperation = 'lighter';
+
+            // Orbiting plasma orbs
+            flares.orbs.forEach((orb, idx) => {
+                const baseRadius = maxRadius * (0.12 + idx * 0.07);
+                const orbit = Math.sin(flares.time * 0.00018 + orb.phase) * 0.5 + 0.5;
+                const orbX = Math.cos(flares.time * 0.00022 + orb.phase) * baseRadius * (0.2 + orbit * 0.5);
+                const orbY = Math.sin(flares.time * 0.00025 + orb.phase) * baseRadius * (0.2 + orbit * 0.5);
+                const gradient = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, maxRadius * 0.25);
+                gradient.addColorStop(0, `hsla(${orb.hue}, 90%, 70%, 0.5)`);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(orbX, orbY, maxRadius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Energy rings radiating from center
+            flares.rings.forEach((ring, idx) => {
+                const elapsed = (flares.time - ring.startDelay) % ring.duration;
+                const progress = elapsed / ring.duration;
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const ringRadius = lerp(maxRadius * 0.05, maxRadius, easeOut);
+                const opacity = Math.max(0, 1 - easeOut);
+                ctx.lineWidth = ring.lineWidth;
+                ctx.strokeStyle = `rgba(100, 200, 255, ${opacity * 0.35})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+
+            // Sparkles reminiscent of audio visualizers
+            flares.sparks.forEach((spark, idx) => {
+                spark.angle += spark.speed * delta;
+                const radial = Math.sin(flares.time * 0.0004 + idx) * 0.5 + 0.5;
+                const radius = maxRadius * (0.1 + spark.radius * 0.9 * radial);
+                const x = Math.cos(spark.angle) * radius;
+                const y = Math.sin(spark.angle) * radius;
+                const size = 1.5 + Math.sin(flares.time * 0.002 + idx) * 1.2;
+                const hue = (210 + idx * 2) % 360;
+                ctx.fillStyle = `hsla(${hue}, 100%, 75%, 0.4)`;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.restore();
+
+            // Glow overlay for center burst
+            const gradient = ctx.createRadialGradient(
+                centerX,
+                centerY,
+                0,
+                centerX,
+                centerY,
+                maxRadius * 0.8
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        // -------------------------------------------------------------
+        // Animation loop
+        // -------------------------------------------------------------
+
+        let lastTime = performance.now();
+
+        function animate(now) {
+            const delta = now - lastTime;
+            lastTime = now;
+
+            renderNebula(delta);
+            renderHyperspace(delta);
+            renderFlares(delta);
+
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+
+        // -------------------------------------------------------------
+        // Responsive behavior
+        // -------------------------------------------------------------
+
+        function handleResize() {
+            resizeCanvas(nebulaCanvas);
+            resizeCanvas(hyperspaceCanvas);
+            resizeCanvas(flareCanvas);
+        }
+
+        window.addEventListener('resize', () => {
+            handleResize();
+        });
+
+        // Initial resize ensures canvases match the viewport when the
+        // page loads before the first animation frame.
+        handleResize();
+    </script>
+</body>
+</html>
