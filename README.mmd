@@ -1,46 +1,54 @@
 flowchart TD
   Start("🚀 Launch GifVision")
 
-  Start --> Upload1["📤 Upload Video to Layer 1"]
-  Upload1 --> Preview1["🎬 Preview & Clip Video"]
-  Preview1 --> Adjust1["🛠️ Adjustments Panel (Layer 1)"]
-  Adjust1 --> Stream1A["Stream A: Apply Effects"] --> Gen1A["Generate GIF A"]
-  Adjust1 --> Stream1B["Stream B: Apply Effects"] --> Gen1B["Generate GIF B"]
-  Gen1A --> Blend1["Blend A + B (Layer 1)"]
-  Gen1B --> Blend1
-  Blend1 --> Layer1Out["✅ Layer 1 Output"]
+  %% Layer 1 Workflow
+  Start --> L1_Upload["Layer 1: Upload Video"]
+  L1_Upload --> L1_Clip["Layer 1: Preview & Clip"]
+  L1_Clip --> L1_Adjust["Layer 1: Adjustments Panel"]
+  L1_Adjust --> L1_StreamA["Stream A Effects"] --> L1_GIF_A["Generate GIF A"]
+  L1_Adjust --> L1_StreamB["Stream B Effects"] --> L1_GIF_B["Generate GIF B"]
+  L1_GIF_A --> L1_Blend["Blend Stream A + B (Layer 1)"]
+  L1_GIF_B --> L1_Blend
+  L1_Blend --> L1_Output["Layer 1 Output"]
 
-  Layer1Out --> Upload2["📤 Upload Video to Layer 2"]
-  Upload2 --> Preview2["🎬 Preview & Clip Video"]
-  Preview2 --> Adjust2["🛠️ Adjustments Panel (Layer 2)"]
-  Adjust2 --> Stream2A["Stream A: Apply Effects"] --> Gen2A["Generate GIF A"]
-  Adjust2 --> Stream2B["Stream B: Apply Effects"] --> Gen2B["Generate GIF B"]
-  Gen2A --> Blend2["Blend A + B (Layer 2)"]
-  Gen2B --> Blend2
-  Blend2 --> Layer2Out["✅ Layer 2 Output"]
+  %% Layer 2 Workflow
+  L1_Output --> L2_Upload["Layer 2: Upload Video"]
+  L2_Upload --> L2_Clip["Layer 2: Preview & Clip"]
+  L2_Clip --> L2_Adjust["Layer 2: Adjustments Panel"]
+  L2_Adjust --> L2_StreamA["Stream A Effects"] --> L2_GIF_A["Generate GIF A"]
+  L2_Adjust --> L2_StreamB["Stream B Effects"] --> L2_GIF_B["Generate GIF B"]
+  L2_GIF_A --> L2_Blend["Blend Stream A + B (Layer 2)"]
+  L2_GIF_B --> L2_Blend
+  L2_Blend --> L2_Output["Layer 2 Output"]
 
-  Layer2Out --> Master["🎨 Master Blend"]
-  Layer1Out --> Master
-  Master --> Final["🎞️ Generate Final GIF"]
-  Final --> Save["💾 Save to Device"]
-  Final --> Share["📤 Share to Social Media"]
+  %% Master Blend & Export
+  L2_Output --> MasterBlend["🎨 Master Blend (Layer 1 + Layer 2)"]
+  MasterBlend --> FinalGIF["Generate Final GIF"]
+  FinalGIF --> Save["💾 Save to Device"]
+  FinalGIF --> Share["📤 Share to Social Media"]
+
+  %% Creative Toolkit (vertical stack)
+  L1_Adjust --> Toolkit
+  L2_Adjust --> Toolkit
 
   subgraph Toolkit ["🎨 Adjustments Toolkit"]
-    Quality["📏 Quality & Size"]
-    Text["🔤 Text Overlay"]
-    Color["🌈 Color & Tone"]
-    FX["🎭 Artistic Filters"]
-    Adjust1 --> Quality & Text & Color & FX
-    Adjust2 --> Quality & Text & Color & FX
+    Quality["Quality & Size"]
+    Text["Text Overlay"]
+    Color["Color & Tone"]
+    FX["Artistic Filters"]
+    Toolkit --> Quality --> Text --> Color --> FX
   end
 
+  %% Filters (vertical)
+  FX --> Filters
+
   subgraph Filters ["🎭 Artistic Filters"]
-    Spectrum["🌈 Spectrum Pulse"]
-    Cycle["🎨 Color Cycle"]
-    Trails["👻 Motion Trails"]
-    Sharpen["🔎 Sharpen"]
-    Edge["✏️ Edge Detect"]
-    Negate["❌ Negate Colors"]
-    Flip["🔄 Flip H/V"]
-    FX --> Spectrum & Cycle & Trails & Sharpen & Edge & Negate & Flip
+    Spectrum["Spectrum Pulse"]
+    Cycle["Color Cycle"]
+    Trails["Motion Trails"]
+    Sharpen["Sharpen"]
+    Edge["Edge Detect"]
+    Negate["Negate Colors"]
+    Flip["Flip H/V"]
+    Filters --> Spectrum --> Cycle --> Trails --> Sharpen --> Edge --> Negate --> Flip
   end
