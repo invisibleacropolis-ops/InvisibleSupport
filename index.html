@@ -138,23 +138,23 @@
                     x: rng(),
                     y: rng(),
                     radius: 0.35 + rng() * 0.35,
-                    drift: { x: (rng() - 0.5) * 0.0006, y: (rng() - 0.5) * 0.0006 },
-                    pulseSpeed: 0.3 + rng() * 0.35,
+                    drift: { x: (rng() - 0.5) * 0.16, y: (rng() - 0.5) * 0.16 },
+                    pulseSpeed: 0.8 + rng() * 1.2,
                 };
             }),
         };
 
-        function renderNebula(delta) {
+        function renderNebula(deltaSeconds) {
             const { width, height } = nebulaCanvas;
             const ctx = nebulaCtx;
             ctx.clearRect(0, 0, width, height);
 
-            nebula.time += delta * 0.00008;
+            nebula.time += deltaSeconds * 0.35;
 
             ctx.globalCompositeOperation = 'lighter';
             nebula.blobs.forEach((blob, idx) => {
-                blob.x = wrap(blob.x + blob.drift.x * delta, 1);
-                blob.y = wrap(blob.y + blob.drift.y * delta, 1);
+                blob.x = wrap(blob.x + blob.drift.x * deltaSeconds, 1);
+                blob.y = wrap(blob.y + blob.drift.y * deltaSeconds, 1);
 
                 const baseRadius = Math.min(width, height) * blob.radius;
                 const pulse = 0.65 + Math.sin(nebula.time * blob.pulseSpeed + idx) * 0.25;
@@ -194,7 +194,8 @@
             ringCount: 1200,
             fieldDepth: 240,
             rotation: 0,
-            spinSpeed: 0.00012,
+            spinSpeed: 0.6,
+            time: 0,
         };
 
         function initializeTunnel() {
@@ -205,7 +206,7 @@
                     angle: rng() * Math.PI * 2,
                     radius,
                     depth: rng() * tunnel.fieldDepth,
-                    speed: 0.28 + rng() * 0.45,
+                    speed: 28 + rng() * 35,
                     streak: 0.45 + rng() * 0.6,
                     colorShift: rng() * 360,
                 };
@@ -214,7 +215,7 @@
 
         initializeTunnel();
 
-        function renderHyperspace(delta) {
+        function renderHyperspace(deltaSeconds) {
             const ctx = hyperspaceCtx;
             const { width, height } = hyperspaceCanvas;
             ctx.clearRect(0, 0, width, height);
@@ -222,29 +223,32 @@
             const halfH = height / 2;
             const fov = Math.min(width, height) * 0.5;
 
-            tunnel.rotation += tunnel.spinSpeed * delta;
+            tunnel.rotation += tunnel.spinSpeed * deltaSeconds;
+            tunnel.time += deltaSeconds;
 
             ctx.lineWidth = 1.5;
             ctx.lineCap = 'round';
 
             tunnel.stars.forEach((star, idx) => {
-                star.depth -= star.speed * delta * 0.005;
+                star.depth -= star.speed * deltaSeconds;
                 if (star.depth <= 0) {
                     star.depth += tunnel.fieldDepth;
                 }
 
-                const angle = star.angle + tunnel.rotation + Math.sin(idx * 0.012 + tunnel.rotation * 12) * 0.15;
+                const swirl = Math.sin(idx * 0.012 + tunnel.rotation * 12 + star.depth * 0.015) * 0.18;
+                const angle = star.angle + tunnel.rotation + swirl;
                 const radius = Math.pow(star.radius, 1.8) * fov * 0.9;
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;
                 const perspective = fov / (star.depth + 1);
                 const screenX = halfW + x * perspective;
                 const screenY = halfH + y * perspective;
-                const streakScale = lerp(0.35, 1.8, 1 - star.depth / tunnel.fieldDepth);
-                const streakLength = star.streak * streakScale * 20;
+                const depthFactor = 1 - star.depth / tunnel.fieldDepth;
+                const streakScale = lerp(0.35, 2.4, depthFactor);
+                const streakLength = star.streak * streakScale * 55;
 
-                const hue = (star.colorShift + (1 - star.depth / tunnel.fieldDepth) * 240) % 360;
-                const alpha = lerp(0.02, 0.9, perspective / 6);
+                const hue = (star.colorShift + depthFactor * 260 + Math.sin(tunnel.time * 0.8 + idx) * 6) % 360;
+                const alpha = lerp(0.04, 1, perspective / 4.5);
                 ctx.strokeStyle = `hsla(${hue}, 95%, 70%, ${Math.min(alpha, 0.9)})`;
 
                 ctx.beginPath();
@@ -289,14 +293,14 @@
                 return {
                     angle: rng() * Math.PI * 2,
                     radius: rng(),
-                    speed: 0.0004 + rng() * 0.0009,
+                    speed: 0.6 + rng() * 1.4,
                     phase: rng() * Math.PI * 2,
                 };
             }),
             time: 0,
         };
 
-        function renderFlares(delta) {
+        function renderFlares(deltaSeconds) {
             const ctx = flareCtx;
             const { width, height } = flareCanvas;
             ctx.clearRect(0, 0, width, height);
@@ -304,7 +308,7 @@
             const centerY = height / 2;
             const maxRadius = Math.min(width, height) * 0.65;
 
-            flares.time += delta;
+            flares.time += deltaSeconds;
 
             ctx.save();
             ctx.translate(centerX, centerY);
@@ -313,27 +317,28 @@
             // Orbiting plasma orbs
             flares.orbs.forEach((orb, idx) => {
                 const baseRadius = maxRadius * (0.12 + idx * 0.07);
-                const orbit = Math.sin(flares.time * 0.00018 + orb.phase) * 0.5 + 0.5;
-                const orbX = Math.cos(flares.time * 0.00022 + orb.phase) * baseRadius * (0.2 + orbit * 0.5);
-                const orbY = Math.sin(flares.time * 0.00025 + orb.phase) * baseRadius * (0.2 + orbit * 0.5);
-                const gradient = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, maxRadius * 0.25);
-                gradient.addColorStop(0, `hsla(${orb.hue}, 90%, 70%, 0.5)`);
+                const orbit = Math.sin(flares.time * 0.8 + orb.phase) * 0.5 + 0.5;
+                const orbX = Math.cos(flares.time * 0.9 + orb.phase) * baseRadius * (0.3 + orbit * 0.65);
+                const orbY = Math.sin(flares.time * 1.1 + orb.phase) * baseRadius * (0.3 + orbit * 0.65);
+                const glowRadius = maxRadius * (0.22 + Math.sin(flares.time * 2 + idx) * 0.04);
+                const gradient = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, glowRadius);
+                gradient.addColorStop(0, `hsla(${orb.hue}, 90%, 70%, 0.6)`);
                 gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(orbX, orbY, maxRadius * 0.25, 0, Math.PI * 2);
+                ctx.arc(orbX, orbY, glowRadius, 0, Math.PI * 2);
                 ctx.fill();
             });
 
             // Energy rings radiating from center
             flares.rings.forEach((ring, idx) => {
-                const elapsed = (flares.time - ring.startDelay) % ring.duration;
-                const progress = elapsed / ring.duration;
+                const elapsed = (flares.time * 1000 - ring.startDelay) % ring.duration;
+                const progress = Math.max(0, elapsed / ring.duration);
                 const easeOut = 1 - Math.pow(1 - progress, 3);
-                const ringRadius = lerp(maxRadius * 0.05, maxRadius, easeOut);
+                const ringRadius = lerp(maxRadius * 0.05, maxRadius * 1.2, easeOut);
                 const opacity = Math.max(0, 1 - easeOut);
-                ctx.lineWidth = ring.lineWidth;
-                ctx.strokeStyle = `rgba(100, 200, 255, ${opacity * 0.35})`;
+                ctx.lineWidth = ring.lineWidth * (1 + Math.sin(flares.time * 2 + idx) * 0.4);
+                ctx.strokeStyle = `rgba(100, 200, 255, ${opacity * 0.45})`;
                 ctx.beginPath();
                 ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
                 ctx.stroke();
@@ -341,14 +346,14 @@
 
             // Sparkles reminiscent of audio visualizers
             flares.sparks.forEach((spark, idx) => {
-                spark.angle += spark.speed * delta;
-                const radial = Math.sin(flares.time * 0.0004 + idx) * 0.5 + 0.5;
+                spark.angle += spark.speed * deltaSeconds * 6.5;
+                const radial = Math.sin(flares.time * 1.2 + idx * 0.2) * 0.5 + 0.5;
                 const radius = maxRadius * (0.1 + spark.radius * 0.9 * radial);
                 const x = Math.cos(spark.angle) * radius;
                 const y = Math.sin(spark.angle) * radius;
-                const size = 1.5 + Math.sin(flares.time * 0.002 + idx) * 1.2;
+                const size = 1.5 + Math.sin(flares.time * 3.5 + idx) * 1.2;
                 const hue = (210 + idx * 2) % 360;
-                ctx.fillStyle = `hsla(${hue}, 100%, 75%, 0.4)`;
+                ctx.fillStyle = `hsla(${hue}, 100%, 75%, 0.5)`;
                 ctx.beginPath();
                 ctx.arc(x, y, size, 0, Math.PI * 2);
                 ctx.fill();
@@ -378,12 +383,13 @@
         let lastTime = performance.now();
 
         function animate(now) {
-            const delta = now - lastTime;
+            const delta = now - lastTime || 16;
             lastTime = now;
+            const deltaSeconds = delta * 0.001;
 
-            renderNebula(delta);
-            renderHyperspace(delta);
-            renderFlares(delta);
+            renderNebula(deltaSeconds);
+            renderHyperspace(deltaSeconds);
+            renderFlares(deltaSeconds);
 
             requestAnimationFrame(animate);
         }
