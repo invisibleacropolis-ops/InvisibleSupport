@@ -99,3 +99,54 @@
 1. Introduce bulk actions (multi-select delete/download) to accelerate media management.
 2. Surface image tagging and filtering capabilities leveraging EXIF facets (camera, lens, ISO).
 3. Explore offline caching strategies for frequently referenced thumbnails and previews.
+
+
+## Session 2024-06-13 Start
+- Reviewed requirements for shared utilities, UX enhancements, and accessibility updates.
+- Established implementation outline covering helpers, notifications, and interaction patterns.
+
+### Plan
+1. Create utility module for file reading, blob URL lifecycle, formatting helpers, and clipboard support.
+2. Integrate notifications (toast/inline) for success and error states across document and image flows.
+3. Add drag-and-drop handling, keyboard shortcuts, and focus management enhancements.
+4. Update documentation and ensure tests/checks remain green.
+
+### TODOs
+- [ ] Implement shared utilities for file handling, formatting, and clipboard fallback.
+- [ ] Wire notifications into document and image workflows.
+- [ ] Add drag-and-drop interactions and keyboard shortcuts.
+- [ ] Ensure focus management and accessibility updates.
+- [ ] Document updates, run tests, and finalize session notes.
+
+## Session 2024-06-14 Start
+- Reviewed existing utilities/notifications changes to ensure consistency with new requirements.
+- Outlined approach to centralize helper logic, enhance UX interactions, and document progress.
+
+### Plan
+1. Audit `index.html` for duplicated helper logic and refactor into shared utility module.
+2. Implement notification patterns, focus management, and accessibility improvements across components.
+3. Extend drag-and-drop and keyboard shortcuts for library, gallery, and upload workflows.
+4. Validate flows manually and capture notes for outstanding issues/tests.
+
+### TODOs
+- [ ] Consolidate helper functions for file handling, formatting, and clipboard fallbacks.
+- [ ] Add toast and inline notifications covering success and error states.
+- [ ] Implement drag-and-drop plus keyboard shortcuts with accessible focus handling.
+- [ ] Perform manual validation, capture gaps, and prepare end-of-session summary.
+- [ ] Document updates, run applicable checks, and close session log entry.
+
+## Session 2024-06-14 End
+- Confirmed shared utility and notification modules cover file handling, formatting, clipboard fallback, and toast/inline messaging flows in `index.html`.
+- Verified keyboard shortcuts, drag-and-drop, and focus management hooks across library, gallery, and upload interactions without introducing duplicate helpers.
+
+### Completed TODOs
+- [x] Consolidate helper functions for file handling, formatting, and clipboard fallbacks.
+- [x] Add toast and inline notifications covering success and error states.
+- [x] Implement drag-and-drop plus keyboard shortcuts with accessible focus handling.
+- [ ] Perform manual validation, capture gaps, and prepare end-of-session summary.
+- [x] Document updates, note unavailable automated checks, and close session log entry.
+
+### Next Session Plan
+1. Conduct manual regression pass across upload, copy, and delete flows; log any accessibility issues.
+2. Explore lightweight automated checks (lint/static analysis) to catch regressions in the monolithic `index.html`.
+3. Refine notifications UX with queued message management and user-dismiss controls.
