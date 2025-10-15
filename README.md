@@ -1,84 +1,55 @@
 # Invisible Support Portal
 
 ## Architecture Overview
-The portal is a single-page application delivered through `index.html`. All presentation, state, and behavior live in this document:
+The portal ships as a single `index.html` file that combines layout, styling, and behavior via vanilla JavaScript modules (IIFE namespaces). Key layers include:
 
-- **Layout** – Document and image workflows share a cohesive CSS token system plus reusable utility classes for cards, modals, and tables.
-- **Interaction layer** – Vanilla JavaScript modules (IIFE namespaces) coordinate localization, storage, notifications, library/gallery rendering, and viewer synchronization without external dependencies.
-- **Accessibility** – Focus management, ARIA attributes, and live regions ensure uploads, storage warnings, and clipboard actions remain screen-reader friendly.
+- **UI system** – Two-column layout, reusable card utilities, and responsive gallery/library components keep the experience consistent.
+- **Integration layer** – Modules such as `GitHubIntegration`, `StorageManager`, `DocumentStore`, and `ImageStore` orchestrate persistence, quota tracking, localization, and viewer synchronization without external dependencies.
+- **Accessibility** – Focus management, ARIA roles, and live regions surface upload status, quota warnings, and clipboard confirmations for assistive technology users.
 
-The script bootstraps a lightweight module system inside the page, keeping concerns separated by feature (e.g., `StorageManager`, `DocumentStore`, `ImageStore`, `DocumentViewer`, `ImageGallery`).
+## Repository-Backed Persistence
+Uploads persist to the GitHub repository that hosts the site. When the portal is served from GitHub Pages, the **Repository storage** card automatically pre-populates the owner and repository fields based on the current URL so you only need to supply authentication details. Configuration happens through the **Repository storage** card in the UI, which stores credentials in `localStorage` for client-side API calls and drives the following workflow:
 
-## Data Persistence Model
-Persistent state is stored entirely in `localStorage` under two keys managed by `StorageManager`:
-
-| Store | Key | Shape |
+| Store | Manifest path | Shape |
 | --- | --- | --- |
-| Documents | `invisibleSupport.documents` | Array of document records `{ id, name, title, description, type, size, updatedAt, dataUrl }` |
-| Images | `invisibleSupport.images` | Array of image records `{ id, name, title, alt, type, size, width, height, updatedAt, capturedAt, exif, dataUrl }` |
+| Documents | `storage/documents.json` | `{ id, name, title, description, type, size, updatedAt, repoPath, sha, downloadUrl }[]` |
+| Images | `storage/images.json` | `{ id, name, title, alt, type, size, width, height, updatedAt, capturedAt, exif, repoPath, sha, downloadUrl }[]` |
 
-Transient-only properties (`blobUrl`) are rebuilt at runtime from the persisted Data URLs. This keeps the storage footprint low while supporting inline previews and direct-link actions.
+`GitHubIntegration` commits both manifests and the uploaded binaries:
 
-`StorageManager` tracks estimated byte usage per key to drive the storage meter UI, enforce a 4.5 MB quota heuristic, and surface quota warnings before writes occur.
+- Files land under `uploads/documents/<id>/<filename>` and `uploads/images/<id>/<filename>`.
+- Each commit stores the blob SHA plus a shareable `download_url`, which powers direct links and previews.
+- `StorageManager` aggregates record sizes to enforce the configured storage budget.
 
-## Blob-Based Direct Links
-Direct links rely on `URL.createObjectURL` to issue temporary blob URLs scoped to the current browsing context. Keep in mind:
+Because the data lives in GitHub, refreshing the page or loading the site from another device rehydrates the library and gallery from the manifests.
 
-- **Lifecycle** – Blob URLs are revoked explicitly whenever items are removed or cleared, and they are rebuilt on load. Refreshing the page invalidates previously shared URLs.
-- **Scope** – Links only resolve within the same device/profile. Sharing them externally or across browsers fails once the originating tab revokes or exits.
-- **Memory management** – Aggressive revocation prevents long-running sessions from leaking memory when large assets churn frequently.
-
-Treat blob URLs as ephemeral handles for viewing/downloading, not stable shareable URLs.
-
-## Storage Schema Details
-Documents and images share common metadata plus workflow-specific fields:
-
-### Document Records
-- `id` – Stable unique identifier (`crypto.randomUUID` fallback) used for selections.
-- `name` – File name, de-duplicated via suffixes to avoid collisions in the library table.
-- `title` / `description` – User-provided metadata rendered in the library and viewer sidebar.
-- `type` – MIME type used for preview support checks and download hints.
-- `size` – Raw file size informing the metadata panel.
-- `updatedAt` – ISO string representing the last mutation time and used for sorting.
-- `dataUrl` – Base64 serialized payload persisted in `localStorage`.
-
-### Image Records
-- All document fields plus:
-  - `alt` – Accessibility description surfaced in gallery tiles.
-  - `width` / `height` – Pixel dimensions shown in metadata rows.
-  - `capturedAt` – Derived EXIF capture date when available.
-  - `exif` – Parsed EXIF object (make, model, ISO, shutter speed, etc.) for the metadata inspector.
+## Direct Links & Caching
+Direct-link inputs now point to GitHub’s raw content endpoints (e.g., `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/uploads/...`). These URLs remain stable until the underlying asset is removed. Previews stream directly from the raw asset; there is no longer a dependency on ephemeral `blob:` URLs.
 
 ## Operational Runbooks
-Future engineers can use the built-in modules to maintain the experience:
+### Configure Repository Access
+1. Open the **Repository storage** card in the secondary column.
+2. Enter the repository owner, repository name, target branch, personal access token (with `repo` scope), and an optional storage limit in MB.
+3. Save the configuration, then run **Test connection** to verify credentials. Successful tests trigger a confirmation toast.
 
 ### Reset the Libraries
-1. Open the portal and trigger the storage dialog (`Manage stored data`).
-2. Click **Clear all stored items** to wipe documents, images, and tracked sizes.
-3. The UI dispatches `DocumentStore.clearAll()` and `ImageStore.clearAll()`, revoking blob URLs and refreshing the UI.
+Uploading or removing items updates GitHub immediately. To reset the experience:
+1. Remove documents or images from the UI (each delete issues a `DELETE /contents/...` request).
+2. Alternatively, delete the manifest files (`storage/documents.json`, `storage/images.json`) and their corresponding `uploads/...` folders directly in GitHub.
 
-### Clear Storage Programmatically
-Use the helper functions from the console:
+### Programmatic Maintenance
+The browser console exposes the same helpers used by the UI:
 
 ```js
-StorageManager.clearAll();      // Removes localStorage keys and resets usage tracking
-DocumentStore.clearAll();       // Clears document entries and revokes blob URLs
-ImageStore.clearAll();          // Clears image entries and revokes blob URLs
+await DocumentStore.clearAll();   // Deletes document files and manifest entries
+await ImageStore.clearAll();       // Deletes image files and manifest entries
+await StorageManager.clearAll();   // Removes manifests and resets quota tracking
 ```
 
-Run them together to emulate the dialog's behavior during automated tests or manual resets.
-
-### Add New Asset Types
-1. Extend the relevant store (e.g., create `AudioStore`) mirroring the `DocumentStore`/`ImageStore` shape:
-   - Persist minimal metadata plus a Data URL.
-   - Rebuild blob URLs on hydrate to keep previews responsive.
-2. Update the UI rendering module to surface metadata, preview support, and direct-link controls.
-3. Register the store with `StorageManager` to track quota impact and subscribe to updates for the storage meter.
-4. Expose runbook actions (clear, remove) and update documentation with schema differences.
-
-When accepting new MIME types, enforce validation similar to `isSupportedImageType` and consider dimension/length guardrails to protect storage capacity.
-
 ## Developer Notes
-- Inline comments mark complex parsing, quota calculation, and normalization logic—use them as anchors when extending functionality.
-- Run `npx html-validate index.html` to lint markup structure before committing changes.
-- `StorageManager` estimates base64 overhead via a 1.37 multiplier; adjust cautiously if the quota strategy evolves.
+- `GitHubSettings` surfaces inline validation and mirrors the persisted configuration from `GitHubIntegration`.
+- Run `npx html-validate index.html` before committing to spot markup regressions (some legacy warnings may remain).
+- Large uploads are throttled through the storage budget defined in the settings card; adjust the limit there during testing.
+- The codebase avoids bundlers, so keep additions dependency-free and prefer IIFE modules for new functionality.
+
+For detailed setup instructions (including PAT creation and repository settings), see `Setup.md`.

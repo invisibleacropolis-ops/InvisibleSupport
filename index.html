@@ -1209,10 +1209,10 @@
                 aria-label="Upload dropzone"
                 data-dropzone
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true" role="presentation">
                   <path
                     fill="currentColor"
-                    d="M12 3c.55 0 1 .45 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4c0-.55.45-1 1-1Zm-7 9a1 1 0 0 1 1 1v4c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1-1Z"
+                    d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1Zm-7 9a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1 1-1Z"
                   />
                 </svg>
                 <div class="stack">
@@ -1285,6 +1285,50 @@
 
         <!-- Secondary column: Library and viewer panels -->
         <section class="portal__column portal__column--secondary">
+          <article class="u-card" aria-labelledby="repo-storage">
+            <div class="u-card__header">
+              <h2 class="u-card__title" id="repo-storage">Repository storage</h2>
+              <p class="u-card__subtitle">
+                Configure GitHub integration so uploads persist to this repository.
+              </p>
+            </div>
+
+            <form class="stack stack--lg" data-github-settings novalidate>
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="github-owner">
+                  <span class="u-card__subtitle" data-i18n-key="labels.githubOwner"></span>
+                  <input class="u-input" type="text" id="github-owner" name="github-owner" autocomplete="off" data-github-owner />
+                </label>
+                <label class="stack" for="github-repo">
+                  <span class="u-card__subtitle" data-i18n-key="labels.githubRepo"></span>
+                  <input class="u-input" type="text" id="github-repo" name="github-repo" autocomplete="off" data-github-repo />
+                </label>
+              </div>
+
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="github-branch">
+                  <span class="u-card__subtitle" data-i18n-key="labels.githubBranch"></span>
+                  <input class="u-input" type="text" id="github-branch" name="github-branch" autocomplete="off" placeholder="main" data-github-branch />
+                </label>
+                <label class="stack" for="github-limit">
+                  <span class="u-card__subtitle" data-i18n-key="labels.githubStorageLimit"></span>
+                  <input class="u-input" type="number" min="1" step="1" id="github-limit" name="github-limit" data-github-limit />
+                </label>
+              </div>
+
+              <label class="stack" for="github-token">
+                <span class="u-card__subtitle" data-i18n-key="labels.githubToken"></span>
+                <input class="u-input" type="password" id="github-token" name="github-token" autocomplete="off" data-github-token />
+              </label>
+
+              <p class="upload-feedback" data-github-feedback hidden></p>
+
+              <div class="upload-card__actions" style="justify-content: flex-start;">
+                <button class="u-btn u-btn--primary" type="submit" data-i18n-key="common.save"></button>
+                <button class="u-btn u-btn--ghost" type="button" data-github-test>Test connection</button>
+              </div>
+            </form>
+          </article>
           <article class="u-card library-card" aria-labelledby="asset-library">
             <div class="u-card__header">
               <h2 class="u-card__title" id="asset-library">Asset library</h2>
@@ -1664,6 +1708,7 @@
               usageSummary: "{used} of {limit}",
               storageWarning: "Storage is almost full ({percent}% used).",
               unknownFile: "File",
+              save: "Save",
             },
             notifications: {
               documentRemoved: "Document removed from library.",
@@ -1676,8 +1721,11 @@
               duplicateName: "An item with this name already exists. Renamed automatically.",
               largeFileWarning: "File is large and may exceed available space.",
               storageCleared: "Stored items cleared successfully.",
+              githubConfigSaved: "Repository settings saved.",
+              githubTestSuccess: "Connection to GitHub succeeded.",
+              githubTestFailure: "GitHub connection failed. Check credentials and permissions.",
             },
-            errors: {
+              errors: {
               quotaExceeded: "Unable to save changes because storage is full.",
               persistFailure: "Unable to persist items. Try clearing storage and retrying.",
               invalidDocument: "Invalid document file.",
@@ -1685,6 +1733,9 @@
               unsupportedImageType: "Unsupported image type.",
               imageDimensions: "Unable to read image dimensions.",
               imageTooLarge: "Image exceeds maximum supported dimensions.",
+              githubConfigMissing: "Configure the GitHub repository settings before uploading.",
+              githubRequestFailed: "GitHub request failed. Review the setup instructions and try again.",
+              githubValidation: "Enter the repository owner and name before saving.",
             },
             labels: {
               storageUsed: "Storage used",
@@ -1696,6 +1747,11 @@
               storageCancelCta: "Keep items",
               storageManageCta: "Manage stored data",
               storageWarningCta: "Review storage",
+              githubOwner: "Repository owner",
+              githubRepo: "Repository name",
+              githubBranch: "Branch",
+              githubToken: "Personal access token",
+              githubStorageLimit: "Storage budget (MB)",
             },
             upload: {
               waitingImages: "Waiting for images…",
@@ -1714,6 +1770,7 @@
               errorImageTooLarge: "{name} exceeds the {limit}px dimension limit.",
               errorImageDimensions: "Unable to read dimensions for {name}.",
               errorUploadFailed: "Upload failed for {name}.",
+              errorMissingConfiguration: "Configure repository settings before uploading.",
             },
             gallery: {
               selectImage: "Select {name}",
@@ -1778,25 +1835,496 @@
 
       Localization.apply();
 
+      const GitHubIntegration = (() => {
+        const CONFIG_KEY = "invisibleSupport.githubConfig";
+
+        function inferRepositoryDefaults() {
+          try {
+            const { hostname, pathname } = window.location || {};
+            if (!hostname || !hostname.endsWith("github.io")) {
+              return { owner: "", repo: "" };
+            }
+            const parts = hostname.split(".");
+            if (parts.length < 3) {
+              return { owner: "", repo: "" };
+            }
+            const owner = parts[0];
+            const cleanPath = (pathname || "").replace(/^\/+|\/+$|\s+/g, "");
+            if (!cleanPath) {
+              return { owner, repo: `${owner}.github.io` };
+            }
+            const [repo] = cleanPath.split("/");
+            return { owner, repo: repo || "" };
+          } catch (error) {
+            console.warn("Failed to infer GitHub repository from location", error);
+            return { owner: "", repo: "" };
+          }
+        }
+
+        const inferred = inferRepositoryDefaults();
+        const DEFAULT_CONFIG = {
+          owner: inferred.owner,
+          repo: inferred.repo,
+          branch: "main",
+          token: "",
+          storageLimitMb: 200,
+        };
+        const configListeners = new Set();
+        const textEncoder = typeof TextEncoder !== "undefined" ? new TextEncoder() : null;
+        const textDecoder = typeof TextDecoder !== "undefined" ? new TextDecoder() : null;
+
+        function sanitizeConfig(raw) {
+          if (!raw || typeof raw !== "object") {
+            return { ...DEFAULT_CONFIG };
+          }
+          const limit = Number(raw.storageLimitMb);
+          const owner = typeof raw.owner === "string" ? raw.owner.trim() : "";
+          const repo = typeof raw.repo === "string" ? raw.repo.trim() : "";
+          const branch =
+            typeof raw.branch === "string" && raw.branch.trim() ? raw.branch.trim() : DEFAULT_CONFIG.branch;
+          return {
+            owner: owner || DEFAULT_CONFIG.owner,
+            repo: repo || DEFAULT_CONFIG.repo,
+            branch,
+            token: typeof raw.token === "string" ? raw.token.trim() : "",
+            storageLimitMb: Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_CONFIG.storageLimitMb,
+          };
+        }
+
+        function loadConfig() {
+          try {
+            const stored = localStorage.getItem(CONFIG_KEY);
+            if (!stored) return { ...DEFAULT_CONFIG };
+            const parsed = JSON.parse(stored);
+            return sanitizeConfig(parsed);
+          } catch (error) {
+            console.warn("Failed to read GitHub configuration", error);
+            return { ...DEFAULT_CONFIG };
+          }
+        }
+
+        let config = loadConfig();
+
+        function notifyConfig() {
+          const snapshot = getConfig();
+          configListeners.forEach((listener) => {
+            try {
+              listener(snapshot);
+            } catch (error) {
+              console.warn("GitHub config listener error", error);
+            }
+          });
+        }
+
+        function persistConfig(next) {
+          config = sanitizeConfig({ ...config, ...next });
+          try {
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+          } catch (error) {
+            console.warn("Unable to persist GitHub configuration", error);
+          }
+          notifyConfig();
+        }
+
+        function getConfig() {
+          return { ...config };
+        }
+
+        function subscribe(listener) {
+          if (typeof listener !== "function") return () => {};
+          configListeners.add(listener);
+          listener(getConfig());
+          return () => configListeners.delete(listener);
+        }
+
+        function updateConfig(partial = {}) {
+          persistConfig(partial);
+        }
+
+        function isConfigured() {
+          return Boolean(config.owner && config.repo && config.token);
+        }
+
+        function ensureConfigured() {
+          if (isConfigured()) return;
+          const error = new Error(Localization.t("errors.githubConfigMissing"));
+          error.code = "config";
+          throw error;
+        }
+
+        function getBranch() {
+          return config.branch && config.branch.trim() ? config.branch.trim() : DEFAULT_CONFIG.branch;
+        }
+
+        function buildApiBase() {
+          return `https://api.github.com/repos/${config.owner}/${config.repo}`;
+        }
+
+        function buildApiUrl(path = "") {
+          const base = buildApiBase();
+          return path ? `${base}/${path}` : base;
+        }
+
+        function buildHeaders(extra) {
+          const headers = { Accept: "application/vnd.github+json" };
+          if (config.token) {
+            headers.Authorization = `Bearer ${config.token}`;
+          }
+          if (extra) {
+            Object.assign(headers, extra);
+          }
+          return headers;
+        }
+
+        function encodePath(path) {
+          return path
+            .split("/")
+            .filter(Boolean)
+            .map((segment) => encodeURIComponent(segment))
+            .join("/");
+        }
+
+        function encodeBase64(value) {
+          if (!value) return "";
+          if (textEncoder) {
+            const bytes = textEncoder.encode(value);
+            let binary = "";
+            bytes.forEach((byte) => {
+              binary += String.fromCharCode(byte);
+            });
+            return btoa(binary);
+          }
+          return btoa(unescape(encodeURIComponent(value)));
+        }
+
+        function decodeBase64(value) {
+          if (!value) return "";
+          try {
+            const binary = atob(value);
+            if (textDecoder) {
+              const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+              return textDecoder.decode(bytes);
+            }
+            return decodeURIComponent(escape(binary));
+          } catch (error) {
+            console.warn("Failed to decode base64 payload", error);
+            return "";
+          }
+        }
+
+        async function getContents(path) {
+          ensureConfigured();
+          const encodedPath = encodePath(path);
+          const branch = encodeURIComponent(getBranch());
+          const url = `${buildApiUrl(`contents/${encodedPath}`)}?ref=${branch}`;
+          const response = await fetch(url, { headers: buildHeaders() });
+          if (response.status === 404) {
+            return null;
+          }
+          if (!response.ok) {
+            let payload = null;
+            try {
+              payload = await response.json();
+            } catch (error) {
+              payload = null;
+            }
+            const error = new Error(payload?.message || Localization.t("errors.githubRequestFailed"));
+            error.code = "request";
+            error.status = response.status;
+            error.payload = payload;
+            throw error;
+          }
+          return response.json();
+        }
+
+        async function putContents(path, { message, content, sha } = {}) {
+          ensureConfigured();
+          const body = {
+            message: message || `Update ${path}`,
+            content,
+            branch: getBranch(),
+          };
+          if (sha) {
+            body.sha = sha;
+          }
+          const response = await fetch(buildApiUrl(`contents/${encodePath(path)}`), {
+            method: "PUT",
+            headers: buildHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(body),
+          });
+          if (!response.ok) {
+            let payload = null;
+            try {
+              payload = await response.json();
+            } catch (error) {
+              payload = null;
+            }
+            const error = new Error(payload?.message || Localization.t("errors.githubRequestFailed"));
+            error.code = "request";
+            error.status = response.status;
+            error.payload = payload;
+            throw error;
+          }
+          return response.json();
+        }
+
+        async function deleteContents(path, { message, sha } = {}) {
+          ensureConfigured();
+          const body = {
+            message: message || `Remove ${path}`,
+            sha,
+            branch: getBranch(),
+          };
+          const response = await fetch(buildApiUrl(`contents/${encodePath(path)}`), {
+            method: "DELETE",
+            headers: buildHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(body),
+          });
+          if (response.status === 404) {
+            return null;
+          }
+          if (!response.ok) {
+            let payload = null;
+            try {
+              payload = await response.json();
+            } catch (error) {
+              payload = null;
+            }
+            const error = new Error(payload?.message || Localization.t("errors.githubRequestFailed"));
+            error.code = "request";
+            error.status = response.status;
+            error.payload = payload;
+            throw error;
+          }
+          return response.json();
+        }
+
+        async function readManifest(path) {
+          const file = await getContents(path);
+          if (!file) {
+            return { items: [], sha: null };
+          }
+          const text = decodeBase64(file.content || "");
+          let data = [];
+          if (text) {
+            try {
+              const parsed = JSON.parse(text);
+              data = Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+              console.warn("Failed to parse manifest", error);
+              data = [];
+            }
+          }
+          return { items: data, sha: file.sha };
+        }
+
+        async function writeManifest(path, items, sha) {
+          const payload = JSON.stringify(items ?? [], null, 2);
+          const response = await putContents(path, {
+            content: encodeBase64(payload),
+            message: `Update ${path}`,
+            sha,
+          });
+          return {
+            sha: response?.content?.sha ?? response?.sha ?? null,
+            path: response?.content?.path ?? path,
+          };
+        }
+
+        async function deleteManifest(path, sha) {
+          await deleteContents(path, { sha, message: `Remove ${path}` });
+        }
+
+        async function uploadFile(path, base64Content, message) {
+          const response = await putContents(path, { content: base64Content, message });
+          const content = response?.content ?? {};
+          return {
+            path: content.path ?? path,
+            sha: content.sha ?? response?.sha ?? null,
+            downloadUrl: content.download_url ?? buildRawUrl(content.path ?? path),
+          };
+        }
+
+        async function deleteFile(path, sha, message) {
+          await deleteContents(path, { sha, message });
+        }
+
+        async function testConnection() {
+          ensureConfigured();
+          const response = await fetch(buildApiUrl(), { headers: buildHeaders() });
+          if (!response.ok) {
+            let payload = null;
+            try {
+              payload = await response.json();
+            } catch (error) {
+              payload = null;
+            }
+            const error = new Error(payload?.message || Localization.t("errors.githubRequestFailed"));
+            error.code = "request";
+            error.status = response.status;
+            throw error;
+          }
+          return true;
+        }
+
+        function getStorageLimitBytes() {
+          const limitMb = Number(config.storageLimitMb);
+          if (Number.isFinite(limitMb) && limitMb > 0) {
+            return limitMb * 1024 * 1024;
+          }
+          return DEFAULT_CONFIG.storageLimitMb * 1024 * 1024;
+        }
+
+        function buildRawUrl(path) {
+          if (!config.owner || !config.repo) return "";
+          return `https://raw.githubusercontent.com/${config.owner}/${config.repo}/${getBranch()}/${path}`;
+        }
+
+        return {
+          getConfig,
+          updateConfig,
+          subscribe,
+          isConfigured,
+          readManifest,
+          writeManifest,
+          deleteManifest,
+          uploadFile,
+          deleteFile,
+          testConnection,
+          getStorageLimitBytes,
+          buildRawUrl,
+        };
+      })();
+
+      const GitHubSettings = (() => {
+        const form = document.querySelector("[data-github-settings]");
+        if (!form) return null;
+        const ownerInput = form.querySelector("[data-github-owner]");
+        const repoInput = form.querySelector("[data-github-repo]");
+        const branchInput = form.querySelector("[data-github-branch]");
+        const tokenInput = form.querySelector("[data-github-token]");
+        const limitInput = form.querySelector("[data-github-limit]");
+        const feedback = form.querySelector("[data-github-feedback]");
+        const testButton = form.querySelector("[data-github-test]");
+
+        function clearFeedback() {
+          if (feedback) {
+            Notifications.inline(feedback, "");
+          }
+        }
+
+        function showFeedback(message, tone = "info") {
+          if (feedback && message) {
+            Notifications.inline(feedback, message, tone);
+          }
+        }
+
+        function populate(config) {
+          if (!config) return;
+          if (ownerInput && document.activeElement !== ownerInput) {
+            ownerInput.value = config.owner || "";
+          }
+          if (repoInput && document.activeElement !== repoInput) {
+            repoInput.value = config.repo || "";
+          }
+          if (branchInput && document.activeElement !== branchInput) {
+            branchInput.value = config.branch || "";
+          }
+          if (limitInput && document.activeElement !== limitInput) {
+            const limit = Number(config.storageLimitMb);
+            limitInput.value = Number.isFinite(limit) && limit > 0 ? String(limit) : "";
+          }
+          if (tokenInput && document.activeElement !== tokenInput) {
+            tokenInput.value = "";
+          }
+        }
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          clearFeedback();
+          const owner = ownerInput?.value.trim() ?? "";
+          const repo = repoInput?.value.trim() ?? "";
+          if (!owner || !repo) {
+            showFeedback(Localization.t("errors.githubValidation"), "error");
+            return;
+          }
+          const branch = branchInput?.value.trim() || "main";
+          const limitValue = Number(limitInput?.value);
+          const payload = {
+            owner,
+            repo,
+            branch,
+          };
+          if (Number.isFinite(limitValue) && limitValue > 0) {
+            payload.storageLimitMb = limitValue;
+          }
+          const token = tokenInput?.value.trim();
+          if (token) {
+            payload.token = token;
+          }
+          try {
+            GitHubIntegration.updateConfig(payload);
+            if (tokenInput) {
+              tokenInput.value = "";
+            }
+            showFeedback(Localization.t("notifications.githubConfigSaved"), "success");
+            Notifications.toast(Localization.t("notifications.githubConfigSaved"), "success");
+          } catch (error) {
+            console.error("Failed to save GitHub configuration", error);
+            showFeedback(Localization.t("errors.githubRequestFailed"), "error");
+          }
+        });
+
+        testButton?.addEventListener("click", async (event) => {
+          event.preventDefault();
+          clearFeedback();
+          testButton.disabled = true;
+          const originalText = testButton.textContent;
+          try {
+            await GitHubIntegration.testConnection();
+            showFeedback(Localization.t("notifications.githubTestSuccess"), "success");
+            Notifications.toast(Localization.t("notifications.githubTestSuccess"), "success");
+          } catch (error) {
+            console.error("GitHub connection test failed", error);
+            const message = error?.code === "config"
+              ? Localization.t("errors.githubConfigMissing")
+              : Localization.t("notifications.githubTestFailure");
+            showFeedback(message, "error");
+            Notifications.toast(message, "error");
+          } finally {
+            testButton.disabled = false;
+            if (typeof originalText === "string") {
+              testButton.textContent = originalText;
+            }
+          }
+        });
+
+        GitHubIntegration.subscribe((config) => {
+          populate(config);
+        });
+
+        populate(GitHubIntegration.getConfig());
+
+        return null;
+      })();
+
       const StorageManager = (() => {
-        const LIMIT_BYTES = 4.5 * 1024 * 1024; // 4.5 MB heuristic limit for localStorage
-        const BASE64_OVERHEAD = 1.37;
         const WARNING_THRESHOLD = 0.8;
         const trackedSizes = new Map();
+        const manifestMeta = new Map();
         const listeners = new Set();
-        const encoder = typeof TextEncoder !== "undefined" ? new TextEncoder() : null;
+        const KEY_PATH_MAP = new Map([
+          ["invisibleSupport.documents", "storage/documents.json"],
+          ["invisibleSupport.images", "storage/images.json"],
+        ]);
 
-        function measure(value) {
-          if (!value) return 0;
-          try {
-            if (encoder) {
-              return encoder.encode(value).length;
-            }
-            return unescape(encodeURIComponent(value)).length;
-          } catch (error) {
-            console.warn("Unable to measure storage value", error);
-            return value.length ?? 0;
-          }
+        function calculateSize(value) {
+          if (!Array.isArray(value)) return 0;
+          return value.reduce((total, item) => total + (Number(item?.size) || 0), 0);
+        }
+
+        function resolvePath(key) {
+          return KEY_PATH_MAP.get(key) ?? null;
         }
 
         function buildSnapshot(overrideKey, overrideSize) {
@@ -1809,10 +2337,9 @@
             }
           });
           if (overrideKey && !trackedSizes.has(overrideKey) && typeof overrideSize === "number") {
-            // Account for the incoming key even if we have not seen it before so quota checks stay accurate.
             used += overrideSize;
           }
-          const limit = LIMIT_BYTES;
+          const limit = GitHubIntegration.getStorageLimitBytes();
           const ratio = limit > 0 ? used / limit : 0;
           return {
             used,
@@ -1833,17 +2360,13 @@
           });
         }
 
-        function register(key) {
-          if (!trackedSizes.has(key)) {
-            trackedSizes.set(key, 0);
+        async function persist(key, value) {
+          const path = resolvePath(key);
+          if (!path) {
+            console.warn(`No manifest path registered for key: ${key}`);
+            return value;
           }
-        }
-
-        function persist(key, value) {
-          register(key);
-          const serialized = JSON.stringify(value);
-          const size = measure(serialized);
-          // Build a snapshot that pretends the new payload already exists to proactively detect quota issues.
+          const size = calculateSize(value);
           const snapshot = buildSnapshot(key, size);
           if (snapshot.isExceeded) {
             const error = new Error(Localization.t("errors.quotaExceeded"));
@@ -1852,16 +2375,15 @@
             throw error;
           }
           try {
-            localStorage.setItem(key, serialized);
+            const meta = manifestMeta.get(key);
+            const result = await GitHubIntegration.writeManifest(path, value, meta?.sha);
+            manifestMeta.set(key, { sha: result.sha });
             trackedSizes.set(key, size);
-            notify(snapshot);
+            notify();
+            return value;
           } catch (error) {
-            if (error && (error.name === "QuotaExceededError" || error.code === 22)) {
-              // Align thrown error shape when the browser rejects due to quota so consumers can surface consistent UI.
-              const quotaError = new Error(Localization.t("errors.quotaExceeded"));
-              quotaError.code = "quota";
-              quotaError.snapshot = snapshot;
-              throw quotaError;
+            if (error?.code === "config") {
+              throw error;
             }
             const persistError = new Error(Localization.t("errors.persistFailure"));
             persistError.code = "persist";
@@ -1870,30 +2392,46 @@
           }
         }
 
-        function read(key) {
-          register(key);
-          const stored = localStorage.getItem(key);
-          // Measuring the stored payload keeps the live usage meter in sync even if external tabs mutate storage.
-          const size = measure(stored ?? "");
-          trackedSizes.set(key, size);
-          notify();
-          if (!stored) return null;
-          return JSON.parse(stored);
+        async function read(key) {
+          const path = resolvePath(key);
+          if (!path) return null;
+          try {
+            const result = await GitHubIntegration.readManifest(path);
+            manifestMeta.set(key, { sha: result.sha });
+            const size = calculateSize(result.items);
+            trackedSizes.set(key, size);
+            notify();
+            return result.items;
+          } catch (error) {
+            if (error?.code === "config") {
+              trackedSizes.set(key, 0);
+              notify();
+              throw error;
+            }
+            console.error("Failed to read manifest", error);
+            trackedSizes.set(key, 0);
+            notify();
+            return null;
+          }
         }
 
-        function clear(key) {
-          register(key);
-          localStorage.removeItem(key);
+        async function clear(key) {
+          const path = resolvePath(key);
+          if (!path) return;
+          const meta = manifestMeta.get(key);
+          try {
+            await GitHubIntegration.deleteManifest(path, meta?.sha ?? null);
+          } catch (error) {
+            console.warn("Failed to remove manifest", error);
+          }
+          manifestMeta.delete(key);
           trackedSizes.set(key, 0);
           notify();
         }
 
-        function clearAll() {
-          trackedSizes.forEach((_, key) => {
-            localStorage.removeItem(key);
-            trackedSizes.set(key, 0);
-          });
-          notify();
+        async function clearAll() {
+          const tasks = Array.from(KEY_PATH_MAP.keys()).map((key) => clear(key));
+          await Promise.all(tasks);
         }
 
         function subscribe(listener) {
@@ -1909,8 +2447,7 @@
 
         function estimateImpact(bytes) {
           if (!Number.isFinite(bytes) || bytes <= 0) return 0;
-          // Stored assets are serialized to base64; multiply to approximate the encoded footprint before persisting.
-          return Math.ceil(bytes * BASE64_OVERHEAD);
+          return bytes;
         }
 
         function getRemainingCapacity() {
@@ -1921,9 +2458,12 @@
         function canStore(additionalBytes) {
           if (!Number.isFinite(additionalBytes) || additionalBytes <= 0) return true;
           const snapshot = buildSnapshot();
-          // Compare against the projected usage to determine if we should block the upload and prompt the user.
           return snapshot.used + additionalBytes <= snapshot.limit;
         }
+
+        GitHubIntegration.subscribe(() => {
+          notify();
+        });
 
         return {
           persist,
@@ -2039,6 +2579,15 @@
           }
         }
 
+        function dataUrlToBase64(dataUrl) {
+          if (!dataUrl) return "";
+          const parts = dataUrl.split(",");
+          if (parts.length === 1) {
+            return parts[0] ?? "";
+          }
+          return parts[1] ?? "";
+        }
+
         function readFileAsDataUrl(file, progressCallback) {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -2094,6 +2643,7 @@
           formatRelativeTime,
           formatDateTime,
           dataUrlToBlob,
+          dataUrlToBase64,
           readFileAsDataUrl,
           createObjectUrl,
           revokeObjectUrl,
@@ -2604,34 +3154,35 @@
           listeners.forEach((listener) => listener([...documents]));
         }
 
-        function persist(nextDocuments) {
+        async function persist(nextDocuments) {
           const serializable = toSerializable(nextDocuments);
-          StorageManager.persist(STORAGE_KEY, serializable);
+          await StorageManager.persist(STORAGE_KEY, serializable);
         }
 
         function hydrate(rawDocs) {
           return rawDocs.map((doc) => {
-            const { blob, type } = Utils.dataUrlToBlob(doc.dataUrl, doc.type);
-            const blobUrl = blob ? Utils.createObjectUrl(blob) : "";
-            // Persisted entries only store Data URLs; rebuild transient blob URLs for preview/open actions on load.
-            return { ...doc, type, blobUrl };
+            const downloadUrl = doc.downloadUrl || (doc.repoPath ? GitHubIntegration.buildRawUrl(doc.repoPath) : "");
+            return { ...doc, downloadUrl, blobUrl: downloadUrl };
           });
         }
 
-        function load() {
+        async function load() {
           try {
-            const stored = StorageManager.read(STORAGE_KEY);
+            const stored = await StorageManager.read(STORAGE_KEY);
             if (Array.isArray(stored)) {
-              // Rehydrate and sort newest-first so recent uploads are surfaced prominently in the UI.
               documents = hydrate(stored).sort(
                 (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
               );
+            } else {
+              documents = [];
             }
           } catch (error) {
-            console.error("Failed to load stored documents", error);
+            if (error?.code !== "config") {
+              console.error("Failed to load stored documents", error);
+            }
             documents = [];
-            StorageManager.clear(STORAGE_KEY);
           }
+          notify();
         }
 
         function generateId() {
@@ -2664,14 +3215,12 @@
           return candidate;
         }
 
-        function normalizeDocument(file, extras, dataUrl) {
+        function normalizeDocument(file, extras) {
           const now = new Date().toISOString();
           const title = extras.title?.trim();
           const description = extras.description?.trim() ?? "";
           const type = file.type || guessMimeType(file.name);
-          const blobUrl = Utils.createObjectUrl(file);
           const normalizedName = ensureUniqueName(file.name);
-          // Data URLs power persistence, while blob URLs enable ephemeral previews without exceeding storage quotas.
           return {
             id: generateId(),
             name: normalizedName,
@@ -2680,16 +3229,18 @@
             type,
             size: file.size,
             updatedAt: now,
-            blobUrl,
-            dataUrl,
+            repoPath: "",
+            sha: "",
+            downloadUrl: "",
+            blobUrl: "",
           };
         }
 
-        function addDocument(doc) {
+        async function addDocument(doc) {
           const nextDocuments = [doc, ...documents].sort(
             (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
           );
-          persist(nextDocuments);
+          await persist(nextDocuments);
           documents = nextDocuments;
           notify();
         }
@@ -2700,46 +3251,76 @@
             error.code = "invalid";
             throw error;
           }
-          // Stream the FileReader updates into the supplied callback so the upload meter reflects actual progress.
-          const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
-          const documentRecord = normalizeDocument(file, extras, dataUrl);
-          try {
-            addDocument(documentRecord);
-          } catch (error) {
-            if (documentRecord?.blobUrl) {
-              Utils.revokeObjectUrl(documentRecord.blobUrl);
-            }
+          if (!GitHubIntegration.isConfigured()) {
+            const error = new Error(Localization.t("errors.githubConfigMissing"));
+            error.code = "config";
             throw error;
           }
-          return documentRecord;
+          const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
+          const base64 = Utils.dataUrlToBase64(dataUrl);
+          const documentRecord = normalizeDocument(file, extras);
+          const repoPath = `uploads/documents/${documentRecord.id}/${encodeURIComponent(documentRecord.name)}`;
+          try {
+            const upload = await GitHubIntegration.uploadFile(
+              repoPath,
+              base64,
+              `Add document ${documentRecord.name}`
+            );
+            documentRecord.repoPath = upload.path;
+            documentRecord.sha = upload.sha ?? "";
+            documentRecord.downloadUrl = upload.downloadUrl ?? "";
+            documentRecord.blobUrl = documentRecord.downloadUrl;
+            documentRecord.updatedAt = new Date().toISOString();
+            await addDocument(documentRecord);
+            return documentRecord;
+          } catch (error) {
+            const failure =
+              error?.code === "config" || error?.code === "quota" || error?.code === "persist"
+                ? error
+                : new Error(Localization.t("errors.persistFailure"));
+            if (failure !== error) {
+              failure.code = "persist";
+              failure.cause = error;
+            }
+            throw failure;
+          }
         }
 
-        function removeDocument(id) {
-          const index = documents.findIndex((doc) => doc.id === id);
-          if (index === -1) return;
-          const [removed] = documents.splice(index, 1);
-          if (removed?.blobUrl) {
-            // Release blob URLs immediately so long-lived tabs do not leak memory across many removals.
-            Utils.revokeObjectUrl(removed.blobUrl);
-          }
+        async function removeDocument(id) {
+          const doc = documents.find((item) => item.id === id);
+          if (!doc) return;
           try {
-            persist(documents);
+            if (doc.repoPath) {
+              await GitHubIntegration.deleteFile(doc.repoPath, doc.sha, `Remove document ${doc.name}`);
+            }
           } catch (error) {
-            console.error("Unable to persist after removal", error);
-            Notifications.toast(Localization.t("errors.persistFailure"), "error");
+            console.warn("Failed to delete remote document", error);
           }
+          if (doc.blobUrl?.startsWith("blob:")) {
+            Utils.revokeObjectUrl(doc.blobUrl);
+          }
+          const nextDocuments = documents.filter((item) => item.id !== id);
+          await persist(nextDocuments);
+          documents = nextDocuments;
           notify();
         }
 
-        function clearAll() {
+        async function clearAll() {
+          await Promise.all(
+            documents.map((doc) => {
+              if (!doc.repoPath) return Promise.resolve();
+              return GitHubIntegration.deleteFile(doc.repoPath, doc.sha, `Remove document ${doc.name}`).catch((error) => {
+                console.warn("Failed to delete remote document", error);
+              });
+            })
+          );
           documents.forEach((doc) => {
-            if (doc?.blobUrl) {
-              // Clearing all documents aggressively revokes each blob URL so stale direct links cannot be reused.
+            if (doc?.blobUrl?.startsWith("blob:")) {
               Utils.revokeObjectUrl(doc.blobUrl);
             }
           });
           documents = [];
-          StorageManager.clear(STORAGE_KEY);
+          await StorageManager.clear(STORAGE_KEY);
           notify();
         }
 
@@ -2758,6 +3339,9 @@
         }
 
         load();
+        GitHubIntegration.subscribe(() => {
+          load();
+        });
 
         return { subscribe, createDocument, removeDocument, getDocument, getDocuments, clearAll };
       })();
@@ -2775,32 +3359,36 @@
           listeners.forEach((listener) => listener([...images]));
         }
 
-        function persist(nextImages) {
+        async function persist(nextImages) {
           const serializable = toSerializable(nextImages);
-          StorageManager.persist(STORAGE_KEY, serializable);
+          await StorageManager.persist(STORAGE_KEY, serializable);
         }
 
         function hydrate(rawImages) {
           return rawImages.map((image) => {
-            const { blob, type } = Utils.dataUrlToBlob(image.dataUrl, image.type || "image/png");
-            const blobUrl = blob ? Utils.createObjectUrl(blob) : "";
-            return { ...image, type, blobUrl };
+            const downloadUrl = image.downloadUrl || (image.repoPath ? GitHubIntegration.buildRawUrl(image.repoPath) : "");
+            const type = image.type || "image/png";
+            return { ...image, type, downloadUrl, blobUrl: downloadUrl };
           });
         }
 
-        function load() {
+        async function load() {
           try {
-            const stored = StorageManager.read(STORAGE_KEY);
+            const stored = await StorageManager.read(STORAGE_KEY);
             if (Array.isArray(stored)) {
               images = hydrate(stored).sort(
                 (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
               );
+            } else {
+              images = [];
             }
           } catch (error) {
-            console.error("Failed to load stored images", error);
+            if (error?.code !== "config") {
+              console.error("Failed to load stored images", error);
+            }
             images = [];
-            StorageManager.clear(STORAGE_KEY);
           }
+          notify();
         }
 
         function generateId() {
@@ -2823,7 +3411,6 @@
           let candidate = trimmed;
           let counter = 2;
           while (images.some((image) => image.name === candidate)) {
-            // Keep appending suffixes until the filename is unique for gallery lookups and blob URL maps.
             candidate = `${base} (${counter})${extension}`;
             counter += 1;
           }
@@ -2833,15 +3420,13 @@
           return candidate;
         }
 
-        function normalizeImage(file, extras, dataUrl, dimensions, exif) {
+        function normalizeImage(file, extras, dimensions, exif) {
           const now = new Date().toISOString();
           const title = extras.title?.trim();
           const alt = extras.alt?.trim();
           const type = file.type || guessMimeType(file.name, "image/png");
-          const blobUrl = Utils.createObjectUrl(file);
           const capturedAtIso = formatExifDate(exif.dateTimeOriginal);
           const normalizedName = ensureUniqueName(file.name);
-          // Persist raw metadata plus derived EXIF so filters/renderers avoid recomputing expensive operations client-side.
           return {
             id: generateId(),
             name: normalizedName,
@@ -2854,16 +3439,18 @@
             updatedAt: now,
             capturedAt: capturedAtIso,
             exif,
-            blobUrl,
-            dataUrl,
+            repoPath: "",
+            sha: "",
+            downloadUrl: "",
+            blobUrl: "",
           };
         }
 
-        function addImage(image) {
+        async function addImage(image) {
           const nextImages = [image, ...images].sort(
             (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
           );
-          persist(nextImages);
+          await persist(nextImages);
           images = nextImages;
           notify();
         }
@@ -2883,7 +3470,6 @@
 
           let dimensions;
           try {
-            // Load the image up-front to validate its true dimensions before we commit to storage.
             dimensions = await getImageDimensions(file);
           } catch (error) {
             const dimensionError = new Error(Localization.t("errors.imageDimensions"));
@@ -2902,7 +3488,6 @@
             throw sizeError;
           }
 
-          // Request the ArrayBuffer in parallel with the Data URL so EXIF parsing does not block the progress indicator.
           const arrayBufferPromise = file.arrayBuffer().catch(() => null);
           const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
           let exif = {};
@@ -2915,32 +3500,55 @@
             console.warn("Unable to parse EXIF data", error);
           }
 
-          const imageRecord = normalizeImage(file, extras, dataUrl, dimensions, exif);
-          try {
-            addImage(imageRecord);
-          } catch (error) {
-            if (imageRecord?.blobUrl) {
-              Utils.revokeObjectUrl(imageRecord.blobUrl);
-            }
+          if (!GitHubIntegration.isConfigured()) {
+            const error = new Error(Localization.t("errors.githubConfigMissing"));
+            error.code = "config";
             throw error;
           }
-          return imageRecord;
+
+          const base64 = Utils.dataUrlToBase64(dataUrl);
+          const imageRecord = normalizeImage(file, extras, dimensions, exif);
+          const repoPath = `uploads/images/${imageRecord.id}/${encodeURIComponent(imageRecord.name)}`;
+          try {
+            const upload = await GitHubIntegration.uploadFile(
+              repoPath,
+              base64,
+              `Add image ${imageRecord.name}`
+            );
+            imageRecord.repoPath = upload.path;
+            imageRecord.sha = upload.sha ?? "";
+            imageRecord.downloadUrl = upload.downloadUrl ?? "";
+            imageRecord.blobUrl = imageRecord.downloadUrl;
+            imageRecord.updatedAt = new Date().toISOString();
+            await addImage(imageRecord);
+            return imageRecord;
+          } catch (error) {
+            if (error?.code === "config" || error?.code === "quota" || error?.code === "persist") {
+              throw error;
+            }
+            const failure = new Error(Localization.t("errors.persistFailure"));
+            failure.code = "persist";
+            failure.cause = error;
+            throw failure;
+          }
         }
 
-        function removeImage(id) {
-          const index = images.findIndex((image) => image.id === id);
-          if (index === -1) return;
-          const [removed] = images.splice(index, 1);
-          if (removed?.blobUrl) {
-            // Revoke the gallery blob immediately so we do not leak memory or allow stale links to persist.
-            Utils.revokeObjectUrl(removed.blobUrl);
-          }
+        async function removeImage(id) {
+          const image = images.find((item) => item.id === id);
+          if (!image) return;
           try {
-            persist(images);
+            if (image.repoPath) {
+              await GitHubIntegration.deleteFile(image.repoPath, image.sha, `Remove image ${image.name}`);
+            }
           } catch (error) {
-            console.error("Unable to persist images after removal", error);
-            Notifications.toast(Localization.t("errors.persistFailure"), "error");
+            console.warn("Failed to delete remote image", error);
           }
+          if (image?.blobUrl?.startsWith("blob:")) {
+            Utils.revokeObjectUrl(image.blobUrl);
+          }
+          const nextImages = images.filter((item) => item.id !== id);
+          await persist(nextImages);
+          images = nextImages;
           notify();
         }
 
@@ -2958,141 +3566,32 @@
           return [...images];
         }
 
-        function clearAll() {
+        async function clearAll() {
+          await Promise.all(
+            images.map((image) => {
+              if (!image.repoPath) return Promise.resolve();
+              return GitHubIntegration.deleteFile(image.repoPath, image.sha, `Remove image ${image.name}`).catch((error) => {
+                console.warn("Failed to delete remote image", error);
+              });
+            })
+          );
           images.forEach((image) => {
-            if (image?.blobUrl) {
-              // Clearing the gallery wipes each blob URL, immediately invalidating any open preview tabs.
+            if (image?.blobUrl?.startsWith("blob:")) {
               Utils.revokeObjectUrl(image.blobUrl);
             }
           });
           images = [];
-          StorageManager.clear(STORAGE_KEY);
+          await StorageManager.clear(STORAGE_KEY);
           notify();
         }
 
         load();
+        GitHubIntegration.subscribe(() => {
+          load();
+        });
 
         return { subscribe, createImage, removeImage, getImage, getImages, clearAll };
       })();
-
-      const StorageUI = (() => {
-        const meter = document.querySelector("[data-storage-meter]");
-        const summaryEl = meter?.querySelector("[data-storage-summary]");
-        const limitEl = meter?.querySelector("[data-storage-limit]");
-        const progressRegion = meter?.querySelector("[data-storage-progress]");
-        const progressBar = meter?.querySelector("[data-storage-progress-bar]");
-        const warningEl = meter?.querySelector("[data-storage-warning]");
-        const manageButton = meter?.querySelector("[data-storage-manage]");
-        const storageModal = document.getElementById("storage-modal");
-        const clearButton = storageModal?.querySelector("[data-storage-clear]");
-        const cancelButton = storageModal?.querySelector("[data-storage-cancel]");
-        if (!meter) return null;
-        let lastState = "normal";
-        let lastTrigger = null;
-
-        function formatSummary(snapshot) {
-          return Localization.t("common.usageSummary", {
-            used: Utils.formatBytes(snapshot.used),
-            limit: Utils.formatBytes(snapshot.limit),
-          });
-        }
-
-        function update(snapshot = StorageManager.getSnapshot()) {
-          if (!snapshot) return;
-          const percent = snapshot.limit ? Math.min((snapshot.used / snapshot.limit) * 100, 100) : 0;
-          // Keep assistive tech in sync with the latest values while also powering the visible progress bar.
-          meter.setAttribute("aria-label", Localization.t("labels.storageUsed"));
-          if (limitEl) {
-            limitEl.textContent = `${Localization.t("labels.storageLimit")}: ${Utils.formatBytes(
-              snapshot.limit
-            )}`;
-          }
-          if (summaryEl) {
-            summaryEl.textContent = formatSummary(snapshot);
-          }
-          if (progressBar) {
-            progressBar.style.width = `${percent}%`;
-          }
-          if (progressRegion) {
-            progressRegion.setAttribute("aria-valuenow", String(Math.round(percent)));
-          }
-          const state = snapshot.isExceeded ? "error" : snapshot.isWarning ? "warning" : "normal";
-          meter.classList.toggle("is-warning", state !== "normal");
-          if (warningEl) {
-            if (state === "error") {
-              warningEl.textContent = Localization.t("notifications.storageQuotaExceeded");
-              warningEl.hidden = false;
-            } else if (state === "warning") {
-              warningEl.textContent = Localization.t("common.storageWarning", {
-                percent: Math.round(percent),
-              });
-              warningEl.hidden = false;
-            } else {
-              warningEl.textContent = "";
-              warningEl.hidden = true;
-            }
-          }
-          if (lastState !== state) {
-            // Notify the user only when we transition into a new severity to avoid notification spam while uploading.
-            if (state === "warning") {
-              Notifications.toast(
-                Localization.t("common.storageWarning", { percent: Math.round(percent) }),
-                "info"
-              );
-            } else if (state === "error") {
-              Notifications.toast(Localization.t("notifications.storageQuotaExceeded"), "error");
-            }
-          }
-          lastState = state;
-        }
-
-        function openDialog(trigger) {
-          if (!storageModal) return;
-          lastTrigger = trigger ?? null;
-          storageModal.classList.add("is-open");
-          cancelButton?.focus({ preventScroll: true });
-        }
-
-        function closeDialog() {
-          if (!storageModal) return;
-          storageModal.classList.remove("is-open");
-          if (lastTrigger) {
-            lastTrigger.focus?.({ preventScroll: true });
-            lastTrigger = null;
-          }
-        }
-
-        manageButton?.addEventListener("click", (event) => {
-          openDialog(event.currentTarget);
-        });
-
-        cancelButton?.addEventListener("click", closeDialog);
-        storageModal?.addEventListener("click", (event) => {
-          if (event.target === storageModal) {
-            closeDialog();
-          }
-        });
-        storageModal?.addEventListener("keydown", (event) => {
-          if (event.key === "Escape") {
-            event.preventDefault();
-            closeDialog();
-          }
-        });
-
-        clearButton?.addEventListener("click", () => {
-          DocumentStore.clearAll();
-          ImageStore.clearAll();
-          StorageManager.clearAll();
-          Notifications.toast(Localization.t("notifications.storageCleared"), "success");
-          closeDialog();
-        });
-
-        StorageManager.subscribe(update);
-        update(StorageManager.getSnapshot());
-
-        return { update };
-      })();
-
       const DocumentViewer = (() => {
         const preview = document.querySelector("[data-viewer-preview]");
         const meta = document.querySelector("[data-viewer-meta]");
@@ -3408,8 +3907,14 @@
           } else if (actionTarget.dataset.action === "delete") {
             const fallback = row.previousElementSibling?.dataset.id || row.nextElementSibling?.dataset.id || "search";
             pendingFocusTarget = fallback;
-            DocumentStore.removeDocument(id);
-            Notifications.toast(Localization.t("notifications.documentRemoved"), "info");
+            DocumentStore.removeDocument(id)
+              .then(() => {
+                Notifications.toast(Localization.t("notifications.documentRemoved"), "info");
+              })
+              .catch((error) => {
+                console.error("Failed to remove document", error);
+                Notifications.toast(Localization.t("errors.persistFailure"), "error");
+              });
           }
         });
 
@@ -3427,8 +3932,14 @@
             event.preventDefault();
             const fallback = row.previousElementSibling?.dataset.id || row.nextElementSibling?.dataset.id || "search";
             pendingFocusTarget = fallback;
-            DocumentStore.removeDocument(id);
-            Notifications.toast(Localization.t("notifications.documentRemoved"), "info");
+            DocumentStore.removeDocument(id)
+              .then(() => {
+                Notifications.toast(Localization.t("notifications.documentRemoved"), "info");
+              })
+              .catch((error) => {
+                console.error("Failed to remove document", error);
+                Notifications.toast(Localization.t("errors.persistFailure"), "error");
+              });
           }
         });
 
@@ -3443,9 +3954,6 @@
             firstRow?.focus({ preventScroll: false });
           },
         };
-      })();
-
-      const ImageViewer = (() => {
       })();
 
       const ImageViewer = (() => {
@@ -3659,7 +4167,7 @@
           }
           zoom = 100;
           if (preview) {
-            const src = image.blobUrl || image.dataUrl || "";
+            const src = image.blobUrl || image.downloadUrl || "";
             if (src) {
               preview.src = src;
             }
@@ -3693,11 +4201,11 @@
           }
 
           if (linkInput) {
-            linkInput.value = image.blobUrl || image.dataUrl || "";
+            linkInput.value = image.blobUrl || image.downloadUrl || "";
           }
           if (openLink) {
-            if (image.blobUrl || image.dataUrl) {
-              openLink.href = image.blobUrl || image.dataUrl || "#";
+            if (image.blobUrl || image.downloadUrl) {
+              openLink.href = image.blobUrl || image.downloadUrl || "#";
               openLink.removeAttribute("aria-disabled");
             } else {
               openLink.href = "#";
@@ -3878,7 +4386,7 @@
             img.alt = image.alt || image.title || image.name;
             img.decoding = "async";
             img.loading = "lazy";
-            const previewSrc = image.blobUrl || image.dataUrl;
+            const previewSrc = image.blobUrl || image.downloadUrl;
             if (previewSrc) {
               if (observer) {
                 img.dataset.src = previewSrc;
@@ -3923,8 +4431,14 @@
                 || listItem.previousElementSibling?.querySelector(".image-gallery__thumb")?.dataset.id
                 || "search";
               pendingFocusId = fallback;
-              ImageStore.removeImage(image.id);
-              Notifications.toast(Localization.t("notifications.imageRemoved"), "info");
+              ImageStore.removeImage(image.id)
+                .then(() => {
+                  Notifications.toast(Localization.t("notifications.imageRemoved"), "info");
+                })
+                .catch((error) => {
+                  console.error("Failed to remove image", error);
+                  Notifications.toast(Localization.t("errors.persistFailure"), "error");
+                });
             });
             actions.appendChild(removeButton);
 
@@ -3980,8 +4494,14 @@
               || listItem?.previousElementSibling?.querySelector(".image-gallery__thumb")?.dataset.id
               || "search";
             pendingFocusId = fallback;
-            ImageStore.removeImage(id);
-            Notifications.toast(Localization.t("notifications.imageRemoved"), "info");
+            ImageStore.removeImage(id)
+              .then(() => {
+                Notifications.toast(Localization.t("notifications.imageRemoved"), "info");
+              })
+              .catch((error) => {
+                console.error("Failed to remove image", error);
+                Notifications.toast(Localization.t("errors.persistFailure"), "error");
+              });
           }
         });
 
@@ -3992,9 +4512,6 @@
         return {
           focusItem,
         };
-      })();
-
-      const ImageUpload = (() => {
       })();
 
       const ImageUpload = (() => {
@@ -4040,6 +4557,8 @@
         function describeError(file, error) {
           const fileName = file?.name ?? Localization.t("common.unknownFile");
           switch (error?.code) {
+            case "config":
+              return Localization.t("upload.errorMissingConfiguration");
             case "type":
               return Localization.t("upload.errorUnsupportedImage", { name: fileName });
             case "max-dimensions":
@@ -4297,7 +4816,9 @@
               console.error("Upload failed", error);
               const fileName = file?.name ?? Localization.t("common.unknownFile");
               const message =
-                error?.code === "quota"
+                error?.code === "config"
+                  ? Localization.t("upload.errorMissingConfiguration")
+                  : error?.code === "quota"
                   ? Localization.t("notifications.storageQuotaExceeded")
                   : error?.code === "persist"
                   ? Localization.t("errors.persistFailure")
