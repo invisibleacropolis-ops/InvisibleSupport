@@ -1167,6 +1167,31 @@
         box-shadow: var(--shadow-sm);
       }
 
+      .viewer-card__pdf {
+        position: relative;
+        width: 100%;
+        min-height: min(70vh, 42rem);
+        border-radius: var(--radius-md);
+        background: white;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        padding: var(--space-md);
+        color: var(--color-text-muted);
+        font-size: 0.95rem;
+        text-align: center;
+      }
+
+      .viewer-card__pdf[data-state="ready"] {
+        padding: 0;
+        color: inherit;
+      }
+
+      .viewer-card__pdf-message {
+        margin: 0;
+      }
+
       .viewer-card__preview img {
         width: 100%;
         height: auto;
@@ -1289,6 +1314,7 @@
         font-size: 0.85rem;
       }
     </style>
+    <script src="https://documentcloud.adobe.com/view-sdk/main.js" defer></script>
   </head>
   <body class="theme theme--immersive">
     <main class="portal" id="support-portal">
@@ -3878,6 +3904,55 @@
       });
 
       const DocumentViewer = (() => {
+        const ADOBE_EMBED_CLIENT_ID = "6854d2a139a04dacac0455a0b3a4cbbd";
+        const pdfLocale = document.documentElement.lang || "en-US";
+        let adobeSdkPromise = null;
+
+        function waitForAdobeSdk() {
+          if (typeof window === "undefined") {
+            return Promise.reject(new Error("Adobe PDF Embed SDK is unavailable in this environment."));
+          }
+          if (window.AdobeDC?.View) {
+            return Promise.resolve(window.AdobeDC);
+          }
+          if (!adobeSdkPromise) {
+            adobeSdkPromise = new Promise((resolve, reject) => {
+              const timeoutId = window.setTimeout(() => {
+                adobeSdkPromise = null;
+                reject(new Error("Timed out while waiting for the Adobe PDF Embed SDK."));
+              }, 10000);
+
+              const onReady = () => {
+                window.clearTimeout(timeoutId);
+                resolve(window.AdobeDC);
+              };
+
+              const previousHandler = document.adobe_dc_view_sdk_ready;
+              document.adobe_dc_view_sdk_ready = () => {
+                if (typeof previousHandler === "function") {
+                  try {
+                    previousHandler();
+                  } catch (error) {
+                    console.warn("Existing Adobe PDF ready handler failed", error);
+                  }
+                }
+                onReady();
+              };
+            });
+          }
+          return adobeSdkPromise;
+        }
+
+        function sanitizeForId(value) {
+          if (!value) return "document";
+          const cleaned = String(value).replace(/[^a-zA-Z0-9_-]/g, "");
+          return cleaned || "document";
+        }
+
+        function createPdfContainerId(doc) {
+          return `pdf-viewer-${sanitizeForId(doc?.id)}-${Math.random().toString(36).slice(2, 8)}`;
+        }
+
         const preview = document.querySelector("[data-viewer-preview]");
         const meta = document.querySelector("[data-viewer-meta]");
         const linkInput = document.querySelector("[data-viewer-link]");
@@ -4147,12 +4222,70 @@
 
           if (isPdf(type, extension)) {
             const resource = await fetchDocumentResource(doc);
-            if (resource?.url) {
-              const frame = document.createElement("iframe");
-              frame.src = resource.url;
-              frame.title = `${displayName} preview`;
-              frame.loading = "lazy";
-              return frame;
+            if (resource?.blob) {
+              const container = document.createElement("div");
+              container.className = "viewer-card__pdf";
+              container.dataset.state = "loading";
+              container.id = createPdfContainerId(doc);
+              container.setAttribute("aria-busy", "true");
+
+              const status = document.createElement("p");
+              status.className = "viewer-card__pdf-message";
+              status.textContent = "Loading secure PDF preview…";
+              container.appendChild(status);
+
+              const bufferPromise = resource.blob.arrayBuffer();
+
+              waitForAdobeSdk()
+                .then(() => bufferPromise)
+                .then((buffer) => {
+                  if (!container.isConnected || currentId !== doc.id) {
+                    return;
+                  }
+
+                  if (typeof window.AdobeDC?.View !== "function") {
+                    throw new Error("Adobe PDF Embed SDK failed to initialize.");
+                  }
+
+                  container.textContent = "";
+                  container.dataset.state = "ready";
+                  container.removeAttribute("aria-busy");
+
+                  const view = new window.AdobeDC.View({
+                    clientId: ADOBE_EMBED_CLIENT_ID,
+                    divId: container.id,
+                    locale: pdfLocale,
+                  });
+
+                  view.previewFile(
+                    {
+                      content: { promise: Promise.resolve(buffer) },
+                      metaData: {
+                        fileName: doc.name,
+                        id: doc.id,
+                      },
+                    },
+                    {
+                      embedMode: "SIZED_CONTAINER",
+                      showAnnotationTools: false,
+                      showDownloadPDF: true,
+                      showPrintPDF: true,
+                    }
+                  );
+                })
+                .catch((error) => {
+                  console.warn("Failed to initialize Adobe PDF preview", error);
+                  if (!container.isConnected || currentId !== doc.id) {
+                    return;
+                  }
+                  const fallback = createFallback(
+                    doc,
+                    "Unable to load the interactive PDF preview. Use the controls below to open or download the document."
+                  );
+                  container.replaceWith(fallback);
+                });
+
+              return container;
             }
           }
 
