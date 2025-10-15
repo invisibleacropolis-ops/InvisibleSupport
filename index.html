@@ -1808,6 +1808,7 @@
             }
           });
           if (overrideKey && !trackedSizes.has(overrideKey) && typeof overrideSize === "number") {
+            // Account for the incoming key even if we have not seen it before so quota checks stay accurate.
             used += overrideSize;
           }
           const limit = LIMIT_BYTES;
@@ -1841,6 +1842,7 @@
           register(key);
           const serialized = JSON.stringify(value);
           const size = measure(serialized);
+          // Build a snapshot that pretends the new payload already exists to proactively detect quota issues.
           const snapshot = buildSnapshot(key, size);
           if (snapshot.isExceeded) {
             const error = new Error(Localization.t("errors.quotaExceeded"));
@@ -1854,6 +1856,7 @@
             notify(snapshot);
           } catch (error) {
             if (error && (error.name === "QuotaExceededError" || error.code === 22)) {
+              // Align thrown error shape when the browser rejects due to quota so consumers can surface consistent UI.
               const quotaError = new Error(Localization.t("errors.quotaExceeded"));
               quotaError.code = "quota";
               quotaError.snapshot = snapshot;
@@ -1869,6 +1872,7 @@
         function read(key) {
           register(key);
           const stored = localStorage.getItem(key);
+          // Measuring the stored payload keeps the live usage meter in sync even if external tabs mutate storage.
           const size = measure(stored ?? "");
           trackedSizes.set(key, size);
           notify();
@@ -1904,6 +1908,7 @@
 
         function estimateImpact(bytes) {
           if (!Number.isFinite(bytes) || bytes <= 0) return 0;
+          // Stored assets are serialized to base64; multiply to approximate the encoded footprint before persisting.
           return Math.ceil(bytes * BASE64_OVERHEAD);
         }
 
@@ -1915,6 +1920,7 @@
         function canStore(additionalBytes) {
           if (!Number.isFinite(additionalBytes) || additionalBytes <= 0) return true;
           const snapshot = buildSnapshot();
+          // Compare against the projected usage to determine if we should block the upload and prompt the user.
           return snapshot.used + additionalBytes <= snapshot.limit;
         }
 
@@ -2354,6 +2360,7 @@
         try {
           const view = new DataView(buffer);
           if (view.byteLength < 4) return {};
+          // Only JPEG containers expose the SOI marker (0xffd8); bail fast for other formats.
           if (view.getUint16(0) !== 0xffd8) {
             return {};
           }
@@ -2371,9 +2378,11 @@
                 view.getUint8(start + 3)
               );
               if (header === "Exif") {
+                // EXIF payloads start after the 6-byte TIFF header ("Exif\0\0"); parse the nested TIFF records.
                 return parseExifSegment(view, start + 6, length - 6);
               }
             }
+            // Advance past the current JPEG segment (length includes the size field itself).
             offset += 2 + length;
           }
         } catch (error) {
@@ -2419,6 +2428,7 @@
           if (dataOffset + valueSize > tiffOffset + length) return null;
           switch (type) {
             case 2: {
+              // ASCII strings are null-terminated; iterate until the sentinel to avoid trailing garbage.
               let text = "";
               for (let index = 0; index < valueSize; index += 1) {
                 const code = view.getUint8(dataOffset + index);
@@ -2447,6 +2457,7 @@
               const values = Array.from({ length: count }, (_, i) => {
                 const numerator = view.getUint32(dataOffset + i * 8, littleEndian);
                 const denominator = view.getUint32(dataOffset + i * 8 + 4, littleEndian);
+                // Rational values encode numerator/denominator pairs; guard against divide-by-zero.
                 return denominator ? numerator / denominator : 0;
               });
               return count === 1 ? values[0] : values;
@@ -2455,6 +2466,7 @@
               const values = Array.from({ length: count }, (_, i) => {
                 const numerator = view.getInt32(dataOffset + i * 8, littleEndian);
                 const denominator = view.getInt32(dataOffset + i * 8 + 4, littleEndian);
+                // Signed rationals behave similarly but can include negative exposure bias values.
                 return denominator ? numerator / denominator : 0;
               });
               return count === 1 ? values[0] : values;
@@ -2475,6 +2487,7 @@
           if (typeof offsetValue !== "number") return;
           if (offsetValue === 0) return;
           if (visited.has(offsetValue)) return;
+          // Queue additional IFD (Image File Directory) blocks so we traverse thumbnails and sub-IFDs breadth-first.
           queue.push(offsetValue);
         }
 
@@ -2599,6 +2612,7 @@
           return rawDocs.map((doc) => {
             const { blob, type } = Utils.dataUrlToBlob(doc.dataUrl, doc.type);
             const blobUrl = blob ? Utils.createObjectUrl(blob) : "";
+            // Persisted entries only store Data URLs; rebuild transient blob URLs for preview/open actions on load.
             return { ...doc, type, blobUrl };
           });
         }
@@ -2607,6 +2621,7 @@
           try {
             const stored = StorageManager.read(STORAGE_KEY);
             if (Array.isArray(stored)) {
+              // Rehydrate and sort newest-first so recent uploads are surfaced prominently in the UI.
               documents = hydrate(stored).sort(
                 (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
               );
@@ -2638,6 +2653,7 @@
           let candidate = trimmed;
           let counter = 2;
           while (documents.some((doc) => doc.name === candidate)) {
+            // Mirror desktop OS renaming conventions: append " (n)" before the extension until unique.
             candidate = `${base} (${counter})${extension}`;
             counter += 1;
           }
@@ -2654,6 +2670,7 @@
           const type = file.type || guessMimeType(file.name);
           const blobUrl = Utils.createObjectUrl(file);
           const normalizedName = ensureUniqueName(file.name);
+          // Data URLs power persistence, while blob URLs enable ephemeral previews without exceeding storage quotas.
           return {
             id: generateId(),
             name: normalizedName,
@@ -2682,6 +2699,7 @@
             error.code = "invalid";
             throw error;
           }
+          // Stream the FileReader updates into the supplied callback so the upload meter reflects actual progress.
           const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
           const documentRecord = normalizeDocument(file, extras, dataUrl);
           try {
@@ -2700,6 +2718,7 @@
           if (index === -1) return;
           const [removed] = documents.splice(index, 1);
           if (removed?.blobUrl) {
+            // Release blob URLs immediately so long-lived tabs do not leak memory across many removals.
             Utils.revokeObjectUrl(removed.blobUrl);
           }
           try {
@@ -2714,6 +2733,7 @@
         function clearAll() {
           documents.forEach((doc) => {
             if (doc?.blobUrl) {
+              // Clearing all documents aggressively revokes each blob URL so stale direct links cannot be reused.
               Utils.revokeObjectUrl(doc.blobUrl);
             }
           });
@@ -2802,6 +2822,7 @@
           let candidate = trimmed;
           let counter = 2;
           while (images.some((image) => image.name === candidate)) {
+            // Keep appending suffixes until the filename is unique for gallery lookups and blob URL maps.
             candidate = `${base} (${counter})${extension}`;
             counter += 1;
           }
@@ -2819,6 +2840,7 @@
           const blobUrl = Utils.createObjectUrl(file);
           const capturedAtIso = formatExifDate(exif.dateTimeOriginal);
           const normalizedName = ensureUniqueName(file.name);
+          // Persist raw metadata plus derived EXIF so filters/renderers avoid recomputing expensive operations client-side.
           return {
             id: generateId(),
             name: normalizedName,
@@ -2860,6 +2882,7 @@
 
           let dimensions;
           try {
+            // Load the image up-front to validate its true dimensions before we commit to storage.
             dimensions = await getImageDimensions(file);
           } catch (error) {
             const dimensionError = new Error(Localization.t("errors.imageDimensions"));
@@ -2878,6 +2901,7 @@
             throw sizeError;
           }
 
+          // Request the ArrayBuffer in parallel with the Data URL so EXIF parsing does not block the progress indicator.
           const arrayBufferPromise = file.arrayBuffer().catch(() => null);
           const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
           let exif = {};
@@ -2907,6 +2931,7 @@
           if (index === -1) return;
           const [removed] = images.splice(index, 1);
           if (removed?.blobUrl) {
+            // Revoke the gallery blob immediately so we do not leak memory or allow stale links to persist.
             Utils.revokeObjectUrl(removed.blobUrl);
           }
           try {
@@ -2935,6 +2960,7 @@
         function clearAll() {
           images.forEach((image) => {
             if (image?.blobUrl) {
+              // Clearing the gallery wipes each blob URL, immediately invalidating any open preview tabs.
               Utils.revokeObjectUrl(image.blobUrl);
             }
           });
@@ -2973,6 +2999,7 @@
         function update(snapshot = StorageManager.getSnapshot()) {
           if (!snapshot) return;
           const percent = snapshot.limit ? Math.min((snapshot.used / snapshot.limit) * 100, 100) : 0;
+          // Keep assistive tech in sync with the latest values while also powering the visible progress bar.
           meter.setAttribute("aria-label", Localization.t("labels.storageUsed"));
           if (limitEl) {
             limitEl.textContent = `${Localization.t("labels.storageLimit")}: ${Utils.formatBytes(
@@ -3005,6 +3032,7 @@
             }
           }
           if (lastState !== state) {
+            // Notify the user only when we transition into a new severity to avoid notification spam while uploading.
             if (state === "warning") {
               Notifications.toast(
                 Localization.t("common.storageWarning", { percent: Math.round(percent) }),
