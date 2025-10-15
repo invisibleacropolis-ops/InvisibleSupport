@@ -23,6 +23,9 @@
         --color-danger: #f25757;
         --color-immersive: 200 56% 16%;
 
+        --document-viewer-width: 40%;
+        --image-viewer-width: 40%;
+
         --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
         --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
 
@@ -59,6 +62,18 @@
       *::before,
       *::after {
         box-sizing: border-box;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
 
       html {
@@ -232,13 +247,16 @@
 
       .portal__grid {
         display: grid;
-        grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+        grid-template-columns:
+          minmax(0, calc(100% - var(--document-viewer-width)))
+          minmax(0, var(--document-viewer-width));
         gap: var(--space-xl);
         align-items: start;
       }
 
       @media (max-width: 960px) {
         .portal__grid {
+          --document-viewer-width: 100%;
           grid-template-columns: 1fr;
         }
 
@@ -261,7 +279,9 @@
 
       .image-portal__grid {
         display: grid;
-        grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+        grid-template-columns:
+          minmax(0, calc(100% - var(--image-viewer-width)))
+          minmax(0, var(--image-viewer-width));
         gap: var(--space-xl);
         align-items: start;
       }
@@ -273,6 +293,7 @@
 
       @media (max-width: 960px) {
         .image-portal__grid {
+          --image-viewer-width: 100%;
           grid-template-columns: 1fr;
         }
       }
@@ -781,6 +802,15 @@
         background: color-mix(in srgb, var(--color-surface) 85%, transparent 15%);
       }
 
+      .image-viewer__toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-md);
+      }
+
       .image-viewer__canvas {
         position: relative;
         min-height: 20rem;
@@ -1061,30 +1091,140 @@
         background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface) 90%);
       }
 
+      .viewer-card__toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-md);
+      }
+
+      .viewer-card__selector {
+        flex: 1 1 16rem;
+        min-width: 12rem;
+      }
+
+      .viewer-card__select {
+        width: 100%;
+      }
+
+      .viewer-card__resize,
+      .image-viewer__resize {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+      }
+
+      .viewer-card__resize input,
+      .image-viewer__resize input {
+        width: min(12rem, 40vw);
+        accent-color: var(--color-accent);
+      }
+
+      .viewer-card__resize-value,
+      .image-viewer__resize-value {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        color: var(--color-text);
+      }
+
       .viewer-card__preview {
         min-height: 18rem;
         border-radius: var(--radius-lg);
         border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
         background: color-mix(in srgb, var(--color-surface) 70%, transparent 30%);
         display: grid;
-        place-items: center;
-        text-align: center;
-        padding: var(--space-xl);
-        position: relative;
+        gap: var(--space-md);
+        padding: var(--space-lg);
       }
 
+      .viewer-card__preview > * {
+        justify-self: stretch;
+      }
+
+      .viewer-card__preview[data-state="empty"],
+      .viewer-card__preview[data-state="loading"] {
+        justify-items: center;
+        align-content: center;
+        text-align: center;
+      }
+
+      .viewer-card__preview[data-state="empty"] > *,
+      .viewer-card__preview[data-state="loading"] > * {
+        justify-self: center;
+      }
+
+      .viewer-card__preview iframe,
       .viewer-card__preview object,
-      .viewer-card__preview iframe {
+      .viewer-card__preview embed {
         width: 100%;
-        height: 100%;
+        height: min(70vh, 42rem);
         border: none;
         border-radius: var(--radius-md);
         background: white;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .viewer-card__preview img {
+        width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .viewer-card__preview video,
+      .viewer-card__preview audio {
+        width: 100%;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .viewer-card__preview pre {
+        margin: 0;
+        width: 100%;
+        max-height: min(70vh, 42rem);
+        overflow: auto;
+        border-radius: var(--radius-md);
+        padding: var(--space-md);
+        background: color-mix(in srgb, var(--color-surface) 85%, transparent 15%);
+        text-align: left;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+
+      .viewer-card__loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm);
+        color: var(--color-text-muted);
+        font-size: 0.95rem;
+      }
+
+      .viewer-card__loading::before {
+        content: "";
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        border: 2px solid color-mix(in srgb, var(--color-accent) 60%, transparent 40%);
+        border-top-color: var(--color-accent);
+        animation: viewer-spin 1s linear infinite;
+      }
+
+      @keyframes viewer-spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       .viewer-card__fallback {
         display: grid;
         gap: var(--space-xs);
+        text-align: center;
       }
 
       .viewer-card__meta {
@@ -1367,10 +1507,36 @@
               </div>
             </div>
           </article>
-          <article class="u-card viewer-card" aria-labelledby="asset-viewer">
+          <article class="u-card viewer-card" aria-labelledby="document-viewer">
             <div class="u-card__header">
-              <h2 class="u-card__title" id="asset-viewer">Asset viewer</h2>
-              <p class="u-card__subtitle">Preview assets inline or open them in immersive mode.</p>
+              <h2 class="u-card__title" id="document-viewer">Document viewer</h2>
+              <p class="u-card__subtitle">Preview uploaded documents inline or switch to immersive mode.</p>
+            </div>
+
+            <div class="viewer-card__toolbar" role="group" aria-label="Document viewer controls">
+              <label class="viewer-card__selector">
+                <span class="visually-hidden">Select a document to preview</span>
+                <select class="u-input viewer-card__select" data-viewer-select aria-label="Select document">
+                  <option value="" selected>Select a document…</option>
+                </select>
+              </label>
+              <label class="viewer-card__resize" for="document-viewer-width">
+                <span>Viewer width</span>
+                <input
+                  id="document-viewer-width"
+                  type="range"
+                  min="25"
+                  max="100"
+                  step="5"
+                  value="40"
+                  aria-valuemin="25"
+                  aria-valuemax="100"
+                  aria-valuenow="40"
+                  aria-label="Document viewer width"
+                  data-viewer-resize
+                />
+                <span class="viewer-card__resize-value" data-viewer-resize-value>40%</span>
+              </label>
             </div>
 
             <div class="viewer-card__preview" data-viewer-preview>
@@ -1567,6 +1733,26 @@
               <div class="u-card__header">
                 <h2 class="u-card__title" id="image-viewer">Image viewer</h2>
                 <p class="u-card__subtitle">Fine-tune preview scaling, review metadata, and grab direct share links.</p>
+              </div>
+
+              <div class="image-viewer__toolbar" role="group" aria-label="Image viewer controls">
+                <label class="image-viewer__resize" for="image-viewer-width">
+                  <span>Viewer width</span>
+                  <input
+                    id="image-viewer-width"
+                    type="range"
+                    min="25"
+                    max="100"
+                    step="5"
+                    value="40"
+                    aria-valuemin="25"
+                    aria-valuemax="100"
+                    aria-valuenow="40"
+                    aria-label="Image viewer width"
+                    data-image-resize
+                  />
+                  <span class="image-viewer__resize-value" data-image-resize-value>40%</span>
+                </label>
               </div>
 
               <div class="stack" data-image-viewer>
@@ -3592,6 +3778,105 @@
 
         return { subscribe, createImage, removeImage, getImage, getImages, clearAll };
       })();
+
+      function createViewerWidthController({
+        sliderSelector,
+        valueSelector,
+        targetSelector,
+        variableName,
+        defaultValue = 40,
+        mediaQuery = "(max-width: 960px)",
+      }) {
+        const slider = document.querySelector(sliderSelector);
+        const valueEl = document.querySelector(valueSelector);
+        const target = document.querySelector(targetSelector);
+        if (!slider || !target) return null;
+
+        const min = Number.parseFloat(slider.min) || 25;
+        const max = Number.parseFloat(slider.max) || 100;
+        const clamp = (value) => {
+          const numeric = Number.parseFloat(value);
+          if (Number.isNaN(numeric)) return defaultValue;
+          return Math.min(max, Math.max(min, Math.round(numeric)));
+        };
+
+        const resolved = getComputedStyle(target)
+          .getPropertyValue(variableName)
+          .replace("%", "")
+          .trim();
+        let currentPercent = clamp(resolved || slider.value || defaultValue);
+
+        function update(percent) {
+          currentPercent = clamp(percent);
+          slider.value = String(currentPercent);
+          slider.setAttribute("aria-valuenow", String(currentPercent));
+          if (valueEl) valueEl.textContent = `${currentPercent}%`;
+          target.style.setProperty(variableName, `${currentPercent}%`);
+        }
+
+        function handleInput(event) {
+          update(event.target.value);
+        }
+
+        const mq = typeof window !== "undefined" && window.matchMedia ? window.matchMedia(mediaQuery) : null;
+
+        function syncWithMedia(event) {
+          const matches = event?.matches ?? mq?.matches;
+          if (!matches) {
+            slider.disabled = false;
+            slider.removeAttribute("aria-disabled");
+            const previous = slider.dataset.previousValue;
+            slider.removeAttribute("data-previous-value");
+            update(previous ?? currentPercent);
+            return;
+          }
+          slider.dataset.previousValue = slider.value;
+          slider.disabled = true;
+          slider.setAttribute("aria-disabled", "true");
+          slider.value = "100";
+          slider.setAttribute("aria-valuenow", "100");
+          if (valueEl) valueEl.textContent = "100%";
+          target.style.removeProperty(variableName);
+        }
+
+        slider.addEventListener("input", handleInput);
+        update(currentPercent);
+        if (mq) {
+          if (mq.addEventListener) {
+            mq.addEventListener("change", syncWithMedia);
+          } else if (mq.addListener) {
+            mq.addListener(syncWithMedia);
+          }
+          syncWithMedia();
+        }
+
+        return {
+          set(percent) {
+            update(percent);
+            if (mq?.matches) {
+              slider.dataset.previousValue = String(clamp(percent));
+            }
+          },
+          get() {
+            return currentPercent;
+          },
+        };
+      }
+
+      createViewerWidthController({
+        sliderSelector: "[data-viewer-resize]",
+        valueSelector: "[data-viewer-resize-value]",
+        targetSelector: ".portal__grid",
+        variableName: "--document-viewer-width",
+      });
+
+      createViewerWidthController({
+        sliderSelector: "[data-image-resize]",
+        valueSelector: "[data-image-resize-value]",
+        targetSelector: ".image-portal__grid",
+        variableName: "--image-viewer-width",
+      });
+
       const DocumentViewer = (() => {
         const preview = document.querySelector("[data-viewer-preview]");
         const meta = document.querySelector("[data-viewer-meta]");
@@ -3604,8 +3889,51 @@
         const sizeEl = document.querySelector("[data-viewer-size]");
         const updatedEl = document.querySelector("[data-viewer-updated]");
         const descriptionEl = document.querySelector("[data-viewer-description]");
+        const selectInput = document.querySelector("[data-viewer-select]");
         const emptyTemplate = preview?.querySelector("[data-viewer-empty]")?.cloneNode(true) ?? null;
+        const previewCache = new Map();
         let currentId = null;
+        let renderToken = 0;
+
+        const OFFICE_MIME_TYPES = new Set([
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.ms-powerpoint",
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ].map((item) => item.toLowerCase()));
+        const OFFICE_EXTENSIONS = new Set([
+          "doc",
+          "docx",
+          "dotx",
+          "ppt",
+          "pptx",
+          "pps",
+          "ppsx",
+          "xls",
+          "xlsx",
+        ]);
+        const TEXT_MIME_TYPES = new Set([
+          "application/json",
+          "application/xml",
+          "application/yaml",
+          "application/x-yaml",
+          "application/csv",
+        ].map((item) => item.toLowerCase()));
+        const TEXT_EXTENSIONS = new Set([
+          "txt",
+          "log",
+          "md",
+          "json",
+          "csv",
+          "yml",
+          "yaml",
+          "xml",
+          "ini",
+          "conf",
+        ]);
+        const TEXT_CHAR_LIMIT = 100000;
 
         function focusPreview() {
           if (preview) {
@@ -3618,63 +3946,98 @@
           document.dispatchEvent(new CustomEvent("documentviewerchange", { detail: { id: currentId } }));
         }
 
-        function renderEmpty() {
+        function getExtension(name) {
+          if (!name) return "";
+          const parts = name.toLowerCase().split(".");
+          return parts.length > 1 ? parts.pop() ?? "" : "";
+        }
+
+        function getDocumentUrl(doc) {
+          if (!doc) return "";
+          return doc.blobUrl || doc.downloadUrl || "";
+        }
+
+        function updateSelectValue(id) {
+          if (!selectInput) return;
+          if (!id) {
+            selectInput.value = "";
+            return;
+          }
+          const option = Array.from(selectInput.options).find((item) => item.value === id);
+          if (option) {
+            selectInput.value = id;
+          }
+        }
+
+        function updateSelectOptions(docs) {
+          if (!selectInput) return;
+          const fragment = document.createDocumentFragment();
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = docs.length ? "Select a document…" : "No documents uploaded yet";
+          fragment.appendChild(placeholder);
+          docs.forEach((doc) => {
+            const option = document.createElement("option");
+            option.value = doc.id;
+            option.textContent = doc.title || doc.name;
+            fragment.appendChild(option);
+          });
+          selectInput.replaceChildren(fragment);
+          if (docs.length === 0) {
+            selectInput.value = "";
+            selectInput.disabled = true;
+            selectInput.setAttribute("aria-disabled", "true");
+          } else {
+            selectInput.disabled = false;
+            selectInput.removeAttribute("aria-disabled");
+            if (currentId && docs.some((doc) => doc.id === currentId)) {
+              selectInput.value = currentId;
+            } else {
+              selectInput.value = "";
+            }
+          }
+        }
+
+        function cleanupCache(validIds) {
+          previewCache.forEach((entry, id) => {
+            if (!validIds.has(id)) {
+              entry?.dispose?.();
+              previewCache.delete(id);
+            }
+          });
+        }
+
+        function renderLoading() {
           if (!preview) return;
           preview.innerHTML = "";
-          if (emptyTemplate) {
-            preview.appendChild(emptyTemplate.cloneNode(true));
-          }
+          preview.dataset.state = "loading";
+          const loading = document.createElement("div");
+          loading.className = "viewer-card__loading";
+          loading.textContent = "Loading preview…";
+          preview.appendChild(loading);
+        }
+
+        function resetMeta() {
           if (meta) meta.hidden = true;
+          if (nameEl) nameEl.textContent = "—";
+          if (filenameEl) filenameEl.textContent = "—";
+          if (typeEl) typeEl.textContent = "—";
+          if (sizeEl) sizeEl.textContent = "—";
+          if (updatedEl) updatedEl.textContent = "—";
+          if (descriptionEl) {
+            descriptionEl.hidden = true;
+            descriptionEl.textContent = "";
+          }
           if (linkInput) linkInput.value = "";
           if (copyButton) copyButton.setAttribute("data-copy", "");
           if (openLink) {
             openLink.href = "#";
             openLink.setAttribute("aria-disabled", "true");
           }
-          currentId = null;
-          emitSelectionChange();
-          focusPreview();
         }
 
-        function isPreviewSupported(type) {
-          if (!type) return false;
-          return (
-            type.startsWith("image/") ||
-            type === "application/pdf" ||
-            type.startsWith("text/") ||
-            type.startsWith("video/") ||
-            type.startsWith("audio/")
-          );
-        }
-
-        function renderDocument(doc) {
-          if (!preview) return;
-          if (!doc) {
-            renderEmpty();
-            return;
-          }
-
-          preview.innerHTML = "";
-          if (isPreviewSupported(doc.type) && doc.blobUrl) {
-            const objectEl = document.createElement("object");
-            objectEl.data = doc.blobUrl;
-            objectEl.type = doc.type || "application/octet-stream";
-            objectEl.className = "viewer-card__object";
-            objectEl.innerHTML = `<p>Preview unavailable. <a href="${doc.blobUrl}" target="_blank" rel="noopener">Open in new tab</a>.</p>`;
-            preview.appendChild(objectEl);
-          } else {
-            const fallback = document.createElement("div");
-            fallback.className = "viewer-card__fallback";
-            const heading = document.createElement("h3");
-            heading.textContent = "Preview unavailable";
-            const message = document.createElement("p");
-            message.className = "portal__lede";
-            message.style.fontSize = "0.95rem";
-            message.textContent = `This file type (${doc.type || "unknown"}) cannot be previewed inline. Use the controls below to open or download the document.`;
-            fallback.append(heading, message);
-            preview.appendChild(fallback);
-          }
-
+        function updateMeta(doc) {
+          const docUrl = getDocumentUrl(doc);
           if (meta) meta.hidden = false;
           if (nameEl) nameEl.textContent = doc.title || doc.name;
           if (filenameEl) filenameEl.textContent = doc.name;
@@ -3690,23 +4053,259 @@
               descriptionEl.textContent = "";
             }
           }
-          if (linkInput) linkInput.value = doc.blobUrl || "";
-          if (copyButton) copyButton.setAttribute("data-copy", doc.blobUrl || "");
+          if (linkInput) linkInput.value = docUrl;
+          if (copyButton) copyButton.setAttribute("data-copy", docUrl);
           if (openLink) {
-            if (doc.blobUrl) {
-              openLink.href = doc.blobUrl;
+            if (docUrl) {
+              openLink.href = docUrl;
               openLink.removeAttribute("aria-disabled");
             } else {
               openLink.href = "#";
               openLink.setAttribute("aria-disabled", "true");
             }
           }
-          currentId = doc.id;
+        }
+
+        function createFallback(doc, message) {
+          const fallback = document.createElement("div");
+          fallback.className = "viewer-card__fallback";
+          const heading = document.createElement("h3");
+          heading.textContent = "Preview unavailable";
+          const copy = document.createElement("p");
+          copy.className = "portal__lede";
+          copy.style.fontSize = "0.95rem";
+          copy.textContent = message
+            || `This file type (${doc.type || "unknown"}) cannot be previewed inline. Use the controls below to open or download the document.`;
+          fallback.append(heading, copy);
+          return fallback;
+        }
+
+        function isPdf(type, extension) {
+          return type === "application/pdf" || extension === "pdf";
+        }
+
+        function isOfficeDocument(type, extension) {
+          return OFFICE_MIME_TYPES.has(type) || OFFICE_EXTENSIONS.has(extension);
+        }
+
+        function isTextDocument(type, extension) {
+          return type.startsWith("text/") || TEXT_MIME_TYPES.has(type) || TEXT_EXTENSIONS.has(extension);
+        }
+
+        function isImage(type) {
+          return type.startsWith("image/");
+        }
+
+        function isVideo(type) {
+          return type.startsWith("video/");
+        }
+
+        function isAudio(type) {
+          return type.startsWith("audio/");
+        }
+
+        async function fetchDocumentResource(doc) {
+          const url = getDocumentUrl(doc);
+          if (!url) return null;
+          const revision = String(doc.sha || doc.updatedAt || "");
+          const cached = previewCache.get(doc.id);
+          if (cached && cached.revision === revision) {
+            return cached;
+          }
+          if (cached) {
+            cached.dispose?.();
+            previewCache.delete(doc.id);
+          }
+          try {
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`Unable to fetch preview (${response.status})`);
+            }
+            const blob = await response.blob();
+            const useExistingUrl = url.startsWith("blob:");
+            const objectUrl = useExistingUrl ? url : URL.createObjectURL(blob);
+            const resource = {
+              url: objectUrl,
+              type: blob.type || doc.type || "application/octet-stream",
+              blob,
+              revision,
+              dispose: useExistingUrl ? null : () => URL.revokeObjectURL(objectUrl),
+            };
+            previewCache.set(doc.id, resource);
+            return resource;
+          } catch (error) {
+            console.warn("Failed to fetch document preview", error);
+            return null;
+          }
+        }
+
+        async function buildPreviewContent(doc) {
+          const type = (doc.type || "").toLowerCase();
+          const extension = getExtension(doc.name);
+          const displayName = doc.title || doc.name;
+          const directUrl = getDocumentUrl(doc);
+
+          if (isPdf(type, extension)) {
+            const resource = await fetchDocumentResource(doc);
+            if (resource?.url) {
+              const frame = document.createElement("iframe");
+              frame.src = resource.url;
+              frame.title = `${displayName} preview`;
+              frame.loading = "lazy";
+              return frame;
+            }
+          }
+
+          if (isOfficeDocument(type, extension) && directUrl) {
+            const frame = document.createElement("iframe");
+            frame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(directUrl)}`;
+            frame.title = `${displayName} preview`;
+            frame.loading = "lazy";
+            return frame;
+          }
+
+          if (isImage(type)) {
+            const resource = await fetchDocumentResource(doc);
+            if (resource?.url) {
+              const img = document.createElement("img");
+              img.src = resource.url;
+              img.alt = displayName;
+              img.loading = "lazy";
+              return img;
+            }
+          }
+
+          if (isVideo(type)) {
+            const resource = await fetchDocumentResource(doc);
+            if (resource?.url) {
+              const video = document.createElement("video");
+              video.controls = true;
+              video.src = resource.url;
+              video.preload = "metadata";
+              return video;
+            }
+          }
+
+          if (isAudio(type)) {
+            const resource = await fetchDocumentResource(doc);
+            if (resource?.url) {
+              const audio = document.createElement("audio");
+              audio.controls = true;
+              audio.src = resource.url;
+              return audio;
+            }
+          }
+
+          if (isTextDocument(type, extension)) {
+            const resource = await fetchDocumentResource(doc);
+            if (resource?.blob) {
+              try {
+                const text = await resource.blob.text();
+                const pre = document.createElement("pre");
+                if (text.length > TEXT_CHAR_LIMIT) {
+                  pre.textContent = `${text.slice(0, TEXT_CHAR_LIMIT)}\n… (preview truncated)`;
+                } else {
+                  pre.textContent = text;
+                }
+                return pre;
+              } catch (error) {
+                console.warn("Failed to decode text preview", error);
+              }
+            }
+          }
+
+          const resource = await fetchDocumentResource(doc);
+          if (resource?.url) {
+            const objectEl = document.createElement("object");
+            objectEl.data = resource.url;
+            objectEl.type = resource.type || doc.type || "application/octet-stream";
+            objectEl.className = "viewer-card__object";
+            if (directUrl) {
+              const paragraph = document.createElement("p");
+              paragraph.textContent = "Preview unavailable. ";
+              const link = document.createElement("a");
+              link.href = directUrl;
+              link.target = "_blank";
+              link.rel = "noopener";
+              link.textContent = "Open in new tab";
+              paragraph.appendChild(link);
+              objectEl.appendChild(paragraph);
+            }
+            return objectEl;
+          }
+
+          return null;
+        }
+
+        function renderEmpty() {
+          renderToken += 1;
+          if (!preview) return;
+          preview.innerHTML = "";
+          preview.dataset.state = "empty";
+          if (emptyTemplate) {
+            preview.appendChild(emptyTemplate.cloneNode(true));
+          }
+          resetMeta();
+          updateSelectValue(null);
+          currentId = null;
           emitSelectionChange();
           focusPreview();
         }
 
+        async function renderDocument(doc) {
+          if (!preview) return;
+          if (!doc) {
+            renderEmpty();
+            return;
+          }
+
+          const token = ++renderToken;
+          currentId = doc.id;
+          updateSelectValue(doc.id);
+          renderLoading();
+
+          let content = null;
+          try {
+            content = await buildPreviewContent(doc);
+          } catch (error) {
+            console.error("Failed to render document preview", error);
+          }
+
+          if (token !== renderToken || currentId !== doc.id) {
+            return;
+          }
+
+          preview.innerHTML = "";
+          preview.dataset.state = "ready";
+          if (content) {
+            preview.appendChild(content);
+          } else {
+            preview.appendChild(createFallback(doc));
+          }
+
+          updateMeta(doc);
+          emitSelectionChange();
+          focusPreview();
+        }
+
+        selectInput?.addEventListener("change", (event) => {
+          const id = event.target.value;
+          if (!id) {
+            renderEmpty();
+            return;
+          }
+          if (id === currentId) return;
+          const doc = DocumentStore.getDocument(id);
+          if (doc) {
+            renderDocument(doc);
+          } else {
+            renderEmpty();
+          }
+        });
+
         DocumentStore.subscribe((docs) => {
+          updateSelectOptions(docs);
+          cleanupCache(new Set(docs.map((doc) => doc.id)));
           if (!currentId) {
             if (docs.length === 0) {
               renderEmpty();
@@ -3725,8 +4324,16 @@
 
         return {
           selectDocument(id) {
+            if (!id) {
+              renderEmpty();
+              return;
+            }
             const doc = DocumentStore.getDocument(id);
-            renderDocument(doc);
+            if (doc) {
+              renderDocument(doc);
+            } else {
+              renderEmpty();
+            }
           },
           getSelectedId() {
             return currentId;
@@ -3811,6 +4418,7 @@
             : null;
 
           filtered.forEach((doc) => {
+            const docUrl = doc.downloadUrl || doc.blobUrl || "";
             const row = document.createElement("tr");
             row.dataset.id = doc.id;
             row.tabIndex = -1;
@@ -3852,18 +4460,18 @@
             const copyBtn = document.createElement("button");
             copyBtn.type = "button";
             copyBtn.className = "library-action";
-            copyBtn.dataset.copy = doc.blobUrl || "";
+            copyBtn.dataset.copy = docUrl;
             copyBtn.textContent = "Copy link";
             actionsCell.appendChild(copyBtn);
 
             const downloadLink = document.createElement("a");
             downloadLink.className = "library-action";
-            downloadLink.href = doc.blobUrl || "#";
+            downloadLink.href = docUrl || "#";
             downloadLink.target = "_blank";
             downloadLink.rel = "noopener";
             downloadLink.download = doc.name;
             downloadLink.textContent = "Download";
-            if (!doc.blobUrl) {
+            if (!docUrl) {
               downloadLink.classList.add("is-disabled");
               downloadLink.setAttribute("aria-disabled", "true");
             }
