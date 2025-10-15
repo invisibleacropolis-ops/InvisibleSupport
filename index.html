@@ -331,6 +331,7 @@
       }
 
       .upload-card__dropzone {
+        position: relative;
         border-radius: var(--radius-lg);
         border: 2px dashed color-mix(in srgb, var(--color-border) 70%, transparent 30%);
         padding: clamp(var(--space-lg), 6vw, var(--space-2xl));
@@ -342,6 +343,30 @@
           var(--color-surface) 85%,
           rgba(255, 255, 255, 0.85) 15%
         );
+        transition: border-color var(--transition-base),
+          background-color var(--transition-base),
+          transform var(--transition-base);
+      }
+
+      .upload-card__dropzone.is-dragover {
+        border-color: color-mix(in srgb, var(--color-accent) 60%, transparent 40%);
+        background: color-mix(in srgb, var(--color-surface) 75%, rgba(75, 107, 251, 0.12) 25%);
+        transform: translateY(-2px);
+      }
+
+      .upload-card__dropzone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .upload-card__accepted {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
       }
 
       .upload-card__dropzone svg {
@@ -368,31 +393,158 @@
         gap: var(--space-md);
       }
 
-      .library-card__list {
-        display: grid;
-        gap: var(--space-sm);
-        max-height: 18rem;
-        overflow: auto;
-        padding-right: var(--space-xs);
+      .library-card__table {
+        border-radius: var(--radius-lg);
+        border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+        background: color-mix(in srgb, var(--color-surface) 92%, transparent 8%);
+        overflow: hidden;
       }
 
-      .library-card__item {
+      .library-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 100%;
+      }
+
+      .library-table thead {
+        background: color-mix(in srgb, var(--color-surface) 70%, transparent 30%);
+        color: color-mix(in srgb, var(--color-text) 90%, white 10%);
+      }
+
+      .library-table th,
+      .library-table td {
+        padding: var(--space-sm) var(--space-md);
+        text-align: left;
+        font-size: 0.9rem;
+      }
+
+      .library-table th {
+        font-weight: 600;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+      }
+
+      .library-table td {
+        border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent 30%);
+        vertical-align: top;
+      }
+
+      .library-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .library-table__title {
         display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: var(--space-sm);
-        align-items: center;
-        padding: var(--space-sm);
+        gap: var(--space-2xs);
+      }
+
+      .library-table__title strong {
+        font-weight: 600;
+      }
+
+      .library-table__title span {
+        color: var(--color-text-muted);
+        font-size: 0.85rem;
+      }
+
+      .library-table__actions-heading {
+        text-align: right;
+      }
+
+      .library-table__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2xs);
+        justify-content: flex-end;
+      }
+
+      .library-action {
+        border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+        background: color-mix(in srgb, var(--color-surface) 88%, transparent 12%);
+        border-radius: var(--radius-sm);
+        padding: var(--space-2xs) var(--space-sm);
+        font-size: 0.8rem;
+        cursor: pointer;
+        color: var(--color-text);
+        transition: background-color var(--transition-base), border-color var(--transition-base);
+      }
+
+      .library-action:hover,
+      .library-action:focus-visible {
+        border-color: color-mix(in srgb, var(--color-accent) 50%, transparent 50%);
+        background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface) 88%);
+        outline: none;
+      }
+
+      .library-action.is-disabled {
+        pointer-events: none;
+        opacity: 0.5;
+      }
+
+      .library-card__empty {
+        margin: 0;
+        padding: var(--space-md);
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        text-align: center;
+        background: color-mix(in srgb, var(--color-surface) 85%, transparent 15%);
+      }
+
+
+      .upload-progress {
+        display: grid;
+        gap: var(--space-2xs);
+        background: color-mix(in srgb, var(--color-surface) 82%, transparent 18%);
         border-radius: var(--radius-md);
-        background: color-mix(in srgb, var(--color-surface) 60%, transparent 40%);
+        border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+        padding: var(--space-sm) var(--space-md);
       }
 
-      .library-card__item > span:last-child {
+      .upload-progress__bar {
+        position: relative;
+        width: 100%;
+        height: 0.75rem;
+        border-radius: var(--radius-sm);
+        background: color-mix(in srgb, var(--color-surface) 70%, transparent 30%);
+        overflow: hidden;
+      }
+
+      .upload-progress__fill {
+        position: absolute;
+        inset: 0;
+        width: 0%;
+        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
+        border-radius: inherit;
+        transition: width 120ms ease;
+      }
+
+      .upload-progress__label {
+        margin: 0;
         font-size: 0.85rem;
         color: var(--color-text-muted);
       }
 
+      .upload-feedback {
+        margin: 0;
+        font-size: 0.9rem;
+        border-radius: var(--radius-md);
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid transparent;
+      }
+
+      .upload-feedback.is-error {
+        color: var(--color-danger);
+        border-color: color-mix(in srgb, var(--color-danger) 40%, transparent 60%);
+        background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface) 92%);
+      }
+
+      .upload-feedback.is-success {
+        color: var(--color-success);
+        border-color: color-mix(in srgb, var(--color-success) 40%, transparent 60%);
+        background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface) 90%);
+      }
+
       .viewer-card__preview {
-        min-height: 14rem;
+        min-height: 18rem;
         border-radius: var(--radius-lg);
         border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
         background: color-mix(in srgb, var(--color-surface) 70%, transparent 30%);
@@ -400,14 +552,74 @@
         place-items: center;
         text-align: center;
         padding: var(--space-xl);
+        position: relative;
       }
 
-      .viewer-card__preview h3 {
-        margin: 0;
-        font-size: 1.1rem;
+      .viewer-card__preview object,
+      .viewer-card__preview iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: var(--radius-md);
+        background: white;
+      }
+
+      .viewer-card__fallback {
+        display: grid;
+        gap: var(--space-xs);
       }
 
       .viewer-card__meta {
+        display: grid;
+        gap: var(--space-lg);
+      }
+
+      .viewer-card__details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: var(--space-sm);
+        margin: 0;
+      }
+
+      .viewer-card__details div {
+        background: color-mix(in srgb, var(--color-surface) 85%, transparent 15%);
+        padding: var(--space-sm);
+        border-radius: var(--radius-md);
+        border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+      }
+
+      .viewer-card__details dt {
+        margin: 0;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        letter-spacing: 0.06em;
+      }
+
+      .viewer-card__details dd {
+        margin: var(--space-2xs) 0 0;
+        font-weight: 600;
+      }
+
+      .viewer-card__description {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+      }
+
+      .viewer-card__link {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        align-items: center;
+      }
+
+      .viewer-card__link-input {
+        flex: 1 1 16rem;
+        min-width: 0;
+      }
+
+      .viewer-card__empty {
         display: grid;
         gap: var(--space-sm);
       }
@@ -447,65 +659,82 @@
               </p>
             </div>
 
-            <div class="upload-card__dropzone" role="region" aria-label="Upload dropzone">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 3c.55 0 1 .45 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4c0-.55.45-1 1-1Zm-7 9a1 1 0 0 1 1 1v4c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1 1-1Z"
-                />
-              </svg>
-              <div class="stack">
-                <p class="portal__lede" style="font-size: 1rem;">
-                  Drop files here or browse to upload.
-                </p>
-                <div class="upload-card__actions">
-                  <label class="u-btn u-btn--primary" for="primary-upload">Browse files</label>
-                  <button class="u-btn u-btn--ghost" type="button">Paste from clipboard</button>
+            <form class="stack stack--lg" id="document-upload-form" aria-label="Document upload" novalidate>
+              <div
+                class="upload-card__dropzone"
+                role="region"
+                aria-label="Upload dropzone"
+                data-dropzone
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 3c.55 0 1 .45 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4c0-.55.45-1 1-1Zm-7 9a1 1 0 0 1 1 1v4c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1-1Z"
+                  />
+                </svg>
+                <div class="stack">
+                  <p class="portal__lede" style="font-size: 1rem;">
+                    Drop files here or browse to upload.
+                  </p>
+                  <div class="upload-card__actions">
+                    <label class="u-btn u-btn--primary" for="primary-upload">Browse files</label>
+                    <span aria-hidden="true">or</span>
+                    <span class="u-card__subtitle">Paste from clipboard (⌘/Ctrl + V)</span>
+                  </div>
+                  <p class="upload-card__accepted">PDF, DOCX, PPTX, XLSX, images, CSV, and more.</p>
                 </div>
-              </div>
-              <input class="u-input" type="file" id="primary-upload" multiple aria-label="Upload files" />
-            </div>
-
-            <form class="stack stack--lg" aria-label="Upload metadata">
-              <div class="form-grid form-grid--split">
-                <label class="stack" for="case-id">
-                  <span class="u-card__subtitle">Case ID</span>
-                  <input class="u-input" type="text" id="case-id" name="case" placeholder="INC-2045" />
-                </label>
-                <label class="stack" for="urgency">
-                  <span class="u-card__subtitle">Urgency</span>
-                  <select class="u-input" id="urgency" name="urgency">
-                    <option>Standard</option>
-                    <option>Priority</option>
-                    <option>Critical</option>
-                  </select>
-                </label>
-              </div>
-
-              <label class="stack" for="context">
-                <span class="u-card__subtitle">Context notes</span>
-                <textarea
+                <input
                   class="u-input"
-                  id="context"
-                  name="context"
-                  placeholder="Describe symptoms, logs, reproduction steps..."
-                  rows="5"
-                ></textarea>
-              </label>
+                  type="file"
+                  id="primary-upload"
+                  name="documents"
+                  multiple
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.png,.jpg,.jpeg,.gif,.webp,.heic,.mp4,.mov,.json,.log,.zip"
+                  aria-label="Upload files"
+                  data-file-input
+                />
+              </div>
+
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="document-title">
+                  <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
+                  <input
+                    class="u-input"
+                    type="text"
+                    id="document-title"
+                    name="title"
+                    placeholder="e.g. Database latency analysis"
+                    data-title-input
+                  />
+                </label>
+                <label class="stack" for="document-description">
+                  <span class="u-card__subtitle">Description <span aria-hidden="true">(optional)</span></span>
+                  <input
+                    class="u-input"
+                    type="text"
+                    id="document-description"
+                    name="description"
+                    placeholder="Short note about the document"
+                    data-description-input
+                  />
+                </label>
+              </div>
 
               <div class="stack">
-                <span class="u-card__subtitle">Distribution</span>
-                <div class="u-copy" role="group" aria-label="Shareable case link">
-                  <span class="u-copy__value" id="case-link">https://support.invisible.support/case/INC-2045</span>
-                  <button class="u-copy__button" type="button" data-copy-target="#case-link">
-                    Copy link
-                  </button>
+                <span class="u-card__subtitle">Upload progress</span>
+                <div class="upload-progress" data-upload-progress hidden>
+                  <div class="upload-progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span class="upload-progress__fill" data-progress-fill></span>
+                  </div>
+                  <p class="upload-progress__label" data-progress-label>Waiting for files…</p>
                 </div>
               </div>
 
-              <div class="upload-card__actions">
-                <button class="u-btn u-btn--primary" type="submit">Create case package</button>
-                <button class="u-btn u-btn--ghost" type="button">Schedule follow-up</button>
+              <p class="upload-feedback" data-upload-feedback role="alert" hidden></p>
+
+              <div class="upload-card__actions" style="justify-content: flex-start;">
+                <button class="u-btn u-btn--primary" type="submit">Upload documents</button>
+                <button class="u-btn u-btn--ghost" type="reset">Reset</button>
               </div>
             </form>
           </article>
@@ -521,44 +750,44 @@
               </p>
             </div>
 
-            <div class="u-tabs" role="tablist" aria-label="Library filters">
-              <button class="u-tabs__trigger is-active" role="tab" aria-selected="true">Recent</button>
-              <button class="u-tabs__trigger" role="tab" aria-selected="false">Favorites</button>
-              <button class="u-tabs__trigger" role="tab" aria-selected="false">Shared</button>
-            </div>
+            <div class="stack" role="region" aria-live="polite">
+              <label class="stack" for="library-search">
+                <span class="u-card__subtitle">Filter library</span>
+                <input
+                  class="u-input"
+                  type="search"
+                  id="library-search"
+                  placeholder="Search by title, file name, or type"
+                  autocomplete="off"
+                  data-library-search
+                />
+              </label>
 
-            <div class="library-card__list" role="list">
-              <div class="library-card__item" role="listitem">
-                <span aria-hidden="true">🗂️</span>
-                <span>Cluster diagnostics bundle</span>
-                <span>12 minutes ago</span>
-              </div>
-              <div class="library-card__item" role="listitem">
-                <span aria-hidden="true">🧪</span>
-                <span>Load-test session 18 logs</span>
-                <span>45 minutes ago</span>
-              </div>
-              <div class="library-card__item" role="listitem">
-                <span aria-hidden="true">🛰️</span>
-                <span>Telemetry stream capture</span>
-                <span>1 hour ago</span>
-              </div>
-              <div class="library-card__item" role="listitem">
-                <span aria-hidden="true">🎥</span>
-                <span>Walkthrough recording</span>
-                <span>Yesterday</span>
+              <div class="library-card__table" role="region" aria-label="Document library table">
+                <table class="library-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Title</th>
+                      <th scope="col">Type</th>
+                      <th scope="col">Size</th>
+                      <th scope="col">Last updated</th>
+                      <th scope="col" class="library-table__actions-heading">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody data-library-rows></tbody>
+                </table>
+                <p class="library-card__empty" data-library-empty hidden>No documents uploaded yet.</p>
               </div>
             </div>
           </article>
-
           <article class="u-card viewer-card" aria-labelledby="asset-viewer">
             <div class="u-card__header">
               <h2 class="u-card__title" id="asset-viewer">Asset viewer</h2>
               <p class="u-card__subtitle">Preview assets inline or open them in immersive mode.</p>
             </div>
 
-            <div class="viewer-card__preview">
-              <div>
+            <div class="viewer-card__preview" data-viewer-preview>
+              <div class="viewer-card__empty" data-viewer-empty>
                 <h3>Nothing selected yet</h3>
                 <p class="portal__lede" style="font-size: 0.95rem;">
                   Choose an item from the library to load a preview, transcript, or streaming session.
@@ -566,18 +795,50 @@
               </div>
             </div>
 
-            <div class="viewer-card__meta">
+            <div class="viewer-card__meta" data-viewer-meta hidden>
               <div class="stack">
-                <span class="u-card__subtitle">Playback controls</span>
-                <div class="upload-card__actions" style="justify-content: flex-start;">
-                  <button class="u-btn u-btn--ghost" type="button">Open immersive viewer</button>
-                  <button class="u-btn u-btn--ghost" type="button">Download asset</button>
-                </div>
+                <span class="u-card__subtitle">Document details</span>
+                <dl class="viewer-card__details">
+                  <div>
+                    <dt>Title</dt>
+                    <dd data-viewer-name>—</dd>
+                  </div>
+                  <div>
+                    <dt>File name</dt>
+                    <dd data-viewer-filename>—</dd>
+                  </div>
+                  <div>
+                    <dt>Type</dt>
+                    <dd data-viewer-type>—</dd>
+                  </div>
+                  <div>
+                    <dt>Size</dt>
+                    <dd data-viewer-size>—</dd>
+                  </div>
+                  <div>
+                    <dt>Last updated</dt>
+                    <dd data-viewer-updated>—</dd>
+                  </div>
+                </dl>
+                <p class="viewer-card__description" data-viewer-description hidden></p>
               </div>
 
               <div class="stack">
-                <span class="u-card__subtitle">Annotations</span>
-                <textarea class="u-input" rows="3" placeholder="Note key findings for the team..."></textarea>
+                <span class="u-card__subtitle">Shareable link</span>
+                <div class="viewer-card__link">
+                  <input
+                    class="u-input viewer-card__link-input"
+                    type="text"
+                    readonly
+                    id="viewer-direct-link"
+                    data-viewer-link
+                    value=""
+                  />
+                  <button class="u-btn u-btn--ghost" type="button" data-viewer-copy>Copy</button>
+                  <a class="u-btn u-btn--primary" href="#" target="_blank" rel="noopener" data-viewer-open>
+                    Open in new tab
+                  </a>
+                </div>
               </div>
             </div>
           </article>
@@ -602,7 +863,6 @@
     </footer>
 
     <script>
-      // Minimal progressive enhancement for copy-to-clipboard affordances.
       const modal = document.getElementById("clipboard-confirm");
       const modalClose = modal?.querySelector("[data-close-modal]");
 
@@ -628,11 +888,14 @@
         const selector = trigger.getAttribute("data-copy-target");
         if (!selector) return "";
         const target = document.querySelector(selector);
-        return target ? target.textContent?.trim() ?? "" : "";
+        if (!target) return "";
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+          return target.value?.trim() ?? "";
+        }
+        return target.textContent?.trim() ?? "";
       }
 
-      async function handleCopy(event) {
-        const trigger = event.currentTarget;
+      async function copyFromTrigger(trigger) {
         const value = resolveCopyValue(trigger);
         if (!value) return;
         try {
@@ -643,15 +906,632 @@
         }
       }
 
-      document
-        .querySelectorAll("[data-copy], [data-copy-target]")
-        .forEach((button) => button.addEventListener("click", handleCopy));
+      document.addEventListener("click", (event) => {
+        const trigger = event.target.closest("[data-copy], [data-copy-target]");
+        if (!trigger) return;
+        event.preventDefault();
+        copyFromTrigger(trigger);
+      });
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           closeModal();
         }
       });
+
+      const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+      const numberFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
+
+      function formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes < 0) return "—";
+        if (bytes === 0) return "0 B";
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        const value = bytes / 1024 ** exponent;
+        return `${numberFormatter.format(value)} ${units[exponent]}`;
+      }
+
+      function formatRelativeTime(isoString) {
+        if (!isoString) return "—";
+        const date = new Date(isoString);
+        if (Number.isNaN(date.getTime())) return "—";
+        const diffMs = date.getTime() - Date.now();
+        const units = [
+          { unit: "year", ms: 1000 * 60 * 60 * 24 * 365 },
+          { unit: "month", ms: 1000 * 60 * 60 * 24 * 30 },
+          { unit: "day", ms: 1000 * 60 * 60 * 24 },
+          { unit: "hour", ms: 1000 * 60 * 60 },
+          { unit: "minute", ms: 1000 * 60 },
+          { unit: "second", ms: 1000 },
+        ];
+        for (const { unit, ms } of units) {
+          if (Math.abs(diffMs) >= ms || unit === "second") {
+            const value = Math.round(diffMs / ms);
+            return relativeTimeFormatter.format(value, unit);
+          }
+        }
+        return relativeTimeFormatter.format(0, "second");
+      }
+
+      function guessMimeType(name, fallback = "application/octet-stream") {
+        if (!name) return fallback;
+        const extension = name.split(".").pop()?.toLowerCase();
+        const lookup = {
+          pdf: "application/pdf",
+          doc: "application/msword",
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          ppt: "application/vnd.ms-powerpoint",
+          pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          xls: "application/vnd.ms-excel",
+          xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          csv: "text/csv",
+          txt: "text/plain",
+          rtf: "application/rtf",
+          json: "application/json",
+          log: "text/plain",
+          png: "image/png",
+          jpg: "image/jpeg",
+          jpeg: "image/jpeg",
+          gif: "image/gif",
+          webp: "image/webp",
+          heic: "image/heic",
+          mp4: "video/mp4",
+          mov: "video/quicktime",
+          zip: "application/zip",
+        };
+        return lookup[extension] || fallback;
+      }
+
+      function dataUrlToBlob(dataUrl, fallbackType = "application/octet-stream") {
+        if (!dataUrl) {
+          return { blob: new Blob([], { type: fallbackType }), type: fallbackType };
+        }
+        const [header, payload] = dataUrl.split(",");
+        try {
+          const match = header?.match(/data:(.*?);base64/);
+          const mime = match?.[1] || fallbackType;
+          const binary = atob(payload ?? "");
+          const length = binary.length;
+          const bytes = new Uint8Array(length);
+          for (let index = 0; index < length; index += 1) {
+            bytes[index] = binary.charCodeAt(index);
+          }
+          return { blob: new Blob([bytes], { type: mime }), type: mime };
+        } catch (error) {
+          console.error("Failed to parse stored file", error);
+          return { blob: new Blob([], { type: fallbackType }), type: fallbackType };
+        }
+      }
+
+      const DocumentStore = (() => {
+        const STORAGE_KEY = "invisibleSupport.documents";
+        const listeners = new Set();
+        let documents = [];
+
+        function notify() {
+          listeners.forEach((listener) => listener([...documents]));
+        }
+
+        function persist() {
+          try {
+            const serializable = documents.map(({ blobUrl, ...rest }) => rest);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+          } catch (error) {
+            console.error("Unable to persist documents", error);
+          }
+        }
+
+        function hydrate(rawDocs) {
+          return rawDocs.map((doc) => {
+            const { blob, type } = dataUrlToBlob(doc.dataUrl, doc.type);
+            const blobUrl = URL.createObjectURL(blob);
+            return { ...doc, type, blobUrl };
+          });
+        }
+
+        function load() {
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (!stored) return;
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+              documents = hydrate(parsed).sort(
+                (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              );
+            }
+          } catch (error) {
+            console.error("Failed to load stored documents", error);
+            documents = [];
+          }
+        }
+
+        function generateId() {
+          return typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `doc-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        }
+
+        function normalizeDocument(file, extras, dataUrl) {
+          const now = new Date().toISOString();
+          const title = extras.title?.trim();
+          const description = extras.description?.trim() ?? "";
+          const type = file.type || guessMimeType(file.name);
+          const blobUrl = URL.createObjectURL(file);
+          return {
+            id: generateId(),
+            name: file.name,
+            title: title || file.name,
+            description,
+            type,
+            size: file.size,
+            updatedAt: now,
+            blobUrl,
+            dataUrl,
+          };
+        }
+
+        function addDocument(doc) {
+          documents = [doc, ...documents].sort(
+            (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+          persist();
+          notify();
+        }
+
+        function createDocument(file, extras = {}, progressCallback) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(reader.error);
+            reader.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const progress = event.total > 0 ? event.loaded / event.total : 0;
+                progressCallback?.(progress);
+              }
+            };
+            reader.onload = () => {
+              try {
+                const dataUrl = typeof reader.result === "string" ? reader.result : "";
+                const documentRecord = normalizeDocument(file, extras, dataUrl);
+                addDocument(documentRecord);
+                resolve(documentRecord);
+              } catch (error) {
+                reject(error);
+              }
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        function removeDocument(id) {
+          const index = documents.findIndex((doc) => doc.id === id);
+          if (index === -1) return;
+          const [removed] = documents.splice(index, 1);
+          if (removed?.blobUrl) {
+            URL.revokeObjectURL(removed.blobUrl);
+          }
+          persist();
+          notify();
+        }
+
+        function subscribe(listener) {
+          listeners.add(listener);
+          listener([...documents]);
+          return () => listeners.delete(listener);
+        }
+
+        function getDocument(id) {
+          return documents.find((doc) => doc.id === id) ?? null;
+        }
+
+        function getDocuments() {
+          return [...documents];
+        }
+
+        load();
+
+        window.addEventListener("beforeunload", () => {
+          documents.forEach((doc) => {
+            if (doc.blobUrl) {
+              URL.revokeObjectURL(doc.blobUrl);
+            }
+          });
+        });
+
+        return { subscribe, createDocument, removeDocument, getDocument, getDocuments };
+      })();
+
+      const DocumentViewer = (() => {
+        const preview = document.querySelector("[data-viewer-preview]");
+        const meta = document.querySelector("[data-viewer-meta]");
+        const linkInput = document.querySelector("[data-viewer-link]");
+        const openLink = document.querySelector("[data-viewer-open]");
+        const copyButton = document.querySelector("[data-viewer-copy]");
+        const nameEl = document.querySelector("[data-viewer-name]");
+        const filenameEl = document.querySelector("[data-viewer-filename]");
+        const typeEl = document.querySelector("[data-viewer-type]");
+        const sizeEl = document.querySelector("[data-viewer-size]");
+        const updatedEl = document.querySelector("[data-viewer-updated]");
+        const descriptionEl = document.querySelector("[data-viewer-description]");
+        const emptyTemplate = preview?.querySelector("[data-viewer-empty]")?.cloneNode(true) ?? null;
+        let currentId = null;
+
+        function renderEmpty() {
+          if (!preview) return;
+          preview.innerHTML = "";
+          if (emptyTemplate) {
+            preview.appendChild(emptyTemplate.cloneNode(true));
+          }
+          if (meta) meta.hidden = true;
+          if (linkInput) linkInput.value = "";
+          if (copyButton) copyButton.setAttribute("data-copy", "");
+          if (openLink) {
+            openLink.href = "#";
+            openLink.setAttribute("aria-disabled", "true");
+          }
+          currentId = null;
+        }
+
+        function isPreviewSupported(type) {
+          if (!type) return false;
+          return (
+            type.startsWith("image/") ||
+            type === "application/pdf" ||
+            type.startsWith("text/") ||
+            type.startsWith("video/") ||
+            type.startsWith("audio/")
+          );
+        }
+
+        function renderDocument(doc) {
+          if (!preview) return;
+          if (!doc) {
+            renderEmpty();
+            return;
+          }
+
+          preview.innerHTML = "";
+          if (isPreviewSupported(doc.type) && doc.blobUrl) {
+            const objectEl = document.createElement("object");
+            objectEl.data = doc.blobUrl;
+            objectEl.type = doc.type || "application/octet-stream";
+            objectEl.className = "viewer-card__object";
+            objectEl.innerHTML = `<p>Preview unavailable. <a href="${doc.blobUrl}" target="_blank" rel="noopener">Open in new tab</a>.</p>`;
+            preview.appendChild(objectEl);
+          } else {
+            const fallback = document.createElement("div");
+            fallback.className = "viewer-card__fallback";
+            const heading = document.createElement("h3");
+            heading.textContent = "Preview unavailable";
+            const message = document.createElement("p");
+            message.className = "portal__lede";
+            message.style.fontSize = "0.95rem";
+            message.textContent = `This file type (${doc.type || "unknown"}) cannot be previewed inline. Use the controls below to open or download the document.`;
+            fallback.append(heading, message);
+            preview.appendChild(fallback);
+          }
+
+          if (meta) meta.hidden = false;
+          if (nameEl) nameEl.textContent = doc.title || doc.name;
+          if (filenameEl) filenameEl.textContent = doc.name;
+          if (typeEl) typeEl.textContent = doc.type || "Unknown";
+          if (sizeEl) sizeEl.textContent = formatBytes(doc.size);
+          if (updatedEl) updatedEl.textContent = formatRelativeTime(doc.updatedAt);
+          if (descriptionEl) {
+            if (doc.description) {
+              descriptionEl.hidden = false;
+              descriptionEl.textContent = doc.description;
+            } else {
+              descriptionEl.hidden = true;
+              descriptionEl.textContent = "";
+            }
+          }
+          if (linkInput) linkInput.value = doc.blobUrl || "";
+          if (copyButton) copyButton.setAttribute("data-copy", doc.blobUrl || "");
+          if (openLink) {
+            if (doc.blobUrl) {
+              openLink.href = doc.blobUrl;
+              openLink.removeAttribute("aria-disabled");
+            } else {
+              openLink.href = "#";
+              openLink.setAttribute("aria-disabled", "true");
+            }
+          }
+          currentId = doc.id;
+        }
+
+        DocumentStore.subscribe((docs) => {
+          if (!currentId) {
+            if (docs.length === 0) {
+              renderEmpty();
+            }
+            return;
+          }
+          const match = docs.find((doc) => doc.id === currentId);
+          if (!match) {
+            renderEmpty();
+          } else {
+            renderDocument(match);
+          }
+        });
+
+        renderEmpty();
+
+        return {
+          selectDocument(id) {
+            const doc = DocumentStore.getDocument(id);
+            renderDocument(doc);
+          },
+        };
+      })();
+
+      const LibraryView = (() => {
+        const rows = document.querySelector("[data-library-rows]");
+        const emptyState = document.querySelector("[data-library-empty]");
+        const searchInput = document.querySelector("[data-library-search]");
+        let docs = [];
+        let query = "";
+
+        function matches(doc) {
+          if (!query) return true;
+          const value = query.toLowerCase();
+          return [doc.title, doc.name, doc.type, doc.description]
+            .filter(Boolean)
+            .some((field) => field.toLowerCase().includes(value));
+        }
+
+        function render() {
+          if (!rows) return;
+          rows.textContent = "";
+          const filtered = docs.filter(matches);
+          if (emptyState) {
+            emptyState.hidden = filtered.length > 0;
+          }
+          if (filtered.length === 0) {
+            return;
+          }
+
+          filtered.forEach((doc) => {
+            const row = document.createElement("tr");
+            row.dataset.id = doc.id;
+
+            const titleCell = document.createElement("td");
+            const titleWrapper = document.createElement("div");
+            titleWrapper.className = "library-table__title";
+            const title = document.createElement("strong");
+            title.textContent = doc.title || doc.name;
+            const subtitle = document.createElement("span");
+            subtitle.textContent = doc.description || doc.name;
+            titleWrapper.append(title, subtitle);
+            titleCell.appendChild(titleWrapper);
+            row.appendChild(titleCell);
+
+            const typeCell = document.createElement("td");
+            typeCell.textContent = doc.type || "Unknown";
+            row.appendChild(typeCell);
+
+            const sizeCell = document.createElement("td");
+            sizeCell.textContent = formatBytes(doc.size);
+            row.appendChild(sizeCell);
+
+            const updatedCell = document.createElement("td");
+            updatedCell.textContent = formatRelativeTime(doc.updatedAt);
+            row.appendChild(updatedCell);
+
+            const actionsCell = document.createElement("td");
+            actionsCell.className = "library-table__actions";
+
+            const viewButton = document.createElement("button");
+            viewButton.type = "button";
+            viewButton.className = "library-action";
+            viewButton.dataset.action = "view";
+            viewButton.textContent = "View";
+            actionsCell.appendChild(viewButton);
+
+            const copyBtn = document.createElement("button");
+            copyBtn.type = "button";
+            copyBtn.className = "library-action";
+            copyBtn.dataset.copy = doc.blobUrl || "";
+            copyBtn.textContent = "Copy link";
+            actionsCell.appendChild(copyBtn);
+
+            const downloadLink = document.createElement("a");
+            downloadLink.className = "library-action";
+            downloadLink.href = doc.blobUrl || "#";
+            downloadLink.target = "_blank";
+            downloadLink.rel = "noopener";
+            downloadLink.download = doc.name;
+            downloadLink.textContent = "Download";
+            if (!doc.blobUrl) {
+              downloadLink.classList.add("is-disabled");
+              downloadLink.setAttribute("aria-disabled", "true");
+            }
+            actionsCell.appendChild(downloadLink);
+
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "library-action";
+            deleteButton.dataset.action = "delete";
+            deleteButton.textContent = "Delete";
+            actionsCell.appendChild(deleteButton);
+
+            row.appendChild(actionsCell);
+            rows.appendChild(row);
+          });
+        }
+
+        DocumentStore.subscribe((nextDocs) => {
+          docs = nextDocs;
+          render();
+        });
+
+        searchInput?.addEventListener("input", (event) => {
+          query = event.target.value.trim().toLowerCase();
+          render();
+        });
+
+        rows?.addEventListener("click", (event) => {
+          const actionTarget = event.target.closest("[data-action]");
+          if (!actionTarget) return;
+          const id = actionTarget.closest("tr")?.dataset.id;
+          if (!id) return;
+          if (actionTarget.dataset.action === "view") {
+            DocumentViewer.selectDocument(id);
+          } else if (actionTarget.dataset.action === "delete") {
+            DocumentStore.removeDocument(id);
+          }
+        });
+      })();
+
+      const UploadController = (() => {
+        const form = document.getElementById("document-upload-form");
+        if (!form) return null;
+        const fileInput = form.querySelector("[data-file-input]");
+        const titleInput = form.querySelector("[data-title-input]");
+        const descriptionInput = form.querySelector("[data-description-input]");
+        const progressContainer = form.querySelector("[data-upload-progress]");
+        const progressBar = progressContainer?.querySelector(".upload-progress__bar");
+        const progressFill = form.querySelector("[data-progress-fill]");
+        const progressLabel = form.querySelector("[data-progress-label]");
+        const feedback = form.querySelector("[data-upload-feedback]");
+        const dropzone = form.querySelector("[data-dropzone]");
+
+        function resetFeedback() {
+          if (!feedback) return;
+          feedback.hidden = true;
+          feedback.textContent = "";
+          feedback.classList.remove("is-error", "is-success");
+        }
+
+        function showFeedback(message, tone) {
+          if (!feedback) return;
+          feedback.textContent = message;
+          feedback.hidden = false;
+          feedback.classList.remove("is-error", "is-success");
+          if (tone === "error") {
+            feedback.classList.add("is-error");
+          } else if (tone === "success") {
+            feedback.classList.add("is-success");
+          }
+        }
+
+        function hideProgress() {
+          if (!progressContainer || !progressFill || !progressLabel || !progressBar) return;
+          progressContainer.hidden = true;
+          progressFill.style.width = "0%";
+          progressBar.setAttribute("aria-valuenow", "0");
+          progressLabel.textContent = "Waiting for files…";
+        }
+
+        function updateProgress(percent, label) {
+          if (!progressContainer || !progressFill || !progressLabel || !progressBar) return;
+          const clamped = Math.max(0, Math.min(100, percent));
+          progressContainer.hidden = false;
+          progressFill.style.width = `${clamped}%`;
+          progressBar.setAttribute("aria-valuenow", String(Math.round(clamped)));
+          if (label) {
+            progressLabel.textContent = label;
+          }
+        }
+
+        async function processFiles(fileList) {
+          const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
+          if (!files.length) {
+            showFeedback("Select at least one document to upload.", "error");
+            return;
+          }
+
+          resetFeedback();
+          let lastDocument = null;
+          const baseTitle = titleInput?.value.trim() ?? "";
+          const description = descriptionInput?.value.trim() ?? "";
+
+          for (const [index, file] of files.entries()) {
+            updateProgress((index / files.length) * 100, `${file.name} • 0%`);
+            try {
+              const documentRecord = await DocumentStore.createDocument(
+                file,
+                {
+                  title: baseTitle
+                    ? files.length > 1
+                      ? `${baseTitle} (${index + 1})`
+                      : baseTitle
+                    : undefined,
+                  description,
+                },
+                (progress) => {
+                  const overall = ((index + progress) / files.length) * 100;
+                  updateProgress(overall, `${file.name} • ${Math.round(progress * 100)}%`);
+                }
+              );
+              lastDocument = documentRecord;
+            } catch (error) {
+              console.error("Upload failed", error);
+              showFeedback(`Upload failed for ${file.name}.`, "error");
+              hideProgress();
+              return;
+            }
+          }
+
+          updateProgress(100, files.length > 1 ? `${files.length} documents uploaded` : `${files[0].name} uploaded`);
+          showFeedback("Upload complete. Documents are ready in the library.", "success");
+          form.reset();
+          if (fileInput) {
+            fileInput.value = "";
+          }
+          setTimeout(() => {
+            hideProgress();
+          }, 600);
+          if (lastDocument) {
+            DocumentViewer.selectDocument(lastDocument.id);
+          }
+        }
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          processFiles(fileInput?.files ?? []);
+        });
+
+        form.addEventListener("reset", () => {
+          hideProgress();
+          resetFeedback();
+        });
+
+        fileInput?.addEventListener("change", () => {
+          resetFeedback();
+        });
+
+        if (dropzone) {
+          ["dragenter", "dragover"].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+              event.preventDefault();
+              dropzone.classList.add("is-dragover");
+            });
+          });
+
+          ["dragleave", "dragend"].forEach((eventName) => {
+            dropzone.addEventListener(eventName, () => {
+              dropzone.classList.remove("is-dragover");
+            });
+          });
+
+          dropzone.addEventListener("drop", (event) => {
+            event.preventDefault();
+            dropzone.classList.remove("is-dragover");
+            if (event.dataTransfer?.files?.length) {
+              processFiles(event.dataTransfer.files);
+            }
+          });
+        }
+
+        document.addEventListener("paste", (event) => {
+          if (event.clipboardData?.files?.length) {
+            event.preventDefault();
+            processFiles(event.clipboardData.files);
+          }
+        });
+
+        return null;
+      })();
     </script>
   </body>
 </html>
