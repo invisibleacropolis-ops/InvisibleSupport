@@ -63,3 +63,39 @@
 1. Add bulk action controls (multi-select delete/share) for the document library.
 2. Integrate offline/online state indicators and reconciliation for large files.
 3. Explore automated UI regression capture for viewer and upload flows.
+
+## Session 2024-06-12 Start
+- Reviewed request to enhance base layout scrolling and implement dedicated Image Management module.
+- Outlined alignment with existing document workflow while extending for image-specific capabilities.
+
+### Plan
+1. Enable predictable scrolling on the index page to surface full-height layouts.
+2. Design and style image upload, gallery, and viewer components with responsive behavior.
+3. Implement client-side image store with validation, EXIF parsing, and blob URL management.
+4. Build gallery rendering logic supporting grid/list toggles, lazy loading, and preview selection.
+5. Mirror document direct-link, copy, and metadata patterns for images.
+
+### TODOs
+- [ ] Add explicit scrollbar styling/behavior to the index page.
+- [ ] Create image upload form with MIME/dimension validation and preview feedback.
+- [ ] Persist images with metadata including EXIF when available.
+- [ ] Render gallery in grid/list views with lazy-loaded thumbnails.
+- [ ] Implement image viewer with fit/zoom controls and direct-link copy field.
+- [ ] Document work, run checks, and close session log entry.
+
+## Session 2024-06-12 End
+- Added explicit scrollbar styling for consistent page navigation and visibility of extended layouts.
+- Delivered Image Management module with validated uploads, persistent storage, gallery toggles, lazy thumbnails, EXIF parsing, and zoomable previews.
+
+### Completed TODOs
+- [x] Add explicit scrollbar styling/behavior to the index page.
+- [x] Create image upload form with MIME/dimension validation and preview feedback.
+- [x] Persist images with metadata including EXIF when available.
+- [x] Render gallery in grid/list views with lazy-loaded thumbnails.
+- [x] Implement image viewer with fit/zoom controls and direct-link copy field.
+- [x] Document work, run checks, and close session log entry.
+
+### Next Session Plan
+1. Introduce bulk actions (multi-select delete/download) to accelerate media management.
+2. Surface image tagging and filtering capabilities leveraging EXIF facets (camera, lens, ISO).
+3. Explore offline caching strategies for frequently referenced thumbnails and previews.

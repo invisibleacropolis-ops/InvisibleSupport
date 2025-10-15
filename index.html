@@ -61,12 +61,32 @@
         box-sizing: border-box;
       }
 
+      html {
+        height: 100%;
+      }
+
       body {
         margin: 0;
         min-height: 100vh;
         font-family: var(--font-sans);
         background: var(--color-surface-muted);
         color: var(--color-text);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-gutter: stable;
+      }
+
+      body::-webkit-scrollbar {
+        width: 0.75rem;
+      }
+
+      body::-webkit-scrollbar-track {
+        background: color-mix(in srgb, var(--color-surface-muted) 80%, transparent 20%);
+      }
+
+      body::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, var(--color-accent) 45%, transparent 55%);
+        border-radius: var(--radius-md);
       }
 
       .theme {
@@ -156,6 +176,36 @@
 
         .portal__column--secondary {
           order: -1;
+        }
+      }
+
+      .image-portal {
+        display: grid;
+        gap: var(--space-xl);
+      }
+
+      .image-portal__header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        max-width: 48rem;
+      }
+
+      .image-portal__grid {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+        gap: var(--space-xl);
+        align-items: start;
+      }
+
+      .image-portal__column {
+        display: grid;
+        gap: var(--space-xl);
+      }
+
+      @media (max-width: 960px) {
+        .image-portal__grid {
+          grid-template-columns: 1fr;
         }
       }
 
@@ -391,6 +441,308 @@
       .form-grid--split {
         grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
         gap: var(--space-md);
+      }
+
+      .image-gallery__toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .image-gallery__search {
+        flex: 1 1 16rem;
+      }
+
+      .image-gallery__views {
+        display: inline-flex;
+        gap: var(--space-2xs);
+        padding: var(--space-2xs);
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--color-surface) 65%, transparent 35%);
+      }
+
+      .image-gallery__view {
+        border: none;
+        background: transparent;
+        color: var(--color-text-muted);
+        padding: var(--space-2xs) var(--space-sm);
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background-color var(--transition-base), color var(--transition-base);
+      }
+
+      .image-gallery__view.is-active {
+        background: var(--color-surface);
+        color: var(--color-text);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+      }
+
+      .image-gallery__items {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-md);
+      }
+
+      .image-gallery__items--grid {
+        grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+      }
+
+      .image-gallery__items--list {
+        grid-template-columns: 1fr;
+      }
+
+      .image-gallery__item {
+        min-width: 0;
+      }
+
+      .image-gallery__thumb {
+        width: 100%;
+        display: grid;
+        gap: var(--space-sm);
+        padding: var(--space-sm);
+        border-radius: var(--radius-lg);
+        border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+        background: color-mix(in srgb, var(--color-surface) 88%, transparent 12%);
+        cursor: pointer;
+        text-align: left;
+        transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
+      }
+
+      .image-gallery__thumb:hover,
+      .image-gallery__thumb:focus-visible {
+        outline: none;
+        border-color: color-mix(in srgb, var(--color-accent) 50%, transparent 50%);
+        box-shadow: 0 12px 24px rgba(75, 107, 251, 0.16);
+        transform: translateY(-1px);
+      }
+
+      .image-gallery__thumb.is-selected {
+        border-color: color-mix(in srgb, var(--color-accent) 65%, transparent 35%);
+        box-shadow: 0 16px 32px rgba(75, 107, 251, 0.24);
+      }
+
+      .image-gallery__thumb-media {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--color-surface-muted) 85%, transparent 15%);
+      }
+
+      .image-gallery__thumb-media img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--transition-base);
+      }
+
+      .image-gallery__thumb:hover .image-gallery__thumb-media img,
+      .image-gallery__thumb:focus-visible .image-gallery__thumb-media img {
+        transform: scale(1.03);
+      }
+
+      .image-gallery__thumb-meta {
+        display: grid;
+        gap: var(--space-2xs);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+      }
+
+      .image-gallery__meta-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--color-text);
+      }
+
+      .image-gallery__meta-subtitle {
+        color: var(--color-text-muted);
+      }
+
+      .image-gallery__thumb-extra {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2xs);
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+      }
+
+      .image-gallery__items--list .image-gallery__thumb {
+        grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+        align-items: center;
+      }
+
+      .image-gallery__items--list .image-gallery__thumb-media {
+        width: 100%;
+      }
+
+      .image-gallery__items--list .image-gallery__thumb-meta {
+        align-self: stretch;
+      }
+
+      .image-gallery__thumb-actions {
+        display: flex;
+        gap: var(--space-2xs);
+      }
+
+      .image-gallery__delete {
+        border: none;
+        background: transparent;
+        color: var(--color-danger);
+        font-size: 0.8rem;
+        cursor: pointer;
+        padding: var(--space-2xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        transition: background-color var(--transition-base), color var(--transition-base);
+      }
+
+      .image-gallery__delete:hover,
+      .image-gallery__delete:focus-visible {
+        background: color-mix(in srgb, var(--color-danger) 15%, transparent 85%);
+        color: var(--color-danger);
+        outline: none;
+      }
+
+      .image-gallery__empty {
+        margin: 0;
+        padding: var(--space-md);
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--color-surface) 85%, transparent 15%);
+      }
+
+      .image-viewer__canvas {
+        position: relative;
+        min-height: 20rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+        background: color-mix(in srgb, var(--color-surface) 82%, transparent 18%);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .image-viewer__canvas[data-fit="actual"] {
+        overflow: auto;
+      }
+
+      .image-viewer__canvas img {
+        max-width: 100%;
+        max-height: 100%;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transform-origin: center;
+        transition: transform 160ms ease, object-fit var(--transition-base);
+      }
+
+      .image-viewer__canvas[data-fit="cover"] img {
+        object-fit: cover;
+      }
+
+      .image-viewer__canvas[data-fit="actual"] img {
+        width: auto;
+        height: auto;
+        max-width: none;
+        max-height: none;
+        object-fit: contain;
+      }
+
+      .image-viewer__empty {
+        text-align: center;
+        display: grid;
+        gap: var(--space-2xs);
+        color: var(--color-text-muted);
+      }
+
+      .image-viewer__controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .image-viewer__control-group {
+        display: inline-flex;
+        gap: var(--space-2xs);
+        padding: var(--space-2xs);
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--color-surface) 65%, transparent 35%);
+      }
+
+      .image-viewer__control {
+        border: none;
+        background: transparent;
+        color: var(--color-text-muted);
+        padding: var(--space-2xs) var(--space-sm);
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background-color var(--transition-base), color var(--transition-base);
+      }
+
+      .image-viewer__control.is-active {
+        background: var(--color-surface);
+        color: var(--color-text);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+      }
+
+      .image-viewer__slider {
+        min-width: 10rem;
+        accent-color: var(--color-accent);
+      }
+
+      .image-viewer__meta {
+        display: grid;
+        gap: var(--space-lg);
+      }
+
+      .image-viewer__details {
+        display: grid;
+        gap: var(--space-md);
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+      }
+
+      .image-viewer__details dt {
+        margin: 0;
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+      }
+
+      .image-viewer__details dd {
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .image-viewer__exif {
+        border-top: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+        padding-top: var(--space-md);
+        display: grid;
+        gap: var(--space-sm);
+      }
+
+      .image-viewer__exif h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .image-viewer__exif-list {
+        display: grid;
+        gap: var(--space-2xs);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
       }
 
       .library-card__table {
@@ -844,6 +1196,235 @@
           </article>
         </section>
       </div>
+
+      <section class="image-portal" aria-labelledby="image-management">
+        <div class="image-portal__header">
+          <h2 class="portal__heading" id="image-management">Image management</h2>
+          <p class="portal__lede">
+            Curate high-resolution imagery with validation, EXIF awareness, and adaptive previews tailored for operations hand-offs.
+          </p>
+        </div>
+
+        <div class="image-portal__grid">
+          <div class="image-portal__column">
+            <article class="u-card image-upload-card" aria-labelledby="image-upload-title">
+              <div class="u-card__header">
+                <h2 class="u-card__title" id="image-upload-title">Image upload</h2>
+                <p class="u-card__subtitle">
+                  Drop incident captures, dashboards, or product screenshots with automatic checks for type and dimensions.
+                </p>
+              </div>
+
+              <form class="stack stack--lg" data-image-form novalidate>
+                <div class="stack">
+                  <div class="upload-card__dropzone" role="region" aria-label="Image upload dropzone" data-image-dropzone>
+                    <svg viewBox="0 0 48 48" role="presentation" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        d="M24 6a12 12 0 0 0-12 12v3H8a6 6 0 0 0 0 12h32a6 6 0 0 0 1-11.9V18A12 12 0 0 0 24 6Zm0 4a8 8 0 0 1 8 8v3h-4.5a1.5 1.5 0 0 0-1.07.44L24 23.86l-2.43-2.42A1.5 1.5 0 0 0 20.5 21H16v-3a8 8 0 0 1 8-8Zm-2 11.62 1.43 1.43a1.5 1.5 0 0 0 2.12 0L27 21.05l3.45 3.45a1.5 1.5 0 0 0 1.06.44H36a2 2 0 0 1 0 4H12a2 2 0 1 1 0-4h4.5l4.5-4.38Z"
+                      />
+                    </svg>
+                    <p class="portal__lede">
+                      Drag and drop visual assets or browse your workstation. Files are inspected before upload.
+                    </p>
+                    <div class="upload-card__actions">
+                      <label class="u-btn u-btn--primary" for="image-upload-input">Browse images</label>
+                      <span aria-hidden="true">or</span>
+                      <span class="u-card__subtitle">Drop anywhere to upload</span>
+                    </div>
+                    <p class="upload-card__accepted">
+                      JPEG, PNG, WebP, AVIF, GIF, and HEIC · Max dimension 8,192&nbsp;px on either side.
+                    </p>
+                  </div>
+                  <input
+                    class="u-input"
+                    type="file"
+                    id="image-upload-input"
+                    name="images"
+                    accept="image/*"
+                    multiple
+                    data-image-file-input
+                  />
+                </div>
+
+                <div class="form-grid form-grid--split">
+                  <label class="stack" for="image-title">
+                    <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
+                    <input
+                      class="u-input"
+                      type="text"
+                      id="image-title"
+                      placeholder="e.g. PagerDuty status overview"
+                      data-image-title
+                    />
+                  </label>
+                  <label class="stack" for="image-alt">
+                    <span class="u-card__subtitle">Alt text <span aria-hidden="true">(optional)</span></span>
+                    <input
+                      class="u-input"
+                      type="text"
+                      id="image-alt"
+                      placeholder="Accessible description for screen readers"
+                      data-image-alt
+                    />
+                  </label>
+                </div>
+
+                <div class="stack">
+                  <span class="u-card__subtitle">Upload progress</span>
+                  <div class="upload-progress" data-image-progress hidden>
+                    <div
+                      class="upload-progress__bar"
+                      role="progressbar"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      aria-valuenow="0"
+                      data-image-progress-bar
+                    >
+                      <span class="upload-progress__fill" data-image-progress-fill></span>
+                    </div>
+                    <p class="upload-progress__label" data-image-progress-label>Waiting for images…</p>
+                  </div>
+                </div>
+
+                <p class="upload-feedback" data-image-feedback role="alert" hidden></p>
+
+                <div class="upload-card__actions" style="justify-content: flex-start;">
+                  <button class="u-btn u-btn--primary" type="submit">Upload images</button>
+                  <button class="u-btn u-btn--ghost" type="reset">Reset</button>
+                </div>
+              </form>
+            </article>
+
+            <article class="u-card image-gallery-card" aria-labelledby="image-gallery">
+              <div class="u-card__header">
+                <h2 class="u-card__title" id="image-gallery">Image gallery</h2>
+                <p class="u-card__subtitle">Switch between grid and list layouts while thumbnails lazy-load in view.</p>
+              </div>
+
+              <div class="stack">
+                <div class="image-gallery__toolbar">
+                  <label class="stack image-gallery__search" for="image-gallery-search">
+                    <span class="u-card__subtitle">Filter images</span>
+                    <input
+                      class="u-input"
+                      type="search"
+                      id="image-gallery-search"
+                      placeholder="Search by title, file name, or EXIF metadata"
+                      autocomplete="off"
+                      data-image-search
+                    />
+                  </label>
+                  <div class="image-gallery__views" role="group" aria-label="Select gallery view">
+                    <button class="image-gallery__view is-active" type="button" data-image-view="grid">Grid</button>
+                    <button class="image-gallery__view" type="button" data-image-view="list">List</button>
+                  </div>
+                </div>
+
+                <ul class="image-gallery__items image-gallery__items--grid" data-image-gallery-items aria-live="polite"></ul>
+                <p class="image-gallery__empty" data-image-gallery-empty hidden>No images uploaded yet.</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="image-portal__column">
+            <article class="u-card image-viewer-card" aria-labelledby="image-viewer">
+              <div class="u-card__header">
+                <h2 class="u-card__title" id="image-viewer">Image viewer</h2>
+                <p class="u-card__subtitle">Fine-tune preview scaling, review metadata, and grab direct share links.</p>
+              </div>
+
+              <div class="stack" data-image-viewer>
+                <div class="image-viewer__canvas" data-image-canvas data-fit="contain">
+                  <div class="image-viewer__empty" data-image-empty>
+                    <h3>Waiting for a selection</h3>
+                    <p class="portal__lede" style="font-size: 0.95rem;">
+                      Choose a thumbnail to open a rich preview with zoom controls and EXIF-aware metadata.
+                    </p>
+                  </div>
+                  <img data-image-preview alt="" hidden />
+                </div>
+
+                <div class="image-viewer__controls" data-image-controls hidden>
+                  <div class="image-viewer__control-group" role="group" aria-label="Fit controls">
+                    <button class="image-viewer__control is-active" type="button" data-image-fit="contain">Fit</button>
+                    <button class="image-viewer__control" type="button" data-image-fit="cover">Fill</button>
+                    <button class="image-viewer__control" type="button" data-image-fit="actual">Actual</button>
+                  </div>
+                  <label class="stack" style="gap: var(--space-2xs); min-width: 10rem;">
+                    <span class="u-card__subtitle">Zoom</span>
+                    <input
+                      class="image-viewer__slider"
+                      type="range"
+                      min="25"
+                      max="200"
+                      step="5"
+                      value="100"
+                      data-image-zoom
+                    />
+                  </label>
+                </div>
+
+                <div class="image-viewer__meta" data-image-meta hidden>
+                  <dl class="image-viewer__details">
+                    <div>
+                      <dt>Title</dt>
+                      <dd data-image-name>—</dd>
+                    </div>
+                    <div>
+                      <dt>File name</dt>
+                      <dd data-image-filename>—</dd>
+                    </div>
+                    <div>
+                      <dt>Dimensions</dt>
+                      <dd data-image-dimensions>—</dd>
+                    </div>
+                    <div>
+                      <dt>Size</dt>
+                      <dd data-image-size>—</dd>
+                    </div>
+                    <div>
+                      <dt>Type</dt>
+                      <dd data-image-type>—</dd>
+                    </div>
+                    <div>
+                      <dt>Alt text</dt>
+                      <dd data-image-alt>—</dd>
+                    </div>
+                    <div>
+                      <dt>Captured</dt>
+                      <dd data-image-taken>—</dd>
+                    </div>
+                  </dl>
+
+                  <div class="image-viewer__exif" data-image-exif hidden>
+                    <h3>EXIF metadata</h3>
+                    <div class="image-viewer__exif-list" data-image-exif-list></div>
+                  </div>
+
+                  <div class="stack">
+                    <span class="u-card__subtitle">Direct link</span>
+                    <div class="viewer-card__link">
+                      <input
+                        class="u-input viewer-card__link-input"
+                        type="text"
+                        readonly
+                        id="image-direct-link"
+                        data-image-link
+                        value=""
+                      />
+                      <button class="u-btn u-btn--ghost" type="button" data-copy-target="#image-direct-link">Copy</button>
+                      <a class="u-btn u-btn--primary" href="#" target="_blank" rel="noopener" data-image-open aria-disabled="true">
+                        Open in new tab
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
     </main>
 
     <div class="u-modal" id="clipboard-confirm" role="dialog" aria-modal="true" aria-labelledby="clipboard-title">
@@ -1003,6 +1584,306 @@
         }
       }
 
+      const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+
+      const SUPPORTED_IMAGE_TYPES = new Set([
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/avif",
+        "image/gif",
+        "image/heic",
+        "image/heif",
+        "image/svg+xml",
+        "image/tiff",
+      ]);
+
+      const MAX_IMAGE_DIMENSION = 8192;
+
+      function isSupportedImageType(type) {
+        if (!type) return false;
+        const normalized = type.toLowerCase();
+        if (SUPPORTED_IMAGE_TYPES.has(normalized)) return true;
+        return normalized.startsWith("image/");
+      }
+
+      function readFileAsDataUrl(file, progressCallback) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(reader.error);
+          reader.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const progress = event.total > 0 ? event.loaded / event.total : 0;
+              progressCallback?.(progress);
+            }
+          };
+          reader.onload = () => {
+            resolve(typeof reader.result === "string" ? reader.result : "");
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function getImageDimensions(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const image = new Image();
+          image.onload = () => {
+            const width = image.naturalWidth || image.width;
+            const height = image.naturalHeight || image.height;
+            URL.revokeObjectURL(url);
+            resolve({ width, height });
+          };
+          image.onerror = (error) => {
+            URL.revokeObjectURL(url);
+            reject(error);
+          };
+          image.src = url;
+        });
+      }
+
+      function parseExifFromArrayBuffer(buffer) {
+        if (!buffer || !(buffer instanceof ArrayBuffer)) return {};
+        try {
+          const view = new DataView(buffer);
+          if (view.byteLength < 4) return {};
+          if (view.getUint16(0) !== 0xffd8) {
+            return {};
+          }
+          let offset = 2;
+          while (offset + 4 < view.byteLength) {
+            if (view.getUint8(offset) !== 0xff) break;
+            const marker = view.getUint8(offset + 1);
+            const length = view.getUint16(offset + 2);
+            if (marker === 0xe1 && length > 8) {
+              const start = offset + 4;
+              const header = String.fromCharCode(
+                view.getUint8(start),
+                view.getUint8(start + 1),
+                view.getUint8(start + 2),
+                view.getUint8(start + 3)
+              );
+              if (header === "Exif") {
+                return parseExifSegment(view, start + 6, length - 6);
+              }
+            }
+            offset += 2 + length;
+          }
+        } catch (error) {
+          console.warn("Failed to parse EXIF metadata", error);
+        }
+        return {};
+      }
+
+      function parseExifSegment(view, offset, length) {
+        if (!view || typeof offset !== "number" || typeof length !== "number") return {};
+        if (offset + length > view.byteLength) return {};
+        const tiffOffset = offset;
+        const byteOrder = view.getUint16(tiffOffset);
+        const littleEndian = byteOrder === 0x4949;
+        if (byteOrder !== 0x4949 && byteOrder !== 0x4d4d) return {};
+        const magic = view.getUint16(tiffOffset + 2, littleEndian);
+        if (magic !== 0x002a) return {};
+        const firstIfdOffset = view.getUint32(tiffOffset + 4, littleEndian);
+        const visited = new Set();
+        const queue = [firstIfdOffset];
+        const exif = {};
+
+        const TYPE_SIZES = {
+          1: 1,
+          2: 1,
+          3: 2,
+          4: 4,
+          5: 8,
+          7: 1,
+          10: 8,
+        };
+
+        function readValue(type, count, valueOffset, entryOffset) {
+          const typeSize = TYPE_SIZES[type];
+          if (!typeSize) return null;
+          const valueSize = typeSize * count;
+          let dataOffset;
+          if (valueSize <= 4) {
+            dataOffset = entryOffset + 8;
+          } else {
+            dataOffset = tiffOffset + valueOffset;
+          }
+          if (dataOffset + valueSize > tiffOffset + length) return null;
+          switch (type) {
+            case 2: {
+              let text = "";
+              for (let index = 0; index < valueSize; index += 1) {
+                const code = view.getUint8(dataOffset + index);
+                if (code === 0) break;
+                text += String.fromCharCode(code);
+              }
+              return text.trim();
+            }
+            case 3: {
+              if (count === 1) {
+                return view.getUint16(dataOffset, littleEndian);
+              }
+              return Array.from({ length: count }, (_, i) =>
+                view.getUint16(dataOffset + i * 2, littleEndian)
+              );
+            }
+            case 4: {
+              if (count === 1) {
+                return view.getUint32(dataOffset, littleEndian);
+              }
+              return Array.from({ length: count }, (_, i) =>
+                view.getUint32(dataOffset + i * 4, littleEndian)
+              );
+            }
+            case 5: {
+              const values = Array.from({ length: count }, (_, i) => {
+                const numerator = view.getUint32(dataOffset + i * 8, littleEndian);
+                const denominator = view.getUint32(dataOffset + i * 8 + 4, littleEndian);
+                return denominator ? numerator / denominator : 0;
+              });
+              return count === 1 ? values[0] : values;
+            }
+            case 10: {
+              const values = Array.from({ length: count }, (_, i) => {
+                const numerator = view.getInt32(dataOffset + i * 8, littleEndian);
+                const denominator = view.getInt32(dataOffset + i * 8 + 4, littleEndian);
+                return denominator ? numerator / denominator : 0;
+              });
+              return count === 1 ? values[0] : values;
+            }
+            case 7:
+            case 1: {
+              if (count === 1) {
+                return view.getUint8(dataOffset);
+              }
+              return Array.from({ length: count }, (_, i) => view.getUint8(dataOffset + i));
+            }
+            default:
+              return null;
+          }
+        }
+
+        function queueIfd(offsetValue) {
+          if (typeof offsetValue !== "number") return;
+          if (offsetValue === 0) return;
+          if (visited.has(offsetValue)) return;
+          queue.push(offsetValue);
+        }
+
+        while (queue.length) {
+          const ifdOffset = queue.shift();
+          if (typeof ifdOffset !== "number") continue;
+          if (visited.has(ifdOffset)) continue;
+          visited.add(ifdOffset);
+          const absolute = tiffOffset + ifdOffset;
+          if (absolute + 2 > tiffOffset + length) continue;
+          const entryCount = view.getUint16(absolute, littleEndian);
+          for (let index = 0; index < entryCount; index += 1) {
+            const entryOffset = absolute + 2 + index * 12;
+            if (entryOffset + 12 > tiffOffset + length) break;
+            const tag = view.getUint16(entryOffset, littleEndian);
+            const type = view.getUint16(entryOffset + 2, littleEndian);
+            const count = view.getUint32(entryOffset + 4, littleEndian);
+            const valueOffset = view.getUint32(entryOffset + 8, littleEndian);
+            if (tag === 0x8769 || tag === 0xa005) {
+              queueIfd(valueOffset);
+              continue;
+            }
+            const value = readValue(type, count, valueOffset, entryOffset);
+            switch (tag) {
+              case 0x010f:
+                if (value) exif.make = value;
+                break;
+              case 0x0110:
+                if (value) exif.model = value;
+                break;
+              case 0x0112:
+                if (typeof value === "number") exif.orientation = value;
+                break;
+              case 0x0131:
+                if (value) exif.software = value;
+                break;
+              case 0x0132:
+                if (value && !exif.dateTimeOriginal) exif.dateTimeOriginal = value;
+                break;
+              case 0x829a:
+                if (value) exif.exposureTime = value;
+                break;
+              case 0x829d:
+                if (value) exif.fNumber = value;
+                break;
+              case 0x8827:
+                if (value) {
+                  exif.iso = Array.isArray(value) ? value[0] : value;
+                }
+                break;
+              case 0x9003:
+                if (value) exif.dateTimeOriginal = value;
+                break;
+              case 0x9201:
+                if (value) exif.shutterSpeed = value;
+                break;
+              case 0x9204:
+                if (value) exif.exposureBias = value;
+                break;
+              case 0x920a:
+                if (value) exif.focalLength = value;
+                break;
+              case 0xa405:
+                if (value) exif.focalLength35mm = value;
+                break;
+              case 0xa434:
+                if (value) exif.lensModel = value;
+                break;
+              default:
+                break;
+            }
+          }
+          const nextIfdOffset = view.getUint32(absolute + 2 + entryCount * 12, littleEndian);
+          if (nextIfdOffset) {
+            queueIfd(nextIfdOffset);
+          }
+        }
+
+        return exif;
+      }
+
+      function formatExifDate(value) {
+        if (!value || typeof value !== "string") return null;
+        const cleaned = value.replace(/\0/g, "").trim();
+        const match = cleaned.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+        if (!match) return cleaned || null;
+        const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`;
+        const date = new Date(iso);
+        if (Number.isNaN(date.getTime())) return cleaned || null;
+        return date.toISOString();
+      }
+
+      function describeOrientation(value) {
+        switch (value) {
+          case 2:
+            return "Mirrored horizontally";
+          case 3:
+            return "Rotated 180°";
+          case 4:
+            return "Mirrored vertically";
+          case 5:
+            return "Mirrored horizontally & rotated 90°";
+          case 6:
+            return "Rotated 90° clockwise";
+          case 7:
+            return "Mirrored horizontally & rotated 270°";
+          case 8:
+            return "Rotated 90° counter-clockwise";
+          default:
+            return value ? `Orientation ${value}` : null;
+        }
+      }
+
       const DocumentStore = (() => {
         const STORAGE_KEY = "invisibleSupport.documents";
         const listeners = new Set();
@@ -1138,6 +2019,174 @@
         });
 
         return { subscribe, createDocument, removeDocument, getDocument, getDocuments };
+      })();
+
+      const ImageStore = (() => {
+        const STORAGE_KEY = "invisibleSupport.images";
+        const listeners = new Set();
+        let images = [];
+
+        function notify() {
+          listeners.forEach((listener) => listener([...images]));
+        }
+
+        function persist() {
+          try {
+            const serializable = images.map(({ blobUrl, ...rest }) => rest);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+          } catch (error) {
+            console.error("Unable to persist images", error);
+          }
+        }
+
+        function hydrate(rawImages) {
+          return rawImages.map((image) => {
+            const { blob, type } = dataUrlToBlob(image.dataUrl, image.type || "image/png");
+            const blobUrl = URL.createObjectURL(blob);
+            return { ...image, type, blobUrl };
+          });
+        }
+
+        function load() {
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (!stored) return;
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+              images = hydrate(parsed).sort(
+                (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              );
+            }
+          } catch (error) {
+            console.error("Failed to load stored images", error);
+            images = [];
+          }
+        }
+
+        function generateId() {
+          return typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `img-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        }
+
+        function normalizeImage(file, extras, dataUrl, dimensions, exif) {
+          const now = new Date().toISOString();
+          const title = extras.title?.trim();
+          const alt = extras.alt?.trim();
+          const type = file.type || guessMimeType(file.name, "image/png");
+          const blobUrl = URL.createObjectURL(file);
+          const capturedAtIso = formatExifDate(exif.dateTimeOriginal);
+          return {
+            id: generateId(),
+            name: file.name,
+            title: title || file.name,
+            alt: alt || "",
+            type,
+            size: file.size,
+            width: dimensions.width,
+            height: dimensions.height,
+            updatedAt: now,
+            capturedAt: capturedAtIso,
+            exif,
+            blobUrl,
+            dataUrl,
+          };
+        }
+
+        function addImage(image) {
+          images = [image, ...images].sort(
+            (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+          persist();
+          notify();
+        }
+
+        async function createImage(file, extras = {}, progressCallback) {
+          if (!(file instanceof File)) {
+            const error = new Error("Invalid image file");
+            error.code = "invalid";
+            throw error;
+          }
+          const mimeType = file.type || guessMimeType(file.name, "image/png");
+          if (!isSupportedImageType(mimeType)) {
+            const error = new Error("Unsupported image type");
+            error.code = "type";
+            throw error;
+          }
+
+          let dimensions;
+          try {
+            dimensions = await getImageDimensions(file);
+          } catch (error) {
+            const dimensionError = new Error("Unable to read image dimensions");
+            dimensionError.code = "dimensions";
+            throw dimensionError;
+          }
+
+          if (
+            !dimensions ||
+            dimensions.width > MAX_IMAGE_DIMENSION ||
+            dimensions.height > MAX_IMAGE_DIMENSION
+          ) {
+            const sizeError = new Error("Image exceeds maximum dimensions");
+            sizeError.code = "max-dimensions";
+            sizeError.details = dimensions;
+            throw sizeError;
+          }
+
+          const arrayBufferPromise = file.arrayBuffer().catch(() => null);
+          const dataUrl = await readFileAsDataUrl(file, progressCallback);
+          let exif = {};
+          try {
+            const buffer = await arrayBufferPromise;
+            if (buffer) {
+              exif = parseExifFromArrayBuffer(buffer);
+            }
+          } catch (error) {
+            console.warn("Unable to parse EXIF data", error);
+          }
+
+          const imageRecord = normalizeImage(file, extras, dataUrl, dimensions, exif);
+          addImage(imageRecord);
+          return imageRecord;
+        }
+
+        function removeImage(id) {
+          const index = images.findIndex((image) => image.id === id);
+          if (index === -1) return;
+          const [removed] = images.splice(index, 1);
+          if (removed?.blobUrl) {
+            URL.revokeObjectURL(removed.blobUrl);
+          }
+          persist();
+          notify();
+        }
+
+        function subscribe(listener) {
+          listeners.add(listener);
+          listener([...images]);
+          return () => listeners.delete(listener);
+        }
+
+        function getImage(id) {
+          return images.find((image) => image.id === id) ?? null;
+        }
+
+        function getImages() {
+          return [...images];
+        }
+
+        load();
+
+        window.addEventListener("beforeunload", () => {
+          images.forEach((image) => {
+            if (image.blobUrl) {
+              URL.revokeObjectURL(image.blobUrl);
+            }
+          });
+        });
+
+        return { subscribe, createImage, removeImage, getImage, getImages };
       })();
 
       const DocumentViewer = (() => {
@@ -1380,6 +2429,642 @@
             DocumentStore.removeDocument(id);
           }
         });
+      })();
+
+      const ImageViewer = (() => {
+        const canvas = document.querySelector("[data-image-canvas]");
+        const preview = canvas?.querySelector("[data-image-preview]");
+        const emptyState = canvas?.querySelector("[data-image-empty]");
+        const controls = document.querySelector("[data-image-controls]");
+        const fitButtons = controls ? Array.from(controls.querySelectorAll("[data-image-fit]")) : [];
+        const zoomSlider = controls?.querySelector("[data-image-zoom]");
+        const meta = document.querySelector("[data-image-meta]");
+        const nameEl = document.querySelector("[data-image-name]");
+        const filenameEl = document.querySelector("[data-image-filename]");
+        const dimensionsEl = document.querySelector("[data-image-dimensions]");
+        const sizeEl = document.querySelector("[data-image-size]");
+        const typeEl = document.querySelector("[data-image-type]");
+        const altEl = document.querySelector("[data-image-alt]");
+        const takenEl = document.querySelector("[data-image-taken]");
+        const linkInput = document.querySelector("[data-image-link]");
+        const openLink = document.querySelector("[data-image-open]");
+        const exifContainer = document.querySelector("[data-image-exif]");
+        const exifList = document.querySelector("[data-image-exif-list]");
+        let currentId = null;
+        let currentFit = "contain";
+        let zoom = 100;
+        let currentOrientation = 1;
+
+        function emitSelectionChange() {
+          document.dispatchEvent(
+            new CustomEvent("imageviewerchange", { detail: { id: currentId } })
+          );
+        }
+
+        function resolveOrientationTransform(value) {
+          switch (value) {
+            case 2:
+              return "scaleX(-1)";
+            case 3:
+              return "rotate(180deg)";
+            case 4:
+              return "scaleY(-1)";
+            case 5:
+              return "rotate(90deg) scaleX(-1)";
+            case 6:
+              return "rotate(90deg)";
+            case 7:
+              return "rotate(-90deg) scaleX(-1)";
+            case 8:
+              return "rotate(-90deg)";
+            default:
+              return "";
+          }
+        }
+
+        function applyTransform() {
+          if (!preview) return;
+          const scale = zoom / 100;
+          const orientationTransform = resolveOrientationTransform(currentOrientation);
+          if (orientationTransform) {
+            preview.style.transform = `${orientationTransform} scale(${scale})`;
+          } else {
+            preview.style.transform = `scale(${scale})`;
+          }
+        }
+
+        function setZoom(value) {
+          const clamped = Math.max(25, Math.min(200, Number(value) || 100));
+          zoom = clamped;
+          if (zoomSlider && zoomSlider.value !== String(clamped)) {
+            zoomSlider.value = String(clamped);
+          }
+          applyTransform();
+        }
+
+        function setFit(nextFit) {
+          currentFit = nextFit;
+          if (canvas) {
+            canvas.dataset.fit = nextFit;
+          }
+          fitButtons.forEach((button) => {
+            button.classList.toggle("is-active", button.dataset.imageFit === nextFit);
+          });
+          applyTransform();
+        }
+
+        function clearMeta() {
+          if (nameEl) nameEl.textContent = "—";
+          if (filenameEl) filenameEl.textContent = "—";
+          if (dimensionsEl) dimensionsEl.textContent = "—";
+          if (sizeEl) sizeEl.textContent = "—";
+          if (typeEl) typeEl.textContent = "—";
+          if (altEl) altEl.textContent = "—";
+          if (takenEl) takenEl.textContent = "—";
+          if (linkInput) linkInput.value = "";
+          if (openLink) {
+            openLink.href = "#";
+            openLink.setAttribute("aria-disabled", "true");
+          }
+          if (exifList) {
+            exifList.textContent = "";
+          }
+          if (exifContainer) {
+            exifContainer.hidden = true;
+          }
+        }
+
+        function renderEmpty() {
+          currentId = null;
+          currentOrientation = 1;
+          zoom = 100;
+          if (zoomSlider) {
+            zoomSlider.value = "100";
+          }
+          if (canvas) {
+            canvas.dataset.fit = currentFit;
+          }
+          if (preview) {
+            preview.hidden = true;
+            preview.removeAttribute("src");
+            preview.style.transform = "scale(1)";
+          }
+          if (emptyState) {
+            emptyState.hidden = false;
+          }
+          if (controls) controls.hidden = true;
+          if (meta) meta.hidden = true;
+          clearMeta();
+          setFit(currentFit);
+          emitSelectionChange();
+        }
+
+        function formatExifEntries(exif) {
+          if (!exif || typeof exif !== "object") return [];
+          const entries = [];
+          const camera = [exif.make, exif.model].filter(Boolean).join(" ").trim();
+          if (camera) {
+            entries.push({ label: "Camera", value: camera });
+          }
+          if (exif.lensModel) {
+            entries.push({ label: "Lens", value: exif.lensModel });
+          }
+          if (typeof exif.exposureTime === "number" && exif.exposureTime > 0) {
+            const exposure = exif.exposureTime < 1
+              ? `1/${Math.round(1 / exif.exposureTime)} s`
+              : `${exif.exposureTime.toFixed(2)} s`;
+            entries.push({ label: "Exposure", value: exposure });
+          }
+          if (typeof exif.shutterSpeed === "number" && !Number.isNaN(exif.shutterSpeed)) {
+            entries.push({ label: "Shutter speed", value: `${exif.shutterSpeed.toFixed(2)} EV` });
+          }
+          if (typeof exif.fNumber === "number" && exif.fNumber > 0) {
+            entries.push({ label: "Aperture", value: `ƒ/${exif.fNumber.toFixed(1)}` });
+          }
+          if (typeof exif.iso === "number" && exif.iso > 0) {
+            entries.push({ label: "ISO", value: `ISO ${exif.iso}` });
+          }
+          if (typeof exif.exposureBias === "number" && !Number.isNaN(exif.exposureBias)) {
+            const bias = exif.exposureBias.toFixed(2);
+            entries.push({ label: "Exposure bias", value: `${bias} EV` });
+          }
+          if (typeof exif.focalLength === "number" && exif.focalLength > 0) {
+            entries.push({ label: "Focal length", value: `${exif.focalLength.toFixed(1)} mm` });
+          }
+          if (typeof exif.focalLength35mm === "number" && exif.focalLength35mm > 0) {
+            entries.push({ label: "35mm equivalent", value: `${exif.focalLength35mm} mm` });
+          }
+          if (exif.software) {
+            entries.push({ label: "Software", value: exif.software });
+          }
+          const orientationDescription = describeOrientation(exif.orientation);
+          if (orientationDescription) {
+            entries.push({ label: "Orientation", value: orientationDescription });
+          }
+          return entries;
+        }
+
+        function renderExif(exif) {
+          if (!exifContainer || !exifList) return;
+          const entries = formatExifEntries(exif);
+          exifList.textContent = "";
+          if (!entries.length) {
+            exifContainer.hidden = true;
+            return;
+          }
+          entries.forEach(({ label, value }) => {
+            const item = document.createElement("div");
+            const strong = document.createElement("strong");
+            strong.textContent = `${label}:`;
+            item.append(strong, document.createTextNode(` ${value}`));
+            exifList.appendChild(item);
+          });
+          exifContainer.hidden = false;
+        }
+
+        function renderImage(image) {
+          if (!image) {
+            renderEmpty();
+            return;
+          }
+          currentId = image.id;
+          currentOrientation = typeof image.exif?.orientation === "number" ? image.exif.orientation : 1;
+          if (zoomSlider) {
+            zoomSlider.value = "100";
+          }
+          zoom = 100;
+          if (preview) {
+            const src = image.blobUrl || image.dataUrl || "";
+            if (src) {
+              preview.src = src;
+            }
+            preview.alt = image.alt || image.title || image.name;
+            preview.hidden = false;
+          }
+          if (emptyState) {
+            emptyState.hidden = true;
+          }
+          if (controls) controls.hidden = false;
+          if (meta) meta.hidden = false;
+          setFit(currentFit || "contain");
+
+          if (nameEl) nameEl.textContent = image.title || image.name;
+          if (filenameEl) filenameEl.textContent = image.name;
+          if (dimensionsEl) {
+            dimensionsEl.textContent = image.width && image.height ? `${image.width} × ${image.height}px` : "—";
+          }
+          if (sizeEl) sizeEl.textContent = formatBytes(image.size);
+          if (typeEl) typeEl.textContent = image.type || "Unknown";
+          if (altEl) altEl.textContent = image.alt || "—";
+          if (takenEl) {
+            let capturedLabel = "—";
+            if (image.capturedAt) {
+              const capturedDate = new Date(image.capturedAt);
+              if (!Number.isNaN(capturedDate.getTime())) {
+                capturedLabel = dateTimeFormatter.format(capturedDate);
+              }
+            } else if (image.exif?.dateTimeOriginal) {
+              capturedLabel = image.exif.dateTimeOriginal.replace(/\0/g, "").trim();
+            }
+            takenEl.textContent = capturedLabel || "—";
+          }
+
+          if (linkInput) {
+            linkInput.value = image.blobUrl || image.dataUrl || "";
+          }
+          if (openLink) {
+            if (image.blobUrl || image.dataUrl) {
+              openLink.href = image.blobUrl || image.dataUrl || "#";
+              openLink.removeAttribute("aria-disabled");
+            } else {
+              openLink.href = "#";
+              openLink.setAttribute("aria-disabled", "true");
+            }
+          }
+
+          renderExif(image.exif);
+          applyTransform();
+          emitSelectionChange();
+        }
+
+        fitButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const fit = button.dataset.imageFit;
+            if (!fit) return;
+            setFit(fit);
+          });
+        });
+
+        if (zoomSlider) {
+          zoomSlider.addEventListener("input", (event) => {
+            setZoom(event.target.value);
+          });
+          zoomSlider.addEventListener("change", (event) => {
+            setZoom(event.target.value);
+          });
+        }
+
+        ImageStore.subscribe((items) => {
+          if (!currentId) {
+            if (items.length === 0) {
+              renderEmpty();
+            }
+            return;
+          }
+          const match = items.find((image) => image.id === currentId);
+          if (!match) {
+            renderEmpty();
+          } else {
+            renderImage(match);
+          }
+        });
+
+        renderEmpty();
+
+        return {
+          selectImage(id) {
+            const image = ImageStore.getImage(id);
+            if (image) {
+              renderImage(image);
+            } else {
+              renderEmpty();
+            }
+          },
+          getSelectedId() {
+            return currentId;
+          },
+        };
+      })();
+
+      const ImageGallery = (() => {
+        const items = document.querySelector("[data-image-gallery-items]");
+        const emptyState = document.querySelector("[data-image-gallery-empty]");
+        const searchInput = document.querySelector("[data-image-search]");
+        const viewButtons = Array.from(document.querySelectorAll("[data-image-view]"));
+        if (!items) return null;
+        let images = [];
+        let query = "";
+        let viewMode = "grid";
+
+        const observer = typeof IntersectionObserver !== "undefined"
+          ? new IntersectionObserver((entries, obs) => {
+              entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                const target = entry.target;
+                const src = target.dataset.src;
+                if (src) {
+                  target.src = src;
+                  target.removeAttribute("data-src");
+                }
+                obs.unobserve(target);
+              });
+            }, { rootMargin: "120px", threshold: 0.1 })
+          : null;
+
+        function clearObserver() {
+          observer?.disconnect();
+        }
+
+        function matches(image) {
+          if (!query) return true;
+          const value = query.toLowerCase();
+          const fields = [
+            image.title,
+            image.name,
+            image.type,
+            image.alt,
+            image.exif?.make,
+            image.exif?.model,
+            image.exif?.lensModel,
+            image.exif?.software,
+          ];
+          return fields
+            .filter(Boolean)
+            .some((field) => String(field).toLowerCase().includes(value));
+        }
+
+        function syncSelection() {
+          const selectedId = ImageViewer.getSelectedId();
+          items.querySelectorAll(".image-gallery__thumb").forEach((thumb) => {
+            thumb.classList.toggle("is-selected", thumb.dataset.id === selectedId);
+          });
+        }
+
+        function render() {
+          clearObserver();
+          items.textContent = "";
+          const filtered = images.filter(matches);
+          if (emptyState) {
+            emptyState.hidden = filtered.length > 0;
+          }
+          items.classList.toggle("image-gallery__items--grid", viewMode === "grid");
+          items.classList.toggle("image-gallery__items--list", viewMode === "list");
+          if (filtered.length === 0) {
+            return;
+          }
+
+          filtered.forEach((image) => {
+            const listItem = document.createElement("li");
+            listItem.className = "image-gallery__item";
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "image-gallery__thumb";
+            button.dataset.id = image.id;
+            button.setAttribute("aria-label", `Select ${image.title || image.name}`);
+
+            const media = document.createElement("span");
+            media.className = "image-gallery__thumb-media";
+            const img = document.createElement("img");
+            img.alt = image.alt || image.title || image.name;
+            img.decoding = "async";
+            img.loading = "lazy";
+            const previewSrc = image.blobUrl || image.dataUrl;
+            if (previewSrc) {
+              if (observer) {
+                img.dataset.src = previewSrc;
+                observer.observe(img);
+              } else {
+                img.src = previewSrc;
+              }
+            }
+            media.appendChild(img);
+
+            const meta = document.createElement("div");
+            meta.className = "image-gallery__thumb-meta";
+            const title = document.createElement("span");
+            title.className = "image-gallery__meta-title";
+            title.textContent = image.title || image.name;
+            const subtitle = document.createElement("span");
+            subtitle.className = "image-gallery__meta-subtitle";
+            subtitle.textContent = image.name;
+            const extra = document.createElement("div");
+            extra.className = "image-gallery__thumb-extra";
+            if (image.width && image.height) {
+              const dimensions = document.createElement("span");
+              dimensions.textContent = `${image.width}×${image.height}px`;
+              extra.appendChild(dimensions);
+            }
+            if (image.size) {
+              const size = document.createElement("span");
+              size.textContent = formatBytes(image.size);
+              extra.appendChild(size);
+            }
+            meta.append(title, subtitle, extra);
+
+            const actions = document.createElement("div");
+            actions.className = "image-gallery__thumb-actions";
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className = "image-gallery__delete";
+            removeButton.textContent = "Remove";
+            removeButton.addEventListener("click", (event) => {
+              event.stopPropagation();
+              ImageStore.removeImage(image.id);
+            });
+            actions.appendChild(removeButton);
+
+            button.append(media, meta, actions);
+            button.addEventListener("click", () => {
+              ImageViewer.selectImage(image.id);
+              syncSelection();
+            });
+
+            listItem.appendChild(button);
+            items.appendChild(listItem);
+          });
+
+          syncSelection();
+        }
+
+        ImageStore.subscribe((nextImages) => {
+          images = nextImages;
+          render();
+        });
+
+        viewButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const nextView = button.dataset.imageView;
+            if (!nextView) return;
+            viewMode = nextView;
+            viewButtons.forEach((toggle) => {
+              toggle.classList.toggle("is-active", toggle.dataset.imageView === nextView);
+            });
+            render();
+          });
+        });
+
+        searchInput?.addEventListener("input", (event) => {
+          query = event.target.value.trim().toLowerCase();
+          render();
+        });
+
+        document.addEventListener("imageviewerchange", () => {
+          syncSelection();
+        });
+
+        return null;
+      })();
+
+      const ImageUpload = (() => {
+        const form = document.querySelector("[data-image-form]");
+        if (!form) return null;
+        const fileInput = form.querySelector("[data-image-file-input]");
+        const titleInput = form.querySelector("[data-image-title]");
+        const altInput = form.querySelector("[data-image-alt]");
+        const progressContainer = form.querySelector("[data-image-progress]");
+        const progressBar = progressContainer?.querySelector("[data-image-progress-bar]");
+        const progressFill = form.querySelector("[data-image-progress-fill]");
+        const progressLabel = form.querySelector("[data-image-progress-label]");
+        const feedback = form.querySelector("[data-image-feedback]");
+        const dropzone = form.querySelector("[data-image-dropzone]");
+
+        function resetFeedback() {
+          if (!feedback) return;
+          feedback.hidden = true;
+          feedback.textContent = "";
+          feedback.classList.remove("is-error", "is-success");
+        }
+
+        function showFeedback(message, tone) {
+          if (!feedback) return;
+          feedback.textContent = message;
+          feedback.hidden = false;
+          feedback.classList.remove("is-error", "is-success");
+          if (tone === "error") {
+            feedback.classList.add("is-error");
+          } else if (tone === "success") {
+            feedback.classList.add("is-success");
+          }
+        }
+
+        function hideProgress() {
+          if (!progressContainer || !progressFill || !progressLabel || !progressBar) return;
+          progressContainer.hidden = true;
+          progressFill.style.width = "0%";
+          progressBar.setAttribute("aria-valuenow", "0");
+          progressLabel.textContent = "Waiting for images…";
+        }
+
+        function updateProgress(percent, label) {
+          if (!progressContainer || !progressFill || !progressLabel || !progressBar) return;
+          const clamped = Math.max(0, Math.min(100, percent));
+          progressContainer.hidden = false;
+          progressFill.style.width = `${clamped}%`;
+          progressBar.setAttribute("aria-valuenow", String(Math.round(clamped)));
+          if (label) {
+            progressLabel.textContent = label;
+          }
+        }
+
+        function describeError(file, error) {
+          switch (error?.code) {
+            case "type":
+              return `${file.name} is not a supported image type.`;
+            case "max-dimensions":
+              return `${file.name} exceeds the ${MAX_IMAGE_DIMENSION}px dimension limit.`;
+            case "dimensions":
+              return `Unable to read dimensions for ${file.name}.`;
+            default:
+              return `Upload failed for ${file.name}.`;
+          }
+        }
+
+        async function processFiles(fileList) {
+          const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
+          if (!files.length) {
+            showFeedback("Select at least one image to upload.", "error");
+            return;
+          }
+
+          resetFeedback();
+          let lastImage = null;
+          const baseTitle = titleInput?.value.trim() ?? "";
+          const baseAlt = altInput?.value.trim() ?? "";
+
+          for (const [index, file] of files.entries()) {
+            updateProgress((index / files.length) * 100, `${file.name} • validating`);
+            try {
+              const imageRecord = await ImageStore.createImage(
+                file,
+                {
+                  title: baseTitle
+                    ? files.length > 1
+                      ? `${baseTitle} (${index + 1})`
+                      : baseTitle
+                    : undefined,
+                  alt: baseAlt
+                    ? files.length > 1
+                      ? `${baseAlt} (${index + 1})`
+                      : baseAlt
+                    : undefined,
+                },
+                (progress) => {
+                  const overall = ((index + progress) / files.length) * 100;
+                  updateProgress(overall, `${file.name} • ${Math.round(progress * 100)}%`);
+                }
+              );
+              lastImage = imageRecord;
+            } catch (error) {
+              console.error("Image upload failed", error);
+              showFeedback(describeError(file, error), "error");
+              hideProgress();
+              return;
+            }
+          }
+
+          updateProgress(100, files.length > 1 ? `${files.length} images uploaded` : `${files[0].name} uploaded`);
+          showFeedback("Upload complete. Images are ready in the gallery.", "success");
+          form.reset();
+          if (fileInput) {
+            fileInput.value = "";
+          }
+          setTimeout(() => {
+            hideProgress();
+          }, 600);
+          if (lastImage) {
+            ImageViewer.selectImage(lastImage.id);
+          }
+        }
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          processFiles(fileInput?.files ?? []);
+        });
+
+        form.addEventListener("reset", () => {
+          hideProgress();
+          resetFeedback();
+        });
+
+        fileInput?.addEventListener("change", () => {
+          resetFeedback();
+        });
+
+        if (dropzone) {
+          ["dragenter", "dragover"].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+              event.preventDefault();
+              dropzone.classList.add("is-dragover");
+            });
+          });
+
+          ["dragleave", "dragend"].forEach((eventName) => {
+            dropzone.addEventListener(eventName, () => {
+              dropzone.classList.remove("is-dragover");
+            });
+          });
+
+          dropzone.addEventListener("drop", (event) => {
+            event.preventDefault();
+            dropzone.classList.remove("is-dragover");
+            if (event.dataTransfer?.files?.length) {
+              processFiles(event.dataTransfer.files);
+            }
+          });
+        }
+
+        return null;
       })();
 
       const UploadController = (() => {
