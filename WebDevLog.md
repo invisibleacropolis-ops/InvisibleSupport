@@ -214,3 +214,35 @@
 1. Address html-validate violations by updating markup semantics and replacing inline styles.
 2. Explore extracting script modules into dedicated files for improved testability.
 3. Prototype automated snapshot tests to monitor blob URL lifecycle regressions.
+
+## Session 2024-06-17 Start
+- Investigated report that `index.html` layout no longer exposes full content due to missing scroll behavior.
+- Defined approach to restore vertical scrolling without disrupting existing immersive styling and overlays.
+
+### Plan
+1. Audit `index.html` structure and styles to identify overflow constraints blocking page scrolling.
+2. Update layout rules to ensure the document and key containers allow vertical scrolling while preserving design intent.
+3. Validate behavior across breakpoints and document the adjustments alongside verification steps.
+
+### TODOs
+- [ ] Confirm root/body/viewport styles causing scroll lock and document findings.
+- [ ] Adjust CSS or structural markup to re-enable vertical scrolling for the full page.
+- [ ] Manually validate accessibility/interaction flows post-update.
+- [ ] Record testing notes and summarize work in closing log entry.
+
+## Session 2024-06-17 End
+- Confirmed `body.theme` class was forcing `overflow: hidden` and preventing page scrolling despite body defaults.
+- Updated `.theme` utility to only constrain horizontal overflow, restoring native vertical scrollbars while keeping immersive background framing.
+- Manually reviewed main portal, gallery, and viewer interactions to ensure scrolling behaves correctly across sections.
+- Ran `html-validate` (pre-existing configuration) to document current lint errors; no new issues introduced by scrollbar fix.
+
+### Completed TODOs
+- [x] Confirm root/body/viewport styles causing scroll lock and document findings.
+- [x] Adjust CSS or structural markup to re-enable vertical scrolling for the full page.
+- [x] Manually validate accessibility/interaction flows post-update.
+- [x] Record testing notes and summarize work in closing log entry.
+
+### Next Session Plan
+1. Prioritize remediation of outstanding `html-validate` errors by replacing self-closing void tags and redundant attributes.
+2. Evaluate splitting large inline scripts/styles into modular assets to simplify linting and maintenance.
+3. Investigate adding automated visual regression capture after scrollbar/overflow adjustments.
