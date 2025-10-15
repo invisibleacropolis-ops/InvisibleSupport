@@ -215,6 +215,10 @@
         background: linear-gradient(90deg, var(--color-danger), color-mix(in srgb, var(--color-danger) 70%, var(--color-accent) 30%));
       }
 
+      .storage-meter.is-exceeded .storage-meter__progress-bar {
+        background: var(--color-danger);
+      }
+
       .storage-meter__warning {
         margin: 0;
         font-size: 0.85rem;
@@ -437,6 +441,11 @@
           background-color var(--transition-base);
       }
 
+      .u-btn--sm {
+        padding: var(--space-2xs) var(--space-sm);
+        font-size: 0.85rem;
+      }
+
       .u-btn:focus-visible {
         outline: 3px solid color-mix(in srgb, var(--color-accent) 60%, white 40%);
         outline-offset: 2px;
@@ -516,6 +525,60 @@
 
       .u-modal.is-open {
         display: grid;
+      }
+
+      .storage-modal__summary {
+        border-top: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+        padding-top: var(--space-md);
+        display: grid;
+        gap: var(--space-md);
+      }
+
+      .storage-summary {
+        margin: 0;
+        display: grid;
+        gap: var(--space-xs);
+      }
+
+      .storage-summary__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+      }
+
+      .storage-summary__label {
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+      }
+
+      .storage-summary__value {
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .storage-breakdown {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-xs);
+      }
+
+      .storage-breakdown__item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        font-size: 0.9rem;
+      }
+
+      .storage-breakdown__label {
+        color: var(--color-text-muted);
+      }
+
+      .storage-breakdown__value {
+        font-weight: 600;
       }
 
       .u-modal__dialog {
@@ -607,6 +670,76 @@
         height: 3rem;
         margin: 0 auto;
         color: var(--color-accent-strong);
+      }
+
+      .upload-card__queue {
+        border-radius: var(--radius-md);
+        border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
+        background: color-mix(in srgb, var(--color-surface) 92%, transparent 8%);
+        padding: var(--space-md);
+        display: grid;
+        gap: var(--space-sm);
+      }
+
+      .upload-card__queue-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+      }
+
+      .upload-card__queue-summary {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text);
+      }
+
+      .upload-card__queue-empty {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+      }
+
+      .upload-card__queue-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-xs);
+      }
+
+      .upload-card__queue-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        background: color-mix(in srgb, var(--color-surface-muted) 70%, transparent 30%);
+      }
+
+      .upload-card__queue-item strong {
+        display: block;
+        font-size: 0.95rem;
+      }
+
+      .upload-card__queue-meta {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+      }
+
+      .upload-card__queue-remove {
+        border: none;
+        background: none;
+        color: var(--color-accent-strong);
+        font-weight: 600;
+        cursor: pointer;
+        padding: var(--space-2xs) var(--space-xs);
+      }
+
+      .upload-card__queue-remove:hover {
+        text-decoration: underline;
       }
 
       .upload-card__actions {
@@ -1404,6 +1537,26 @@
                 />
               </div>
 
+              <section
+                class="upload-card__queue stack"
+                data-upload-queue
+                hidden
+                aria-live="polite"
+              >
+                <div class="upload-card__queue-header">
+                  <span class="u-card__subtitle" data-i18n-key="upload.queueTitle"></span>
+                  <button
+                    class="u-btn u-btn--ghost u-btn--sm"
+                    type="button"
+                    data-queue-clear
+                    data-i18n-key="upload.queueClear"
+                  ></button>
+                </div>
+                <p class="upload-card__queue-summary" data-queue-summary hidden></p>
+                <p class="upload-card__queue-empty" data-queue-empty data-i18n-key="upload.queueEmpty"></p>
+                <ul class="upload-card__queue-list" data-queue-list></ul>
+              </section>
+
               <div class="form-grid form-grid--split">
                 <label class="stack" for="document-title">
                   <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
@@ -1893,6 +2046,28 @@
         <div class="stack">
           <h2 class="u-card__title" id="storage-title" data-i18n-key="labels.storageDialogTitle"></h2>
           <p class="u-card__subtitle" id="storage-description" data-i18n-key="labels.storageDialogDescription"></p>
+          <div class="storage-modal__summary" data-storage-summary>
+            <dl class="storage-summary">
+              <div class="storage-summary__row">
+                <dt class="storage-summary__label" data-i18n-key="labels.storageUsed"></dt>
+                <dd class="storage-summary__value" data-storage-used>—</dd>
+              </div>
+              <div class="storage-summary__row">
+                <dt class="storage-summary__label" data-i18n-key="labels.storageAvailable"></dt>
+                <dd class="storage-summary__value" data-storage-available>—</dd>
+              </div>
+            </dl>
+            <ul class="storage-breakdown">
+              <li class="storage-breakdown__item">
+                <span class="storage-breakdown__label" data-i18n-key="labels.storageDocuments"></span>
+                <span class="storage-breakdown__value" data-storage-documents>—</span>
+              </li>
+              <li class="storage-breakdown__item">
+                <span class="storage-breakdown__label" data-i18n-key="labels.storageImages"></span>
+                <span class="storage-breakdown__value" data-storage-images>—</span>
+              </li>
+            </ul>
+          </div>
           <div class="upload-card__actions" style="justify-content: flex-end;">
             <button class="u-btn u-btn--primary" type="button" data-storage-clear data-i18n-key="labels.storageClearCta"></button>
             <button class="u-btn u-btn--ghost" type="button" data-storage-cancel data-i18n-key="labels.storageCancelCta"></button>
@@ -1952,6 +2127,12 @@
             labels: {
               storageUsed: "Storage used",
               storageLimit: "Storage limit",
+              storageAvailable: "Available space",
+              storageDocuments: "Documents",
+              storageImages: "Images",
+              storageDocumentSingular: "Document",
+              storageImageSingular: "Image",
+              storageLimitUnset: "Limit not configured",
               storageDialogTitle: "Storage management",
               storageDialogDescription:
                 "Local storage is near capacity. Clear older items or export data to continue uploading.",
@@ -1976,6 +2157,11 @@
               summaryDocumentsMultiple: "{count} documents uploaded",
               completeImages: "Upload complete. Images are ready in the gallery.",
               completeDocuments: "Upload complete. Documents are ready in the library.",
+              queueTitle: "Selected files",
+              queueEmpty: "No files selected yet.",
+              queueClear: "Clear selection",
+              queueSummarySingle: "\"{name}\" ready to upload ({size})",
+              queueSummaryMultiple: "{count} files ready to upload ({size})",
               errorSelectImages: "Select at least one image to upload.",
               errorSelectDocuments: "Select at least one document to upload.",
               errorUnsupportedImage: "{name} is not a supported image type.",
@@ -2962,6 +3148,8 @@
       })();
 
       let lastCopyTrigger = null;
+      let openStorageModal = () => {};
+      let closeStorageModal = () => {};
       const modal = document.getElementById("clipboard-confirm");
       const modalClose = modal?.querySelector("[data-close-modal]");
 
@@ -3033,6 +3221,7 @@
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           closeModal();
+          closeStorageModal();
         }
       });
 
@@ -3802,7 +3991,181 @@
           load();
         });
 
-        return { subscribe, createImage, removeImage, getImage, getImages, clearAll };
+      return { subscribe, createImage, removeImage, getImage, getImages, clearAll };
+    })();
+
+      const StorageUI = (() => {
+        const meter = document.querySelector("[data-storage-meter]");
+        const summaryEl = meter?.querySelector("[data-storage-summary]");
+        const limitEl = meter?.querySelector("[data-storage-limit]");
+        const progress = meter?.querySelector("[data-storage-progress]");
+        const progressBar = meter?.querySelector("[data-storage-progress-bar]");
+        const warningEl = meter?.querySelector("[data-storage-warning]");
+        const manageButton = meter?.querySelector("[data-storage-manage]");
+        const storageModal = document.getElementById("storage-modal");
+        const modalUsed = storageModal?.querySelector("[data-storage-used]");
+        const modalAvailable = storageModal?.querySelector("[data-storage-available]");
+        const modalDocuments = storageModal?.querySelector("[data-storage-documents]");
+        const modalImages = storageModal?.querySelector("[data-storage-images]");
+        const modalClear = storageModal?.querySelector("[data-storage-clear]");
+        const modalCancel = storageModal?.querySelector("[data-storage-cancel]");
+        let lastTrigger = null;
+        let snapshot = StorageManager.getSnapshot();
+        let documents = DocumentStore.getDocuments();
+        let images = ImageStore.getImages();
+
+        function formatLimit(limitBytes) {
+          if (!Number.isFinite(limitBytes) || limitBytes <= 0) {
+            return Localization.t("labels.storageLimitUnset");
+          }
+          return Utils.formatBytes(limitBytes);
+        }
+
+        function describeCollection(count, singularKey, pluralKey, bytes) {
+          const label = count === 1 ? Localization.t(singularKey) : Localization.t(pluralKey);
+          const sizeText = Utils.formatBytes(bytes);
+          return `${count} ${label.toLowerCase()} • ${sizeText}`;
+        }
+
+        function renderMeter() {
+          if (!meter) return;
+          const usedText = Utils.formatBytes(snapshot.used);
+          const limitText = formatLimit(snapshot.limit);
+          const percent = snapshot.limit > 0 ? Math.min(100, Math.round((snapshot.used / snapshot.limit) * 100)) : 0;
+          if (summaryEl) {
+            summaryEl.textContent = Localization.t("common.usageSummary", { used: usedText, limit: limitText });
+          }
+          if (limitEl) {
+            limitEl.textContent = limitText;
+          }
+          if (progress) {
+            progress.setAttribute("aria-valuemin", "0");
+            progress.setAttribute("aria-valuemax", "100");
+            progress.setAttribute("aria-valuenow", String(percent));
+          }
+          if (progressBar) {
+            progressBar.style.width = `${percent}%`;
+          }
+          meter.classList.toggle("is-warning", snapshot.isWarning || snapshot.isExceeded);
+          meter.classList.toggle("is-exceeded", snapshot.isExceeded);
+          if (warningEl) {
+            if (snapshot.isExceeded) {
+              warningEl.hidden = false;
+              warningEl.textContent = Localization.t("notifications.storageQuotaExceeded");
+            } else if (snapshot.isWarning) {
+              warningEl.hidden = false;
+              warningEl.textContent = Localization.t("notifications.storageWarning", { percent });
+            } else {
+              warningEl.hidden = true;
+              warningEl.textContent = "";
+            }
+          }
+        }
+
+        function renderModal() {
+          if (!storageModal) return;
+          const docBytes = documents.reduce((total, doc) => total + (Number(doc?.size) || 0), 0);
+          const imageBytes = images.reduce((total, image) => total + (Number(image?.size) || 0), 0);
+          const availableBytes = snapshot.limit > 0 ? Math.max(snapshot.limit - snapshot.used, 0) : 0;
+          if (modalUsed) {
+            modalUsed.textContent = Utils.formatBytes(snapshot.used);
+          }
+          if (modalAvailable) {
+            modalAvailable.textContent = snapshot.limit > 0
+              ? Utils.formatBytes(availableBytes)
+              : Localization.t("labels.storageLimitUnset");
+          }
+          if (modalDocuments) {
+            modalDocuments.textContent = describeCollection(
+              documents.length,
+              "labels.storageDocumentSingular",
+              "labels.storageDocuments",
+              docBytes
+            );
+          }
+          if (modalImages) {
+            modalImages.textContent = describeCollection(
+              images.length,
+              "labels.storageImageSingular",
+              "labels.storageImages",
+              imageBytes
+            );
+          }
+        }
+
+        function openModalInternal(trigger) {
+          if (!storageModal) return;
+          lastTrigger = trigger ?? null;
+          renderModal();
+          storageModal.classList.add("is-open");
+          modalClear?.focus({ preventScroll: true });
+        }
+
+        function closeModalInternal() {
+          if (!storageModal) return;
+          storageModal.classList.remove("is-open");
+          if (lastTrigger) {
+            lastTrigger.focus({ preventScroll: true });
+            lastTrigger = null;
+          }
+        }
+
+        if (manageButton) {
+          manageButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            openModalInternal(manageButton);
+          });
+        }
+
+        modalCancel?.addEventListener("click", closeModalInternal);
+        storageModal?.addEventListener("click", (event) => {
+          if (event.target === storageModal) {
+            closeModalInternal();
+          }
+        });
+
+        if (modalClear) {
+          modalClear.addEventListener("click", async () => {
+            if (modalClear.disabled) return;
+            modalClear.disabled = true;
+            try {
+              await Promise.all([DocumentStore.clearAll(), ImageStore.clearAll()]);
+              Notifications.toast(Localization.t("notifications.storageCleared"), "success");
+              closeModalInternal();
+            } catch (error) {
+              console.error("Failed to clear storage", error);
+              Notifications.toast(Localization.t("errors.persistFailure"), "error");
+            } finally {
+              modalClear.disabled = false;
+            }
+          });
+        }
+
+        StorageManager.subscribe((nextSnapshot) => {
+          snapshot = nextSnapshot;
+          renderMeter();
+          renderModal();
+        });
+
+        DocumentStore.subscribe((nextDocuments) => {
+          documents = nextDocuments;
+          renderMeter();
+          renderModal();
+        });
+
+        ImageStore.subscribe((nextImages) => {
+          images = nextImages;
+          renderModal();
+          renderMeter();
+        });
+
+        renderMeter();
+        renderModal();
+
+        openStorageModal = openModalInternal;
+        closeStorageModal = closeModalInternal;
+
+        return null;
       })();
 
       function createViewerWidthController({
@@ -5482,6 +5845,23 @@
         const progressLabel = form.querySelector("[data-progress-label]");
         const feedback = form.querySelector("[data-upload-feedback]");
         const dropzone = form.querySelector("[data-dropzone]");
+        const queueContainer = form.querySelector("[data-upload-queue]");
+        const queueList = form.querySelector("[data-queue-list]");
+        const queueSummary = form.querySelector("[data-queue-summary]");
+        const queueEmpty = form.querySelector("[data-queue-empty]");
+        const queueClear = form.querySelector("[data-queue-clear]");
+
+        const pendingFiles = [];
+        const pendingKeys = new Set();
+        let isUploading = false;
+
+        function buildFileKey(file) {
+          return `${file.name}::${file.size}::${file.lastModified}`;
+        }
+
+        function getTotalSize() {
+          return pendingFiles.reduce((total, file) => total + (Number(file?.size) || 0), 0);
+        }
 
         function resetFeedback() {
           Notifications.inline(feedback, "");
@@ -5510,6 +5890,120 @@
           }
         }
 
+        function renderQueue() {
+          if (!queueContainer || !queueList) return;
+          queueList.textContent = "";
+          const hasFiles = pendingFiles.length > 0;
+          queueContainer.hidden = !hasFiles;
+          if (queueClear) {
+            queueClear.disabled = !hasFiles || isUploading;
+          }
+          if (queueEmpty) {
+            queueEmpty.hidden = hasFiles;
+          }
+          if (!hasFiles) {
+            if (queueSummary) {
+              queueSummary.hidden = true;
+              queueSummary.textContent = "";
+            }
+            if (progressLabel && (progressContainer?.hidden ?? true)) {
+              progressLabel.textContent = Localization.t("upload.waitingDocuments");
+            }
+            return;
+          }
+
+          const totalSize = getTotalSize();
+          const sizeText = Utils.formatBytes(totalSize);
+          if (queueSummary) {
+            const summary =
+              pendingFiles.length === 1
+                ? Localization.t("upload.queueSummarySingle", {
+                    name: pendingFiles[0].name,
+                    size: sizeText,
+                  })
+                : Localization.t("upload.queueSummaryMultiple", {
+                    count: pendingFiles.length,
+                    size: sizeText,
+                  });
+            queueSummary.hidden = false;
+            queueSummary.textContent = summary;
+            if (progressLabel && (progressContainer?.hidden ?? false) && !isUploading) {
+              progressLabel.textContent = summary;
+            }
+          }
+
+          pendingFiles.forEach((file) => {
+            const key = buildFileKey(file);
+            const item = document.createElement("li");
+            item.className = "upload-card__queue-item";
+            item.dataset.key = key;
+
+            const details = document.createElement("div");
+            const title = document.createElement("strong");
+            title.textContent = file.name;
+            const meta = document.createElement("p");
+            meta.className = "upload-card__queue-meta";
+            meta.textContent = Utils.formatBytes(file.size);
+            details.append(title, meta);
+
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className = "upload-card__queue-remove";
+            removeButton.dataset.queueRemove = key;
+            const removeLabel = Localization.t("common.remove");
+            removeButton.textContent = removeLabel;
+            removeButton.setAttribute("aria-label", `${removeLabel} ${file.name}`);
+            removeButton.disabled = isUploading;
+
+            item.append(details, removeButton);
+            queueList.appendChild(item);
+          });
+        }
+
+        function clearQueue() {
+          pendingFiles.splice(0, pendingFiles.length);
+          pendingKeys.clear();
+          if (fileInput) {
+            fileInput.value = "";
+          }
+          renderQueue();
+        }
+
+        function removeFromQueue(key) {
+          if (!key) return;
+          const index = pendingFiles.findIndex((file) => buildFileKey(file) === key);
+          if (index === -1) return;
+          const [removed] = pendingFiles.splice(index, 1);
+          pendingKeys.delete(key);
+          if (removed && progressContainer?.hidden) {
+            progressLabel.textContent = pendingFiles.length
+              ? progressLabel.textContent
+              : Localization.t("upload.waitingDocuments");
+          }
+          renderQueue();
+        }
+
+        function addFiles(fileList) {
+          const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
+          if (!files.length) {
+            return 0;
+          }
+          let added = 0;
+          files.forEach((file) => {
+            const key = buildFileKey(file);
+            if (pendingKeys.has(key)) {
+              return;
+            }
+            pendingKeys.add(key);
+            pendingFiles.push(file);
+            added += 1;
+          });
+          if (added > 0) {
+            renderQueue();
+          }
+          return added;
+        }
+
         async function processFiles(fileList) {
           const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
           if (!files.length) {
@@ -5520,108 +6014,138 @@
           }
 
           resetFeedback();
+          isUploading = true;
+          renderQueue();
+
           let lastDocument = null;
           const baseTitle = titleInput?.value.trim() ?? "";
           const description = descriptionInput?.value.trim() ?? "";
           let warnedLarge = false;
 
-          for (const [index, file] of files.entries()) {
-            const estimatedImpact = StorageManager.estimateImpact(file.size);
-            const snapshot = StorageManager.getSnapshot();
-            if (!StorageManager.canStore(estimatedImpact)) {
-              const message = Localization.t("notifications.storageQuotaExceeded");
-              showFeedback(message, "error");
-              Notifications.toast(message, "error");
-              hideProgress();
-              return;
-            }
-            const predictedRatio = snapshot.limit
-              ? Math.round(((snapshot.used + estimatedImpact) / snapshot.limit) * 100)
-              : 100;
-            if (!warnedLarge && predictedRatio >= 85) {
-              Notifications.toast(Localization.t("notifications.largeFileWarning"), "info");
-              warnedLarge = true;
-            }
-            updateProgress(
-              (index / files.length) * 100,
-              Localization.t("upload.progress", { name: file.name, percent: 0 })
-            );
-            try {
-              const documentRecord = await DocumentStore.createDocument(
-                file,
-                {
-                  title: baseTitle
-                    ? files.length > 1
-                      ? `${baseTitle} (${index + 1})`
-                      : baseTitle
-                    : undefined,
-                  description,
-                },
-                (progress) => {
-                  const overall = ((index + progress) / files.length) * 100;
-                  updateProgress(
-                    overall,
-                    Localization.t("upload.progress", {
-                      name: file.name,
-                      percent: Math.round(progress * 100),
-                    })
-                  );
-                }
+          try {
+            for (const [index, file] of files.entries()) {
+              const estimatedImpact = StorageManager.estimateImpact(file.size);
+              const snapshot = StorageManager.getSnapshot();
+              if (!StorageManager.canStore(estimatedImpact)) {
+                const message = Localization.t("notifications.storageQuotaExceeded");
+                showFeedback(message, "error");
+                Notifications.toast(message, "error");
+                hideProgress();
+                return;
+              }
+              const predictedRatio = snapshot.limit
+                ? Math.round(((snapshot.used + estimatedImpact) / snapshot.limit) * 100)
+                : 100;
+              if (!warnedLarge && predictedRatio >= 85) {
+                Notifications.toast(Localization.t("notifications.largeFileWarning"), "info");
+                warnedLarge = true;
+              }
+              updateProgress(
+                (index / files.length) * 100,
+                Localization.t("upload.progress", { name: file.name, percent: 0 })
               );
-              lastDocument = documentRecord;
-            } catch (error) {
-              console.error("Upload failed", error);
-              const fileName = file?.name ?? Localization.t("common.unknownFile");
-              const message =
-                error?.code === "config"
-                  ? Localization.t("upload.errorMissingConfiguration")
-                  : error?.code === "quota"
-                  ? Localization.t("notifications.storageQuotaExceeded")
-                  : error?.code === "persist"
-                  ? Localization.t("errors.persistFailure")
-                  : Localization.t("upload.errorUploadFailed", { name: fileName });
-              showFeedback(message, "error");
-              Notifications.toast(message, "error");
-              hideProgress();
-              return;
+              try {
+                const documentRecord = await DocumentStore.createDocument(
+                  file,
+                  {
+                    title: baseTitle
+                      ? files.length > 1
+                        ? `${baseTitle} (${index + 1})`
+                        : baseTitle
+                      : undefined,
+                    description,
+                  },
+                  (progress) => {
+                    const overall = ((index + progress) / files.length) * 100;
+                    updateProgress(
+                      overall,
+                      Localization.t("upload.progress", {
+                        name: file.name,
+                        percent: Math.round(progress * 100),
+                      })
+                    );
+                  }
+                );
+                lastDocument = documentRecord;
+              } catch (error) {
+                console.error("Upload failed", error);
+                const fileName = file?.name ?? Localization.t("common.unknownFile");
+                const message =
+                  error?.code === "config"
+                    ? Localization.t("upload.errorMissingConfiguration")
+                    : error?.code === "quota"
+                    ? Localization.t("notifications.storageQuotaExceeded")
+                    : error?.code === "persist"
+                    ? Localization.t("errors.persistFailure")
+                    : Localization.t("upload.errorUploadFailed", { name: fileName });
+                showFeedback(message, "error");
+                Notifications.toast(message, "error");
+                hideProgress();
+                return;
+              }
             }
-          }
 
-          const firstDocName = files[0]?.name ?? Localization.t("common.unknownFile");
-          const summary =
-            files.length > 1
-              ? Localization.t("upload.summaryDocumentsMultiple", { count: files.length })
-              : Localization.t("upload.summaryDocumentsSingle", { name: firstDocName });
-          updateProgress(100, summary);
-          showFeedback(Localization.t("upload.completeDocuments"), "success");
-          Notifications.toast(Localization.t("notifications.documentUploadSuccess"), "success");
-          form.reset();
-          if (fileInput) {
-            fileInput.value = "";
-          }
-          setTimeout(() => {
-            hideProgress();
-          }, 600);
-          if (lastDocument) {
-            DocumentViewer.selectDocument(lastDocument.id);
-            if (LibraryView?.focusRow) {
-              window.setTimeout(() => LibraryView.focusRow(lastDocument.id), 0);
+            const firstDocName = files[0]?.name ?? Localization.t("common.unknownFile");
+            const summary =
+              files.length > 1
+                ? Localization.t("upload.summaryDocumentsMultiple", { count: files.length })
+                : Localization.t("upload.summaryDocumentsSingle", { name: firstDocName });
+            updateProgress(100, summary);
+            showFeedback(Localization.t("upload.completeDocuments"), "success");
+            Notifications.toast(Localization.t("notifications.documentUploadSuccess"), "success");
+            form.reset();
+            if (fileInput) {
+              fileInput.value = "";
             }
+            window.setTimeout(() => {
+              hideProgress();
+            }, 600);
+            if (lastDocument) {
+              DocumentViewer.selectDocument(lastDocument.id);
+              if (LibraryView?.focusRow) {
+                window.setTimeout(() => LibraryView.focusRow(lastDocument.id), 0);
+              }
+            }
+          } finally {
+            isUploading = false;
+            renderQueue();
           }
         }
 
         form.addEventListener("submit", (event) => {
           event.preventDefault();
-          processFiles(fileInput?.files ?? []);
+          processFiles([...pendingFiles]);
         });
 
         form.addEventListener("reset", () => {
           hideProgress();
           resetFeedback();
+          clearQueue();
         });
 
         fileInput?.addEventListener("change", () => {
           resetFeedback();
+          if (addFiles(fileInput.files)) {
+            if (progressContainer?.hidden) {
+              progressLabel.textContent = Localization.t("upload.waitingDocuments");
+            }
+          }
+          if (fileInput) {
+            fileInput.value = "";
+          }
+        });
+
+        queueClear?.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (!isUploading) {
+            clearQueue();
+          }
+        });
+
+        queueList?.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-queue-remove]");
+          if (!button || isUploading) return;
+          removeFromQueue(button.dataset.queueRemove);
         });
 
         if (dropzone) {
@@ -5642,17 +6166,22 @@
             event.preventDefault();
             dropzone.classList.remove("is-dragover");
             if (event.dataTransfer?.files?.length) {
-              processFiles(event.dataTransfer.files);
+              resetFeedback();
+              addFiles(event.dataTransfer.files);
             }
           });
         }
 
         document.addEventListener("paste", (event) => {
-          if (event.clipboardData?.files?.length) {
+          const files = event.clipboardData?.files;
+          if (files?.length) {
             event.preventDefault();
-            processFiles(event.clipboardData.files);
+            resetFeedback();
+            addFiles(files);
           }
         });
+
+        renderQueue();
 
         return null;
       })();
