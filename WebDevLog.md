@@ -180,3 +180,37 @@
 1. Expand localization coverage to remaining static copy and explore RTL layout implications.
 2. Audit keyboard focus traps across modals and complex widgets for continuous accessibility compliance.
 3. Prototype automated smoke tests for upload, storage clearing, and clipboard flows.
+
+## Session 2024-06-16 Start
+- Reviewed new directive to document architecture, storage schema, and engineer workflows.
+- Identified need to expand inline comments, README guidance, and WebDevLog coverage.
+
+### Plan
+1. Audit `index.html` for complex logic requiring inline commentary.
+2. Document storage schema, architecture, and blob link lifecycle in README and supporting notes.
+3. Add operational instructions for resetting libraries, clearing storage, and extending asset support.
+4. Update developer notes and run verification steps before summarizing work.
+
+### TODOs
+- [ ] Inline-comment complex logic within `index.html` utilities and workflows.
+- [ ] Extend README with architecture, persistence, and limitation documentation.
+- [ ] Capture storage schema details for documents and images.
+- [ ] Document operational runbooks for future engineers.
+- [ ] Validate changes, update WebDevLog end entry, and finalize notes.
+
+## Session 2024-06-16 End
+- Added inline commentary to quota, EXIF parsing, and normalization flows to aid future maintainers.
+- Authored README covering architecture, storage schema, blob lifecycle, and operational runbooks.
+- Logged html-validate lint failures (pre-existing) after running automated markup checks.
+
+### Completed TODOs
+- [x] Inline-comment complex logic within `index.html` utilities and workflows.
+- [x] Extend README with architecture, persistence, and limitation documentation.
+- [x] Capture storage schema details for documents and images.
+- [x] Document operational runbooks for future engineers.
+- [x] Validate changes, update WebDevLog end entry, and finalize notes.
+
+### Next Session Plan
+1. Address html-validate violations by updating markup semantics and replacing inline styles.
+2. Explore extracting script modules into dedicated files for improved testability.
+3. Prototype automated snapshot tests to monitor blob URL lifecycle regressions.
