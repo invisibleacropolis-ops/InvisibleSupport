@@ -1140,19 +1140,6 @@
         padding: var(--space-lg);
       }
 
-      .viewer-split-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-xl);
-        align-items: start;
-      }
-
-      @media (max-width: 1200px) {
-        .viewer-split-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
       .viewer-card__preview > * {
         justify-self: stretch;
       }
@@ -1199,23 +1186,6 @@
       .viewer-card__pdf[data-state="ready"] {
         padding: 0;
         color: inherit;
-      }
-
-      .pdf-viewer-card {
-        --pdf-viewer-width: 100%;
-      }
-
-      .pdf-viewer-card .viewer-card__preview {
-        justify-items: center;
-      }
-
-      .pdf-viewer-card .viewer-card__preview > * {
-        justify-self: center;
-        width: min(100%, var(--pdf-viewer-width));
-      }
-
-      .pdf-viewer-card .viewer-card__pdf {
-        width: min(100%, var(--pdf-viewer-width));
       }
 
       .viewer-card__pdf-message {
@@ -1563,96 +1533,7 @@
               </div>
             </div>
           </article>
-          <div class="viewer-split-grid">
-            <article class="u-card viewer-card pdf-viewer-card" aria-labelledby="pdf-viewer">
-              <div class="u-card__header">
-                <h2 class="u-card__title" id="pdf-viewer">PDF viewer</h2>
-                <p class="u-card__subtitle">Use the Adobe Embed API for high-fidelity PDF previews.</p>
-              </div>
-
-              <div class="viewer-card__toolbar" role="group" aria-label="PDF viewer controls">
-                <label class="viewer-card__selector">
-                  <span class="visually-hidden">Select a PDF to preview</span>
-                  <select class="u-input viewer-card__select" data-pdf-viewer-select aria-label="Select PDF document">
-                    <option value="" selected>Select a PDF…</option>
-                  </select>
-                </label>
-                <label class="viewer-card__resize" for="pdf-viewer-width">
-                  <span>Viewer width</span>
-                  <input
-                    id="pdf-viewer-width"
-                    type="range"
-                    min="25"
-                    max="100"
-                    step="5"
-                    value="100"
-                    aria-valuemin="25"
-                    aria-valuemax="100"
-                    aria-valuenow="100"
-                    aria-label="PDF viewer width"
-                    data-pdf-viewer-resize
-                  />
-                  <span class="viewer-card__resize-value" data-pdf-viewer-resize-value>100%</span>
-                </label>
-              </div>
-
-              <div class="viewer-card__preview" data-pdf-viewer-preview>
-                <div class="viewer-card__empty" data-pdf-viewer-empty>
-                  <h3>No PDF selected</h3>
-                  <p class="portal__lede" style="font-size: 0.95rem;">
-                    Choose a PDF from the library to launch the embedded Adobe viewer.
-                  </p>
-                </div>
-              </div>
-
-              <div class="viewer-card__meta" data-pdf-viewer-meta hidden>
-                <div class="stack">
-                  <span class="u-card__subtitle">Document details</span>
-                  <dl class="viewer-card__details">
-                    <div>
-                      <dt>Title</dt>
-                      <dd data-pdf-viewer-name>—</dd>
-                    </div>
-                    <div>
-                      <dt>File name</dt>
-                      <dd data-pdf-viewer-filename>—</dd>
-                    </div>
-                    <div>
-                      <dt>Type</dt>
-                      <dd data-pdf-viewer-type>—</dd>
-                    </div>
-                    <div>
-                      <dt>Size</dt>
-                      <dd data-pdf-viewer-size>—</dd>
-                    </div>
-                    <div>
-                      <dt>Last updated</dt>
-                      <dd data-pdf-viewer-updated>—</dd>
-                    </div>
-                  </dl>
-                  <p class="viewer-card__description" data-pdf-viewer-description hidden></p>
-                </div>
-
-                <div class="stack">
-                  <span class="u-card__subtitle">Shareable link</span>
-                  <div class="viewer-card__link">
-                    <input
-                      class="u-input viewer-card__link-input"
-                      type="text"
-                      readonly
-                      id="pdf-viewer-direct-link"
-                      data-pdf-viewer-link
-                      value=""
-                    />
-                    <button class="u-btn u-btn--ghost" type="button" data-pdf-viewer-copy>Copy</button>
-                    <a class="u-btn u-btn--primary" href="#" target="_blank" rel="noopener" data-pdf-viewer-open>
-                      Open in new tab
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </article>
-            <article class="u-card viewer-card" aria-labelledby="document-viewer">
+          <article class="u-card viewer-card" aria-labelledby="document-viewer">
               <div class="u-card__header">
                 <h2 class="u-card__title" id="document-viewer">Document viewer</h2>
                 <p class="u-card__subtitle">Preview uploaded documents inline or switch to immersive mode.</p>
@@ -1739,8 +1620,7 @@
                 </div>
               </div>
             </div>
-            </article>
-          </div>
+          </article>
         </section>
       </div>
 
@@ -4017,21 +3897,13 @@
       });
 
       createViewerWidthController({
-        sliderSelector: "[data-pdf-viewer-resize]",
-        valueSelector: "[data-pdf-viewer-resize-value]",
-        targetSelector: ".pdf-viewer-card",
-        variableName: "--pdf-viewer-width",
-        defaultValue: 100,
-      });
-
-      createViewerWidthController({
         sliderSelector: "[data-image-resize]",
         valueSelector: "[data-image-resize-value]",
         targetSelector: ".image-portal__grid",
         variableName: "--image-viewer-width",
       });
 
-      const ADOBE_EMBED_CLIENT_ID = "6854d2a139a04dacac0455a0b3a4cbbd";
+      const ADOBE_EMBED_CLIENT_ID = "d6b613e7ac104dc49aae04788ff781df";
       const pdfLocale = document.documentElement.lang || "en-US";
       let adobeSdkPromise = null;
 
@@ -4573,16 +4445,15 @@
         });
 
         DocumentStore.subscribe((docs) => {
-          const nonPdfDocs = docs.filter((doc) => !isPdfDocument(doc));
-          updateSelectOptions(nonPdfDocs);
-          cleanupCache(new Set(nonPdfDocs.map((doc) => doc.id)));
+          updateSelectOptions(docs);
+          cleanupCache(new Set(docs.map((doc) => doc.id)));
           if (!currentId) {
-            if (nonPdfDocs.length === 0) {
+            if (docs.length === 0) {
               renderEmpty();
             }
             return;
           }
-          const match = nonPdfDocs.find((doc) => doc.id === currentId);
+          const match = docs.find((doc) => doc.id === currentId);
           if (!match) {
             renderEmpty();
           } else {
@@ -4610,349 +4481,6 @@
         },
       };
       })();
-
-      const PdfViewer = (() => {
-        const preview = document.querySelector("[data-pdf-viewer-preview]");
-        const meta = document.querySelector("[data-pdf-viewer-meta]");
-        const linkInput = document.querySelector("[data-pdf-viewer-link]");
-        const openLink = document.querySelector("[data-pdf-viewer-open]");
-        const copyButton = document.querySelector("[data-pdf-viewer-copy]");
-        const nameEl = document.querySelector("[data-pdf-viewer-name]");
-        const filenameEl = document.querySelector("[data-pdf-viewer-filename]");
-        const typeEl = document.querySelector("[data-pdf-viewer-type]");
-        const sizeEl = document.querySelector("[data-pdf-viewer-size]");
-        const updatedEl = document.querySelector("[data-pdf-viewer-updated]");
-        const descriptionEl = document.querySelector("[data-pdf-viewer-description]");
-        const selectInput = document.querySelector("[data-pdf-viewer-select]");
-        const emptyTemplate = preview?.querySelector("[data-pdf-viewer-empty]")?.cloneNode(true) ?? null;
-        const resourceCache = new Map();
-        let currentId = null;
-        let renderToken = 0;
-
-        if (!preview || !selectInput) {
-          return {
-            selectDocument() {},
-            getSelectedId() {
-              return null;
-            },
-          };
-        }
-
-        function focusPreview() {
-          preview.setAttribute("tabindex", "-1");
-          preview.focus({ preventScroll: true });
-        }
-
-        function emitSelectionChange() {
-          document.dispatchEvent(new CustomEvent("pdfviewerchange", { detail: { id: currentId } }));
-        }
-
-        function resetMeta() {
-          if (meta) meta.hidden = true;
-          if (nameEl) nameEl.textContent = "—";
-          if (filenameEl) filenameEl.textContent = "—";
-          if (typeEl) typeEl.textContent = "—";
-          if (sizeEl) sizeEl.textContent = "—";
-          if (updatedEl) updatedEl.textContent = "—";
-          if (descriptionEl) {
-            descriptionEl.hidden = true;
-            descriptionEl.textContent = "";
-          }
-          if (linkInput) linkInput.value = "";
-          if (copyButton) copyButton.setAttribute("data-copy", "");
-          if (openLink) {
-            openLink.href = "#";
-            openLink.setAttribute("aria-disabled", "true");
-          }
-        }
-
-        function updateMeta(doc) {
-          const docUrl = getDocumentUrl(doc);
-          if (meta) meta.hidden = false;
-          if (nameEl) nameEl.textContent = doc.title || doc.name;
-          if (filenameEl) filenameEl.textContent = doc.name;
-          if (typeEl) typeEl.textContent = doc.type || "Unknown";
-          if (sizeEl) sizeEl.textContent = Utils.formatBytes(doc.size);
-          if (updatedEl) updatedEl.textContent = Utils.formatRelativeTime(doc.updatedAt);
-          if (descriptionEl) {
-            if (doc.description) {
-              descriptionEl.hidden = false;
-              descriptionEl.textContent = doc.description;
-            } else {
-              descriptionEl.hidden = true;
-              descriptionEl.textContent = "";
-            }
-          }
-          if (linkInput) linkInput.value = docUrl;
-          if (copyButton) copyButton.setAttribute("data-copy", docUrl);
-          if (openLink) {
-            if (docUrl) {
-              openLink.href = docUrl;
-              openLink.removeAttribute("aria-disabled");
-            } else {
-              openLink.href = "#";
-              openLink.setAttribute("aria-disabled", "true");
-            }
-          }
-        }
-
-        function updateSelectValue(id) {
-          if (!selectInput) return;
-          if (!id) {
-            selectInput.value = "";
-            return;
-          }
-          const option = Array.from(selectInput.options).find((item) => item.value === id);
-          if (option) {
-            selectInput.value = id;
-          }
-        }
-
-        function updateSelectOptions(docs) {
-          if (!selectInput) return;
-          const fragment = document.createDocumentFragment();
-          const placeholder = document.createElement("option");
-          placeholder.value = "";
-          placeholder.textContent = docs.length ? "Select a PDF…" : "No PDFs uploaded yet";
-          fragment.appendChild(placeholder);
-          docs.forEach((doc) => {
-            const option = document.createElement("option");
-            option.value = doc.id;
-            option.textContent = doc.title || doc.name;
-            fragment.appendChild(option);
-          });
-          selectInput.replaceChildren(fragment);
-          if (docs.length === 0) {
-            selectInput.value = "";
-            selectInput.disabled = true;
-            selectInput.setAttribute("aria-disabled", "true");
-          } else {
-            selectInput.disabled = false;
-            selectInput.removeAttribute("aria-disabled");
-            if (currentId && docs.some((doc) => doc.id === currentId)) {
-              selectInput.value = currentId;
-            } else {
-              selectInput.value = "";
-            }
-          }
-        }
-
-        function cleanupCache(validIds) {
-          resourceCache.forEach((entry, id) => {
-            if (!validIds.has(id)) {
-              resourceCache.delete(id);
-            }
-          });
-        }
-
-        async function fetchPdfResource(doc) {
-          const url = getDocumentUrl(doc);
-          if (!url) return null;
-          const revision = String(doc.sha || doc.updatedAt || "");
-          const cached = resourceCache.get(doc.id);
-          if (cached && cached.revision === revision) {
-            return cached;
-          }
-          if (cached) {
-            resourceCache.delete(doc.id);
-          }
-          try {
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Unable to fetch PDF preview (${response.status})`);
-            }
-            const blob = await response.blob();
-            const buffer = await blob.arrayBuffer();
-            const resource = { buffer, revision };
-            resourceCache.set(doc.id, resource);
-            return resource;
-          } catch (error) {
-            console.warn("Failed to fetch PDF preview", error);
-            return null;
-          }
-        }
-
-        function renderLoading(doc) {
-          preview.innerHTML = "";
-          preview.dataset.state = "loading";
-          const container = document.createElement("div");
-          container.className = "viewer-card__pdf";
-          container.dataset.state = "loading";
-          container.id = createPdfContainerId(doc);
-          container.setAttribute("aria-busy", "true");
-          const status = document.createElement("p");
-          status.className = "viewer-card__pdf-message";
-          status.textContent = "Loading secure PDF preview…";
-          container.appendChild(status);
-          preview.appendChild(container);
-          return container;
-        }
-
-        function renderEmpty() {
-          renderToken += 1;
-          preview.innerHTML = "";
-          preview.dataset.state = "empty";
-          if (emptyTemplate) {
-            preview.appendChild(emptyTemplate.cloneNode(true));
-          }
-          resetMeta();
-          updateSelectValue(null);
-          currentId = null;
-          emitSelectionChange();
-          focusPreview();
-        }
-
-        async function renderPdf(doc) {
-          if (!doc) {
-            renderEmpty();
-            return;
-          }
-
-          const token = ++renderToken;
-          currentId = doc.id;
-          if (typeof DocumentViewer?.selectDocument === "function") {
-            DocumentViewer.selectDocument(null);
-          }
-          updateSelectValue(doc.id);
-          resetMeta();
-          const container = renderLoading(doc);
-          const resource = await fetchPdfResource(doc);
-          if (token !== renderToken || currentId !== doc.id) {
-            return;
-          }
-
-          if (!resource) {
-            preview.innerHTML = "";
-            preview.dataset.state = "ready";
-            preview.appendChild(
-              createViewerFallback(
-                doc,
-                "Unable to load the PDF preview. Use the controls below to open or download the document."
-              )
-            );
-            updateMeta(doc);
-            emitSelectionChange();
-            focusPreview();
-            return;
-          }
-
-          waitForAdobeSdk()
-            .then(() => resource.buffer)
-            .then((buffer) => {
-              if (!container?.isConnected || currentId !== doc.id || token !== renderToken) {
-                return;
-              }
-
-              if (typeof window.AdobeDC?.View !== "function") {
-                throw new Error("Adobe PDF Embed SDK failed to initialize.");
-              }
-
-              container.textContent = "";
-              container.dataset.state = "ready";
-              container.removeAttribute("aria-busy");
-
-              const view = new window.AdobeDC.View({
-                clientId: ADOBE_EMBED_CLIENT_ID,
-                divId: container.id,
-                locale: pdfLocale,
-              });
-
-              view.previewFile(
-                {
-                  content: { promise: Promise.resolve(buffer) },
-                  metaData: {
-                    fileName: doc.name,
-                    id: doc.id,
-                  },
-                },
-                {
-                  embedMode: "SIZED_CONTAINER",
-                  showAnnotationTools: false,
-                  showDownloadPDF: true,
-                  showPrintPDF: true,
-                }
-              );
-            })
-            .catch((error) => {
-              console.warn("Failed to initialize Adobe PDF preview", error);
-              if (!container?.isConnected || currentId !== doc.id || token !== renderToken) {
-                return;
-              }
-              container.replaceWith(
-                createViewerFallback(
-                  doc,
-                  "Unable to load the interactive PDF preview. Use the controls below to open or download the document."
-                )
-              );
-            });
-
-          preview.dataset.state = "ready";
-          updateMeta(doc);
-          emitSelectionChange();
-          focusPreview();
-        }
-
-        selectInput.addEventListener("change", (event) => {
-          const id = event.target.value;
-          if (!id) {
-            renderEmpty();
-            return;
-          }
-          const doc = DocumentStore.getDocument(id);
-          if (isPdfDocument(doc)) {
-            renderPdf(doc);
-          } else {
-            renderEmpty();
-          }
-        });
-
-        DocumentStore.subscribe((docs) => {
-          const pdfDocs = docs.filter(isPdfDocument);
-          updateSelectOptions(pdfDocs);
-          cleanupCache(new Set(pdfDocs.map((doc) => doc.id)));
-          if (!currentId) {
-            if (pdfDocs.length === 0) {
-              renderEmpty();
-            }
-            return;
-          }
-          const match = pdfDocs.find((doc) => doc.id === currentId);
-          if (!match) {
-            renderEmpty();
-          } else {
-            renderPdf(match);
-          }
-        });
-
-        renderEmpty();
-
-        return {
-          selectDocument(id) {
-            if (!id) {
-              renderEmpty();
-              return;
-            }
-            const doc = DocumentStore.getDocument(id);
-            if (isPdfDocument(doc)) {
-              renderPdf(doc);
-            } else {
-              renderEmpty();
-            }
-          },
-          getSelectedId() {
-            return currentId;
-          },
-        };
-      })();
-
-      document.addEventListener("documentviewerchange", (event) => {
-        const id = event?.detail?.id;
-        if (!id) return;
-        const doc = DocumentStore.getDocument(id);
-        if (doc && !isPdfDocument(doc) && typeof PdfViewer?.selectDocument === "function") {
-          PdfViewer.selectDocument(null);
-        }
-      });
 
       const LibraryView = (() => {
         const rows = document.querySelector("[data-library-rows]");
@@ -5001,10 +4529,6 @@
             const id = DocumentViewer.getSelectedId();
             if (id) selectedIds.add(id);
           }
-          if (typeof PdfViewer?.getSelectedId === "function") {
-            const id = PdfViewer.getSelectedId();
-            if (id) selectedIds.add(id);
-          }
           rows?.querySelectorAll("tr[data-id]").forEach((row) => {
             markSelection(row, selectedIds.has(row.dataset.id));
           });
@@ -5037,14 +4561,9 @@
             const id = DocumentViewer.getSelectedId();
             if (id) selectedIds.add(id);
           }
-          if (typeof PdfViewer?.getSelectedId === "function") {
-            const id = PdfViewer.getSelectedId();
-            if (id) selectedIds.add(id);
-          }
 
           filtered.forEach((doc) => {
             const docUrl = doc.downloadUrl || doc.blobUrl || "";
-            const isPdf = isPdfDocument(doc);
             const row = document.createElement("tr");
             row.dataset.id = doc.id;
             row.tabIndex = -1;
@@ -5080,7 +4599,7 @@
             viewButton.type = "button";
             viewButton.className = "library-action";
             viewButton.dataset.action = "view";
-            viewButton.textContent = isPdf ? "View PDF" : "View";
+            viewButton.textContent = "View";
             actionsCell.appendChild(viewButton);
 
             const copyBtn = document.createElement("button");
@@ -5135,21 +4654,8 @@
           const id = row?.dataset.id;
           if (!id) return;
           if (actionTarget.dataset.action === "view") {
-            const doc = DocumentStore.getDocument(id);
-            if (isPdfDocument(doc)) {
-              if (typeof PdfViewer?.selectDocument === "function") {
-                PdfViewer.selectDocument(id);
-              }
-              if (typeof DocumentViewer?.selectDocument === "function") {
-                DocumentViewer.selectDocument(null);
-              }
-            } else {
-              if (typeof DocumentViewer?.selectDocument === "function") {
-                DocumentViewer.selectDocument(id);
-              }
-              if (typeof PdfViewer?.selectDocument === "function") {
-                PdfViewer.selectDocument(null);
-              }
+            if (typeof DocumentViewer?.selectDocument === "function") {
+              DocumentViewer.selectDocument(id);
             }
             pendingFocusTarget = id;
             syncSelection();
@@ -5174,21 +4680,8 @@
           if (!id) return;
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            const doc = DocumentStore.getDocument(id);
-            if (isPdfDocument(doc)) {
-              if (typeof PdfViewer?.selectDocument === "function") {
-                PdfViewer.selectDocument(id);
-              }
-              if (typeof DocumentViewer?.selectDocument === "function") {
-                DocumentViewer.selectDocument(null);
-              }
-            } else {
-              if (typeof DocumentViewer?.selectDocument === "function") {
-                DocumentViewer.selectDocument(id);
-              }
-              if (typeof PdfViewer?.selectDocument === "function") {
-                PdfViewer.selectDocument(null);
-              }
+            if (typeof DocumentViewer?.selectDocument === "function") {
+              DocumentViewer.selectDocument(id);
             }
             pendingFocusTarget = id;
             syncSelection();
@@ -5208,10 +4701,6 @@
         });
 
         document.addEventListener("documentviewerchange", () => {
-          syncSelection();
-        });
-
-        document.addEventListener("pdfviewerchange", () => {
           syncSelection();
         });
 
