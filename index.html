@@ -209,6 +209,75 @@
         }
       }
 
+      .toast-stack {
+        position: fixed;
+        bottom: var(--space-xl);
+        right: var(--space-xl);
+        display: grid;
+        gap: var(--space-sm);
+        width: min(24rem, calc(100vw - 2 * var(--space-xl)));
+        z-index: 1000;
+        pointer-events: none;
+      }
+
+      .toast {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        border-radius: var(--radius-md);
+        padding: var(--space-sm) var(--space-md);
+        background: var(--color-elevated);
+        border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent 30%);
+        box-shadow: var(--shadow-sm);
+        color: var(--color-text);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity var(--transition-base), transform var(--transition-base);
+        pointer-events: auto;
+      }
+
+      .toast.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .toast__icon {
+        font-size: 1.2rem;
+      }
+
+      .toast--success {
+        border-color: color-mix(in srgb, var(--color-success) 40%, transparent 60%);
+      }
+
+      .toast--success .toast__icon {
+        color: var(--color-success);
+      }
+
+      .toast--error {
+        border-color: color-mix(in srgb, var(--color-danger) 40%, transparent 60%);
+      }
+
+      .toast--error .toast__icon {
+        color: var(--color-danger);
+      }
+
+      .toast--info {
+        border-color: color-mix(in srgb, var(--color-accent) 40%, transparent 60%);
+      }
+
+      .toast--info .toast__icon {
+        color: var(--color-accent-strong);
+      }
+
+      @media (max-width: 640px) {
+        .toast-stack {
+          left: var(--space-md);
+          right: var(--space-md);
+          width: auto;
+          bottom: var(--space-lg);
+        }
+      }
+
       /* Utility foundation */
       .u-card {
         background: var(--color-elevated);
@@ -778,6 +847,10 @@
       .library-table td {
         border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent 30%);
         vertical-align: top;
+      }
+
+      .library-table tr.is-selected {
+        background: color-mix(in srgb, var(--color-accent) 12%, transparent 88%);
       }
 
       .library-table tr:last-child td {
@@ -1427,6 +1500,8 @@
       </section>
     </main>
 
+    <div class="toast-stack" role="status" aria-live="polite" aria-atomic="false" data-toast-stack></div>
+
     <div class="u-modal" id="clipboard-confirm" role="dialog" aria-modal="true" aria-labelledby="clipboard-title">
       <div class="u-modal__dialog">
         <div class="stack">
@@ -1444,16 +1519,272 @@
     </footer>
 
     <script>
+      const Utils = (() => {
+        const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+        const bytesFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
+        const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        });
+        const blobRegistry = new Set();
+
+        function formatBytes(bytes) {
+          if (!Number.isFinite(bytes) || bytes < 0) return "—";
+          if (bytes === 0) return "0 B";
+          const units = ["B", "KB", "MB", "GB", "TB"];
+          const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+          const value = bytes / 1024 ** exponent;
+          return `${bytesFormatter.format(value)} ${units[exponent]}`;
+        }
+
+        function formatRelativeTime(isoString) {
+          if (!isoString) return "—";
+          const date = new Date(isoString);
+          if (Number.isNaN(date.getTime())) return "—";
+          const diffMs = date.getTime() - Date.now();
+          const units = [
+            { unit: "year", ms: 1000 * 60 * 60 * 24 * 365 },
+            { unit: "month", ms: 1000 * 60 * 60 * 24 * 30 },
+            { unit: "day", ms: 1000 * 60 * 60 * 24 },
+            { unit: "hour", ms: 1000 * 60 * 60 },
+            { unit: "minute", ms: 1000 * 60 },
+            { unit: "second", ms: 1000 },
+          ];
+          for (const { unit, ms } of units) {
+            if (Math.abs(diffMs) >= ms || unit === "second") {
+              const value = Math.round(diffMs / ms);
+              return relativeTimeFormatter.format(value, unit);
+            }
+          }
+          return relativeTimeFormatter.format(0, "second");
+        }
+
+        function formatDateTime(isoString) {
+          if (!isoString) return "—";
+          const date = new Date(isoString);
+          if (Number.isNaN(date.getTime())) return "—";
+          return dateTimeFormatter.format(date);
+        }
+
+        function createObjectUrl(value) {
+          if (!value) return "";
+          try {
+            const url = URL.createObjectURL(value);
+            blobRegistry.add(url);
+            return url;
+          } catch (error) {
+            console.warn("Failed to create object URL", error);
+            return "";
+          }
+        }
+
+        function revokeObjectUrl(url) {
+          if (!url) return;
+          blobRegistry.delete(url);
+          try {
+            URL.revokeObjectURL(url);
+          } catch (error) {
+            console.warn("Failed to revoke object URL", error);
+          }
+        }
+
+        function revokeAllObjectUrls() {
+          blobRegistry.forEach((url) => {
+            try {
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              console.warn("Failed to revoke object URL", error);
+            }
+          });
+          blobRegistry.clear();
+        }
+
+        function dataUrlToBlob(dataUrl, fallbackType = "application/octet-stream") {
+          if (!dataUrl) {
+            return { blob: new Blob([], { type: fallbackType }), type: fallbackType };
+          }
+          const [header, payload] = dataUrl.split(",");
+          try {
+            const match = header?.match(/data:(.*?);base64/);
+            const mime = match?.[1] || fallbackType;
+            const binary = atob(payload ?? "");
+            const length = binary.length;
+            const bytes = new Uint8Array(length);
+            for (let index = 0; index < length; index += 1) {
+              bytes[index] = binary.charCodeAt(index);
+            }
+            return { blob: new Blob([bytes], { type: mime }), type: mime };
+          } catch (error) {
+            console.error("Failed to parse stored file", error);
+            return { blob: new Blob([], { type: fallbackType }), type: fallbackType };
+          }
+        }
+
+        function readFileAsDataUrl(file, progressCallback) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(reader.error);
+            reader.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const progress = event.total > 0 ? event.loaded / event.total : 0;
+                progressCallback?.(progress);
+              }
+            };
+            reader.onload = () => {
+              resolve(typeof reader.result === "string" ? reader.result : "");
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        async function copyToClipboard(text) {
+          if (!text) return false;
+          try {
+            await navigator.clipboard.writeText(text);
+            return true;
+          } catch (error) {
+            console.warn("Async clipboard failed, attempting fallback", error);
+          }
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "true");
+          textarea.style.position = "fixed";
+          textarea.style.top = "-9999px";
+          document.body.appendChild(textarea);
+          const selection = document.getSelection();
+          const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+          textarea.select();
+          let success = false;
+          try {
+            success = document.execCommand("copy");
+          } catch (error) {
+            console.error("Fallback copy failed", error);
+            success = false;
+          }
+          textarea.blur();
+          document.body.removeChild(textarea);
+          if (range && selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          return success;
+        }
+
+        return {
+          formatBytes,
+          formatRelativeTime,
+          formatDateTime,
+          dataUrlToBlob,
+          readFileAsDataUrl,
+          createObjectUrl,
+          revokeObjectUrl,
+          revokeAllObjectUrls,
+          copyToClipboard,
+        };
+      })();
+
+      const Notifications = (() => {
+        const stack = document.querySelector("[data-toast-stack]");
+        const hideDelay = 5000;
+        const tones = new Map([
+          ["success", { icon: "✓", className: "toast--success" }],
+          ["error", { icon: "⚠", className: "toast--error" }],
+          ["info", { icon: "ℹ", className: "toast--info" }],
+        ]);
+
+        function buildToast(message, tone = "info") {
+          const meta = tones.get(tone) || tones.get("info");
+          const toast = document.createElement("div");
+          toast.className = `toast ${meta?.className ?? ""}`.trim();
+          toast.setAttribute("role", tone === "error" ? "alert" : "status");
+          toast.setAttribute("aria-live", tone === "error" ? "assertive" : "polite");
+          toast.tabIndex = 0;
+
+          const icon = document.createElement("span");
+          icon.className = "toast__icon";
+          icon.setAttribute("aria-hidden", "true");
+          icon.textContent = meta?.icon ?? "ℹ";
+
+          const textNode = document.createElement("span");
+          textNode.className = "toast__message";
+          textNode.textContent = message;
+
+          toast.append(icon, textNode);
+          return toast;
+        }
+
+        function toast(message, tone = "info", { duration = hideDelay } = {}) {
+          if (!stack || !message) return;
+          const toastEl = buildToast(message, tone);
+          stack.appendChild(toastEl);
+          requestAnimationFrame(() => {
+            toastEl.classList.add("is-visible");
+          });
+          const dismiss = () => {
+            toastEl.classList.remove("is-visible");
+            toastEl.addEventListener(
+              "transitionend",
+              () => {
+                toastEl.remove();
+              },
+              { once: true }
+            );
+          };
+          const timer = window.setTimeout(dismiss, duration);
+          toastEl.addEventListener("click", () => {
+            window.clearTimeout(timer);
+            dismiss();
+          });
+          toastEl.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              window.clearTimeout(timer);
+              dismiss();
+            }
+          });
+        }
+
+        function inline(target, message, tone) {
+          if (!target) return;
+          const normalized = message?.trim() ?? "";
+          target.classList.remove("is-error", "is-success");
+          if (!normalized) {
+            target.hidden = true;
+            target.textContent = "";
+            target.removeAttribute("role");
+            return;
+          }
+          target.hidden = false;
+          target.textContent = normalized;
+          if (tone === "error") {
+            target.classList.add("is-error");
+          } else if (tone === "success") {
+            target.classList.add("is-success");
+          }
+          target.setAttribute("role", "alert");
+        }
+
+        return { toast, inline };
+      })();
+
+      let lastCopyTrigger = null;
       const modal = document.getElementById("clipboard-confirm");
       const modalClose = modal?.querySelector("[data-close-modal]");
 
-      function openModal() {
-        modal?.classList.add("is-open");
+      function openModal(trigger) {
+        if (!modal) return;
+        lastCopyTrigger = trigger ?? null;
+        modal.classList.add("is-open");
         modalClose?.focus({ preventScroll: true });
       }
 
       function closeModal() {
-        modal?.classList.remove("is-open");
+        if (!modal) return;
+        modal.classList.remove("is-open");
+        if (lastCopyTrigger) {
+          lastCopyTrigger.focus({ preventScroll: true });
+          lastCopyTrigger = null;
+        }
       }
 
       modalClose?.addEventListener("click", closeModal);
@@ -1479,11 +1810,22 @@
       async function copyFromTrigger(trigger) {
         const value = resolveCopyValue(trigger);
         if (!value) return;
-        try {
-          await navigator.clipboard.writeText(value);
-          openModal();
-        } catch (error) {
-          console.error("Copy failed", error);
+        const success = await Utils.copyToClipboard(value);
+        if (success) {
+          Notifications.toast("Link copied to clipboard.", "success");
+          if (modal) {
+            openModal(trigger);
+          }
+        } else {
+          Notifications.toast("Copy failed. Please copy manually.", "error");
+          const selector = trigger.getAttribute("data-copy-target");
+          if (selector) {
+            const target = document.querySelector(selector);
+            if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+              target.focus();
+              target.select();
+            }
+          }
         }
       }
 
@@ -1500,39 +1842,9 @@
         }
       });
 
-      const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-      const numberFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
-
-      function formatBytes(bytes) {
-        if (!Number.isFinite(bytes) || bytes < 0) return "—";
-        if (bytes === 0) return "0 B";
-        const units = ["B", "KB", "MB", "GB", "TB"];
-        const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-        const value = bytes / 1024 ** exponent;
-        return `${numberFormatter.format(value)} ${units[exponent]}`;
-      }
-
-      function formatRelativeTime(isoString) {
-        if (!isoString) return "—";
-        const date = new Date(isoString);
-        if (Number.isNaN(date.getTime())) return "—";
-        const diffMs = date.getTime() - Date.now();
-        const units = [
-          { unit: "year", ms: 1000 * 60 * 60 * 24 * 365 },
-          { unit: "month", ms: 1000 * 60 * 60 * 24 * 30 },
-          { unit: "day", ms: 1000 * 60 * 60 * 24 },
-          { unit: "hour", ms: 1000 * 60 * 60 },
-          { unit: "minute", ms: 1000 * 60 },
-          { unit: "second", ms: 1000 },
-        ];
-        for (const { unit, ms } of units) {
-          if (Math.abs(diffMs) >= ms || unit === "second") {
-            const value = Math.round(diffMs / ms);
-            return relativeTimeFormatter.format(value, unit);
-          }
-        }
-        return relativeTimeFormatter.format(0, "second");
-      }
+      window.addEventListener("beforeunload", () => {
+        Utils.revokeAllObjectUrls();
+      });
 
       function guessMimeType(name, fallback = "application/octet-stream") {
         if (!name) return fallback;
@@ -1563,31 +1875,16 @@
         return lookup[extension] || fallback;
       }
 
-      function dataUrlToBlob(dataUrl, fallbackType = "application/octet-stream") {
-        if (!dataUrl) {
-          return { blob: new Blob([], { type: fallbackType }), type: fallbackType };
-        }
-        const [header, payload] = dataUrl.split(",");
-        try {
-          const match = header?.match(/data:(.*?);base64/);
-          const mime = match?.[1] || fallbackType;
-          const binary = atob(payload ?? "");
-          const length = binary.length;
-          const bytes = new Uint8Array(length);
-          for (let index = 0; index < length; index += 1) {
-            bytes[index] = binary.charCodeAt(index);
-          }
-          return { blob: new Blob([bytes], { type: mime }), type: mime };
-        } catch (error) {
-          console.error("Failed to parse stored file", error);
-          return { blob: new Blob([], { type: fallbackType }), type: fallbackType };
-        }
+      function formatExifDate(value) {
+        if (!value || typeof value !== "string") return null;
+        const cleaned = value.replace(/\0/g, "").trim();
+        const match = cleaned.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+        if (!match) return cleaned || null;
+        const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`;
+        const date = new Date(iso);
+        if (Number.isNaN(date.getTime())) return cleaned || null;
+        return date.toISOString();
       }
-
-      const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      });
 
       const SUPPORTED_IMAGE_TYPES = new Set([
         "image/jpeg",
@@ -1610,23 +1907,6 @@
         return normalized.startsWith("image/");
       }
 
-      function readFileAsDataUrl(file, progressCallback) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onerror = () => reject(reader.error);
-          reader.onprogress = (event) => {
-            if (event.lengthComputable) {
-              const progress = event.total > 0 ? event.loaded / event.total : 0;
-              progressCallback?.(progress);
-            }
-          };
-          reader.onload = () => {
-            resolve(typeof reader.result === "string" ? reader.result : "");
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-
       function getImageDimensions(file) {
         return new Promise((resolve, reject) => {
           const url = URL.createObjectURL(file);
@@ -1644,7 +1924,6 @@
           image.src = url;
         });
       }
-
       function parseExifFromArrayBuffer(buffer) {
         if (!buffer || !(buffer instanceof ArrayBuffer)) return {};
         try {
@@ -1852,17 +2131,6 @@
         return exif;
       }
 
-      function formatExifDate(value) {
-        if (!value || typeof value !== "string") return null;
-        const cleaned = value.replace(/\0/g, "").trim();
-        const match = cleaned.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
-        if (!match) return cleaned || null;
-        const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`;
-        const date = new Date(iso);
-        if (Number.isNaN(date.getTime())) return cleaned || null;
-        return date.toISOString();
-      }
-
       function describeOrientation(value) {
         switch (value) {
           case 2:
@@ -1904,8 +2172,8 @@
 
         function hydrate(rawDocs) {
           return rawDocs.map((doc) => {
-            const { blob, type } = dataUrlToBlob(doc.dataUrl, doc.type);
-            const blobUrl = URL.createObjectURL(blob);
+            const { blob, type } = Utils.dataUrlToBlob(doc.dataUrl, doc.type);
+            const blobUrl = blob ? Utils.createObjectUrl(blob) : "";
             return { ...doc, type, blobUrl };
           });
         }
@@ -1937,7 +2205,7 @@
           const title = extras.title?.trim();
           const description = extras.description?.trim() ?? "";
           const type = file.type || guessMimeType(file.name);
-          const blobUrl = URL.createObjectURL(file);
+          const blobUrl = Utils.createObjectUrl(file);
           return {
             id: generateId(),
             name: file.name,
@@ -1959,28 +2227,16 @@
           notify();
         }
 
-        function createDocument(file, extras = {}, progressCallback) {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onerror = () => reject(reader.error);
-            reader.onprogress = (event) => {
-              if (event.lengthComputable) {
-                const progress = event.total > 0 ? event.loaded / event.total : 0;
-                progressCallback?.(progress);
-              }
-            };
-            reader.onload = () => {
-              try {
-                const dataUrl = typeof reader.result === "string" ? reader.result : "";
-                const documentRecord = normalizeDocument(file, extras, dataUrl);
-                addDocument(documentRecord);
-                resolve(documentRecord);
-              } catch (error) {
-                reject(error);
-              }
-            };
-            reader.readAsDataURL(file);
-          });
+        async function createDocument(file, extras = {}, progressCallback) {
+          if (!(file instanceof File)) {
+            const error = new Error("Invalid document file");
+            error.code = "invalid";
+            throw error;
+          }
+          const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
+          const documentRecord = normalizeDocument(file, extras, dataUrl);
+          addDocument(documentRecord);
+          return documentRecord;
         }
 
         function removeDocument(id) {
@@ -1988,7 +2244,7 @@
           if (index === -1) return;
           const [removed] = documents.splice(index, 1);
           if (removed?.blobUrl) {
-            URL.revokeObjectURL(removed.blobUrl);
+            Utils.revokeObjectUrl(removed.blobUrl);
           }
           persist();
           notify();
@@ -2009,14 +2265,6 @@
         }
 
         load();
-
-        window.addEventListener("beforeunload", () => {
-          documents.forEach((doc) => {
-            if (doc.blobUrl) {
-              URL.revokeObjectURL(doc.blobUrl);
-            }
-          });
-        });
 
         return { subscribe, createDocument, removeDocument, getDocument, getDocuments };
       })();
@@ -2041,8 +2289,8 @@
 
         function hydrate(rawImages) {
           return rawImages.map((image) => {
-            const { blob, type } = dataUrlToBlob(image.dataUrl, image.type || "image/png");
-            const blobUrl = URL.createObjectURL(blob);
+            const { blob, type } = Utils.dataUrlToBlob(image.dataUrl, image.type || "image/png");
+            const blobUrl = blob ? Utils.createObjectUrl(blob) : "";
             return { ...image, type, blobUrl };
           });
         }
@@ -2074,7 +2322,7 @@
           const title = extras.title?.trim();
           const alt = extras.alt?.trim();
           const type = file.type || guessMimeType(file.name, "image/png");
-          const blobUrl = URL.createObjectURL(file);
+          const blobUrl = Utils.createObjectUrl(file);
           const capturedAtIso = formatExifDate(exif.dateTimeOriginal);
           return {
             id: generateId(),
@@ -2135,7 +2383,7 @@
           }
 
           const arrayBufferPromise = file.arrayBuffer().catch(() => null);
-          const dataUrl = await readFileAsDataUrl(file, progressCallback);
+          const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
           let exif = {};
           try {
             const buffer = await arrayBufferPromise;
@@ -2156,7 +2404,7 @@
           if (index === -1) return;
           const [removed] = images.splice(index, 1);
           if (removed?.blobUrl) {
-            URL.revokeObjectURL(removed.blobUrl);
+            Utils.revokeObjectUrl(removed.blobUrl);
           }
           persist();
           notify();
@@ -2178,14 +2426,6 @@
 
         load();
 
-        window.addEventListener("beforeunload", () => {
-          images.forEach((image) => {
-            if (image.blobUrl) {
-              URL.revokeObjectURL(image.blobUrl);
-            }
-          });
-        });
-
         return { subscribe, createImage, removeImage, getImage, getImages };
       })();
 
@@ -2204,6 +2444,17 @@
         const emptyTemplate = preview?.querySelector("[data-viewer-empty]")?.cloneNode(true) ?? null;
         let currentId = null;
 
+        function focusPreview() {
+          if (preview) {
+            preview.setAttribute("tabindex", "-1");
+            preview.focus({ preventScroll: true });
+          }
+        }
+
+        function emitSelectionChange() {
+          document.dispatchEvent(new CustomEvent("documentviewerchange", { detail: { id: currentId } }));
+        }
+
         function renderEmpty() {
           if (!preview) return;
           preview.innerHTML = "";
@@ -2218,6 +2469,8 @@
             openLink.setAttribute("aria-disabled", "true");
           }
           currentId = null;
+          emitSelectionChange();
+          focusPreview();
         }
 
         function isPreviewSupported(type) {
@@ -2263,8 +2516,8 @@
           if (nameEl) nameEl.textContent = doc.title || doc.name;
           if (filenameEl) filenameEl.textContent = doc.name;
           if (typeEl) typeEl.textContent = doc.type || "Unknown";
-          if (sizeEl) sizeEl.textContent = formatBytes(doc.size);
-          if (updatedEl) updatedEl.textContent = formatRelativeTime(doc.updatedAt);
+          if (sizeEl) sizeEl.textContent = Utils.formatBytes(doc.size);
+          if (updatedEl) updatedEl.textContent = Utils.formatRelativeTime(doc.updatedAt);
           if (descriptionEl) {
             if (doc.description) {
               descriptionEl.hidden = false;
@@ -2286,6 +2539,8 @@
             }
           }
           currentId = doc.id;
+          emitSelectionChange();
+          focusPreview();
         }
 
         DocumentStore.subscribe((docs) => {
@@ -2310,6 +2565,9 @@
             const doc = DocumentStore.getDocument(id);
             renderDocument(doc);
           },
+          getSelectedId() {
+            return currentId;
+          },
         };
       })();
 
@@ -2319,6 +2577,7 @@
         const searchInput = document.querySelector("[data-library-search]");
         let docs = [];
         let query = "";
+        let pendingFocusTarget = null;
 
         function matches(doc) {
           if (!query) return true;
@@ -2326,6 +2585,50 @@
           return [doc.title, doc.name, doc.type, doc.description]
             .filter(Boolean)
             .some((field) => field.toLowerCase().includes(value));
+        }
+
+        function getRowSelector(id) {
+          if (!id) return null;
+          if (typeof CSS !== "undefined" && CSS.escape) {
+            return `tr[data-id="${CSS.escape(id)}"]`;
+          }
+          const safe = String(id).replace(/"/g, '\"');
+          return `tr[data-id="${safe}"]`;
+        }
+
+        function focusRow(id) {
+          const selector = getRowSelector(id);
+          if (!rows || !selector) return;
+          const target = rows.querySelector(selector);
+          target?.focus({ preventScroll: false });
+        }
+
+        function markSelection(row, isSelected) {
+          row.classList.toggle("is-selected", isSelected);
+          if (isSelected) {
+            row.setAttribute("aria-selected", "true");
+          } else {
+            row.removeAttribute("aria-selected");
+          }
+        }
+
+        function syncSelection() {
+          const selectedId = typeof DocumentViewer?.getSelectedId === "function"
+            ? DocumentViewer.getSelectedId()
+            : null;
+          rows?.querySelectorAll("tr[data-id]").forEach((row) => {
+            markSelection(row, row.dataset.id === selectedId);
+          });
+        }
+
+        function applyPendingFocus() {
+          if (!pendingFocusTarget) return;
+          if (pendingFocusTarget === "search") {
+            searchInput?.focus({ preventScroll: false });
+          } else {
+            focusRow(pendingFocusTarget);
+          }
+          pendingFocusTarget = null;
         }
 
         function render() {
@@ -2336,12 +2639,19 @@
             emptyState.hidden = filtered.length > 0;
           }
           if (filtered.length === 0) {
+            applyPendingFocus();
             return;
           }
+
+          const selectedId = typeof DocumentViewer?.getSelectedId === "function"
+            ? DocumentViewer.getSelectedId()
+            : null;
 
           filtered.forEach((doc) => {
             const row = document.createElement("tr");
             row.dataset.id = doc.id;
+            row.tabIndex = -1;
+            markSelection(row, doc.id === selectedId);
 
             const titleCell = document.createElement("td");
             const titleWrapper = document.createElement("div");
@@ -2359,11 +2669,11 @@
             row.appendChild(typeCell);
 
             const sizeCell = document.createElement("td");
-            sizeCell.textContent = formatBytes(doc.size);
+            sizeCell.textContent = Utils.formatBytes(doc.size);
             row.appendChild(sizeCell);
 
             const updatedCell = document.createElement("td");
-            updatedCell.textContent = formatRelativeTime(doc.updatedAt);
+            updatedCell.textContent = Utils.formatRelativeTime(doc.updatedAt);
             row.appendChild(updatedCell);
 
             const actionsCell = document.createElement("td");
@@ -2406,6 +2716,9 @@
             row.appendChild(actionsCell);
             rows.appendChild(row);
           });
+
+          applyPendingFocus();
+          syncSelection();
         }
 
         DocumentStore.subscribe((nextDocs) => {
@@ -2421,14 +2734,54 @@
         rows?.addEventListener("click", (event) => {
           const actionTarget = event.target.closest("[data-action]");
           if (!actionTarget) return;
-          const id = actionTarget.closest("tr")?.dataset.id;
+          const row = actionTarget.closest("tr[data-id]");
+          const id = row?.dataset.id;
           if (!id) return;
           if (actionTarget.dataset.action === "view") {
             DocumentViewer.selectDocument(id);
+            pendingFocusTarget = id;
+            syncSelection();
           } else if (actionTarget.dataset.action === "delete") {
+            const fallback = row.previousElementSibling?.dataset.id || row.nextElementSibling?.dataset.id || "search";
+            pendingFocusTarget = fallback;
             DocumentStore.removeDocument(id);
+            Notifications.toast("Document removed from library.", "info");
           }
         });
+
+        rows?.addEventListener("keydown", (event) => {
+          const row = event.target.closest("tr[data-id]");
+          if (!row || event.target !== row) return;
+          const id = row.dataset.id;
+          if (!id) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            DocumentViewer.selectDocument(id);
+            pendingFocusTarget = id;
+            syncSelection();
+          } else if (event.key === "Delete") {
+            event.preventDefault();
+            const fallback = row.previousElementSibling?.dataset.id || row.nextElementSibling?.dataset.id || "search";
+            pendingFocusTarget = fallback;
+            DocumentStore.removeDocument(id);
+            Notifications.toast("Document removed from library.", "info");
+          }
+        });
+
+        document.addEventListener("documentviewerchange", () => {
+          syncSelection();
+        });
+
+        return {
+          focusRow,
+          focusFirst() {
+            const firstRow = rows?.querySelector("tr[data-id]");
+            firstRow?.focus({ preventScroll: false });
+          },
+        };
+      })();
+
+      const ImageViewer = (() => {
       })();
 
       const ImageViewer = (() => {
@@ -2454,6 +2807,13 @@
         let currentFit = "contain";
         let zoom = 100;
         let currentOrientation = 1;
+
+        function focusCanvas() {
+          if (canvas) {
+            canvas.setAttribute("tabindex", "-1");
+            canvas.focus({ preventScroll: true });
+          }
+        }
 
         function emitSelectionChange() {
           document.dispatchEvent(
@@ -2557,6 +2917,7 @@
           clearMeta();
           setFit(currentFit);
           emitSelectionChange();
+          focusCanvas();
         }
 
         function formatExifEntries(exif) {
@@ -2653,16 +3014,14 @@
           if (dimensionsEl) {
             dimensionsEl.textContent = image.width && image.height ? `${image.width} × ${image.height}px` : "—";
           }
-          if (sizeEl) sizeEl.textContent = formatBytes(image.size);
+          if (sizeEl) sizeEl.textContent = Utils.formatBytes(image.size);
           if (typeEl) typeEl.textContent = image.type || "Unknown";
           if (altEl) altEl.textContent = image.alt || "—";
           if (takenEl) {
             let capturedLabel = "—";
             if (image.capturedAt) {
-              const capturedDate = new Date(image.capturedAt);
-              if (!Number.isNaN(capturedDate.getTime())) {
-                capturedLabel = dateTimeFormatter.format(capturedDate);
-              }
+              const formatted = Utils.formatDateTime(image.capturedAt);
+              capturedLabel = formatted !== "—" ? formatted : image.capturedAt;
             } else if (image.exif?.dateTimeOriginal) {
               capturedLabel = image.exif.dateTimeOriginal.replace(/\0/g, "").trim();
             }
@@ -2685,6 +3044,7 @@
           renderExif(image.exif);
           applyTransform();
           emitSelectionChange();
+          focusCanvas();
         }
 
         fitButtons.forEach((button) => {
@@ -2745,6 +3105,7 @@
         let images = [];
         let query = "";
         let viewMode = "grid";
+        let pendingFocusId = null;
 
         const observer = typeof IntersectionObserver !== "undefined"
           ? new IntersectionObserver((entries, obs) => {
@@ -2760,6 +3121,22 @@
               });
             }, { rootMargin: "120px", threshold: 0.1 })
           : null;
+
+        function getButtonSelector(id) {
+          if (!id) return null;
+          if (typeof CSS !== "undefined" && CSS.escape) {
+            return `.image-gallery__thumb[data-id="${CSS.escape(id)}"]`;
+          }
+          const safe = String(id).replace(/"/g, '\"');
+          return `.image-gallery__thumb[data-id="${safe}"]`;
+        }
+
+        function focusItem(id) {
+          const selector = getButtonSelector(id);
+          if (!selector) return;
+          const button = items.querySelector(selector);
+          button?.focus({ preventScroll: false });
+        }
 
         function clearObserver() {
           observer?.disconnect();
@@ -2787,7 +3164,22 @@
           const selectedId = ImageViewer.getSelectedId();
           items.querySelectorAll(".image-gallery__thumb").forEach((thumb) => {
             thumb.classList.toggle("is-selected", thumb.dataset.id === selectedId);
+            if (thumb.dataset.id === selectedId) {
+              thumb.setAttribute("aria-current", "true");
+            } else {
+              thumb.removeAttribute("aria-current");
+            }
           });
+        }
+
+        function applyPendingFocus() {
+          if (!pendingFocusId) return;
+          if (pendingFocusId === "search") {
+            searchInput?.focus({ preventScroll: false });
+          } else {
+            focusItem(pendingFocusId);
+          }
+          pendingFocusId = null;
         }
 
         function render() {
@@ -2800,6 +3192,8 @@
           items.classList.toggle("image-gallery__items--grid", viewMode === "grid");
           items.classList.toggle("image-gallery__items--list", viewMode === "list");
           if (filtered.length === 0) {
+            syncSelection();
+            applyPendingFocus();
             return;
           }
 
@@ -2847,7 +3241,7 @@
             }
             if (image.size) {
               const size = document.createElement("span");
-              size.textContent = formatBytes(image.size);
+              size.textContent = Utils.formatBytes(image.size);
               extra.appendChild(size);
             }
             meta.append(title, subtitle, extra);
@@ -2860,7 +3254,12 @@
             removeButton.textContent = "Remove";
             removeButton.addEventListener("click", (event) => {
               event.stopPropagation();
+              const fallback = listItem.nextElementSibling?.querySelector(".image-gallery__thumb")?.dataset.id
+                || listItem.previousElementSibling?.querySelector(".image-gallery__thumb")?.dataset.id
+                || "search";
+              pendingFocusId = fallback;
               ImageStore.removeImage(image.id);
+              Notifications.toast("Image removed from gallery.", "info");
             });
             actions.appendChild(removeButton);
 
@@ -2875,6 +3274,7 @@
           });
 
           syncSelection();
+          applyPendingFocus();
         }
 
         ImageStore.subscribe((nextImages) => {
@@ -2899,11 +3299,37 @@
           render();
         });
 
+        items.addEventListener("keydown", (event) => {
+          const targetButton = event.target.closest(".image-gallery__thumb");
+          if (!targetButton || event.target !== targetButton) return;
+          const id = targetButton.dataset.id;
+          if (!id) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            ImageViewer.selectImage(id);
+            syncSelection();
+          } else if (event.key === "Delete") {
+            event.preventDefault();
+            const listItem = targetButton.closest("li");
+            const fallback = listItem?.nextElementSibling?.querySelector(".image-gallery__thumb")?.dataset.id
+              || listItem?.previousElementSibling?.querySelector(".image-gallery__thumb")?.dataset.id
+              || "search";
+            pendingFocusId = fallback;
+            ImageStore.removeImage(id);
+            Notifications.toast("Image removed from gallery.", "info");
+          }
+        });
+
         document.addEventListener("imageviewerchange", () => {
           syncSelection();
         });
 
-        return null;
+        return {
+          focusItem,
+        };
+      })();
+
+      const ImageUpload = (() => {
       })();
 
       const ImageUpload = (() => {
@@ -2920,22 +3346,11 @@
         const dropzone = form.querySelector("[data-image-dropzone]");
 
         function resetFeedback() {
-          if (!feedback) return;
-          feedback.hidden = true;
-          feedback.textContent = "";
-          feedback.classList.remove("is-error", "is-success");
+          Notifications.inline(feedback, "");
         }
 
         function showFeedback(message, tone) {
-          if (!feedback) return;
-          feedback.textContent = message;
-          feedback.hidden = false;
-          feedback.classList.remove("is-error", "is-success");
-          if (tone === "error") {
-            feedback.classList.add("is-error");
-          } else if (tone === "success") {
-            feedback.classList.add("is-success");
-          }
+          Notifications.inline(feedback, message, tone);
         }
 
         function hideProgress() {
@@ -2974,6 +3389,7 @@
           const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
           if (!files.length) {
             showFeedback("Select at least one image to upload.", "error");
+            Notifications.toast("Select at least one image to upload.", "error");
             return;
           }
 
@@ -3007,14 +3423,18 @@
               lastImage = imageRecord;
             } catch (error) {
               console.error("Image upload failed", error);
-              showFeedback(describeError(file, error), "error");
+              const message = describeError(file, error);
+              showFeedback(message, "error");
+              Notifications.toast(message, "error");
               hideProgress();
               return;
             }
           }
 
-          updateProgress(100, files.length > 1 ? `${files.length} images uploaded` : `${files[0].name} uploaded`);
+          const summary = files.length > 1 ? `${files.length} images uploaded` : `${files[0].name} uploaded`;
+          updateProgress(100, summary);
           showFeedback("Upload complete. Images are ready in the gallery.", "success");
+          Notifications.toast("Images uploaded successfully.", "success");
           form.reset();
           if (fileInput) {
             fileInput.value = "";
@@ -3024,6 +3444,9 @@
           }, 600);
           if (lastImage) {
             ImageViewer.selectImage(lastImage.id);
+            if (ImageGallery?.focusItem) {
+              window.setTimeout(() => ImageGallery.focusItem(lastImage.id), 0);
+            }
           }
         }
 
@@ -3081,22 +3504,11 @@
         const dropzone = form.querySelector("[data-dropzone]");
 
         function resetFeedback() {
-          if (!feedback) return;
-          feedback.hidden = true;
-          feedback.textContent = "";
-          feedback.classList.remove("is-error", "is-success");
+          Notifications.inline(feedback, "");
         }
 
         function showFeedback(message, tone) {
-          if (!feedback) return;
-          feedback.textContent = message;
-          feedback.hidden = false;
-          feedback.classList.remove("is-error", "is-success");
-          if (tone === "error") {
-            feedback.classList.add("is-error");
-          } else if (tone === "success") {
-            feedback.classList.add("is-success");
-          }
+          Notifications.inline(feedback, message, tone);
         }
 
         function hideProgress() {
@@ -3122,6 +3534,7 @@
           const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
           if (!files.length) {
             showFeedback("Select at least one document to upload.", "error");
+            Notifications.toast("Select at least one document to upload.", "error");
             return;
           }
 
@@ -3152,13 +3565,16 @@
             } catch (error) {
               console.error("Upload failed", error);
               showFeedback(`Upload failed for ${file.name}.`, "error");
+              Notifications.toast(`Upload failed for ${file.name}.`, "error");
               hideProgress();
               return;
             }
           }
 
-          updateProgress(100, files.length > 1 ? `${files.length} documents uploaded` : `${files[0].name} uploaded`);
+          const summary = files.length > 1 ? `${files.length} documents uploaded` : `${files[0].name} uploaded`;
+          updateProgress(100, summary);
           showFeedback("Upload complete. Documents are ready in the library.", "success");
+          Notifications.toast("Documents uploaded successfully.", "success");
           form.reset();
           if (fileInput) {
             fileInput.value = "";
@@ -3168,6 +3584,9 @@
           }, 600);
           if (lastDocument) {
             DocumentViewer.selectDocument(lastDocument.id);
+            if (LibraryView?.focusRow) {
+              window.setTimeout(() => LibraryView.focusRow(lastDocument.id), 0);
+            }
           }
         }
 
