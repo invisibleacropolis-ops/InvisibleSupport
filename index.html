@@ -148,6 +148,73 @@
         max-width: 48rem;
       }
 
+      .storage-meter {
+        display: grid;
+        gap: var(--space-xs);
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-md);
+        border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+        background: color-mix(in srgb, var(--color-surface) 88%, transparent 12%);
+        max-width: min(24rem, 100%);
+      }
+
+      .storage-meter__heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--color-text-muted);
+      }
+
+      .storage-meter__values {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .storage-meter__progress {
+        position: relative;
+        height: 0.5rem;
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--color-border) 50%, transparent 50%);
+        overflow: hidden;
+      }
+
+      .storage-meter__progress-bar {
+        position: absolute;
+        inset: 0;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--color-accent), var(--color-accent-strong));
+        transition: width var(--transition-base);
+      }
+
+      .storage-meter.is-warning .storage-meter__progress-bar {
+        background: linear-gradient(90deg, var(--color-danger), color-mix(in srgb, var(--color-danger) 70%, var(--color-accent) 30%));
+      }
+
+      .storage-meter__warning {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--color-danger);
+      }
+
+      .storage-meter__actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .storage-meter__button {
+        font-size: 0.85rem;
+        padding: var(--space-2xs) var(--space-sm);
+      }
+
       .portal__heading {
         font-size: clamp(2rem, 3vw, 2.75rem);
         font-weight: 700;
@@ -243,6 +310,31 @@
 
       .toast__icon {
         font-size: 1.2rem;
+      }
+
+      .toast__message {
+        flex: 1 1 auto;
+      }
+
+      .toast__dismiss {
+        margin-left: auto;
+        appearance: none;
+        border: none;
+        background: transparent;
+        color: var(--color-text-muted);
+        font-weight: 600;
+        cursor: pointer;
+        padding: var(--space-2xs) var(--space-xs);
+      }
+
+      .toast__dismiss:hover {
+        color: var(--color-text);
+      }
+
+      .toast__dismiss:focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--color-accent) 65%, white 35%);
+        outline-offset: 2px;
+        border-radius: var(--radius-sm);
       }
 
       .toast--success {
@@ -1071,6 +1163,31 @@
           Prioritize rich context uploads while staying immersed in your operations. Consolidate files,
           notes, and case metadata without losing the cinematic feel of the workspace.
         </p>
+        <section
+          class="storage-meter"
+          role="region"
+          aria-live="polite"
+          aria-label="Storage usage"
+          data-storage-meter
+        >
+          <div class="storage-meter__heading">
+            <span data-i18n-key="labels.storageUsed"></span>
+            <span data-storage-limit></span>
+          </div>
+          <div class="storage-meter__values">
+            <span data-storage-summary></span>
+            <button
+              class="u-btn u-btn--ghost storage-meter__button"
+              type="button"
+              data-storage-manage
+              data-i18n-key="labels.storageManageCta"
+            ></button>
+          </div>
+          <div class="storage-meter__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-storage-progress>
+            <span class="storage-meter__progress-bar" data-storage-progress-bar></span>
+          </div>
+          <p class="storage-meter__warning" data-storage-warning hidden></p>
+        </section>
       </header>
 
       <div class="portal__grid">
@@ -1514,11 +1631,306 @@
       </div>
     </div>
 
+    <div class="u-modal" id="storage-modal" role="dialog" aria-modal="true" aria-labelledby="storage-title" aria-describedby="storage-description">
+      <div class="u-modal__dialog">
+        <div class="stack">
+          <h2 class="u-card__title" id="storage-title" data-i18n-key="labels.storageDialogTitle"></h2>
+          <p class="u-card__subtitle" id="storage-description" data-i18n-key="labels.storageDialogDescription"></p>
+          <div class="upload-card__actions" style="justify-content: flex-end;">
+            <button class="u-btn u-btn--primary" type="button" data-storage-clear data-i18n-key="labels.storageClearCta"></button>
+            <button class="u-btn u-btn--ghost" type="button" data-storage-cancel data-i18n-key="labels.storageCancelCta"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <footer>
       Invisible Support · Seamless context hand-offs for modern ops teams
     </footer>
 
     <script>
+      const Localization = (() => {
+        const defaultLocale = document.documentElement.lang || "en";
+        const fallbackLocale = "en";
+        const locales = {
+          en: {
+            common: {
+              copySuccess: "Link copied to clipboard.",
+              copyFailure: "Copy failed. Please copy manually.",
+              dismiss: "Dismiss notification",
+              remove: "Remove",
+              manageStorage: "Manage storage",
+              usageSummary: "{used} of {limit}",
+              storageWarning: "Storage is almost full ({percent}% used).",
+              unknownFile: "File",
+            },
+            notifications: {
+              documentRemoved: "Document removed from library.",
+              imageRemoved: "Image removed from gallery.",
+              imageUploadSuccess: "Images uploaded successfully.",
+              imageUploadSelectPrompt: "Select at least one image to upload.",
+              documentUploadSuccess: "Documents uploaded successfully.",
+              documentUploadSelectPrompt: "Select at least one document to upload.",
+              storageQuotaExceeded: "Storage quota exceeded. Remove items or clear space to continue.",
+              duplicateName: "An item with this name already exists. Renamed automatically.",
+              largeFileWarning: "File is large and may exceed available space.",
+              storageCleared: "Stored items cleared successfully.",
+            },
+            errors: {
+              quotaExceeded: "Unable to save changes because storage is full.",
+              persistFailure: "Unable to persist items. Try clearing storage and retrying.",
+              invalidDocument: "Invalid document file.",
+              invalidImage: "Invalid image file.",
+              unsupportedImageType: "Unsupported image type.",
+              imageDimensions: "Unable to read image dimensions.",
+              imageTooLarge: "Image exceeds maximum supported dimensions.",
+            },
+            labels: {
+              storageUsed: "Storage used",
+              storageLimit: "Storage limit",
+              storageDialogTitle: "Storage management",
+              storageDialogDescription:
+                "Local storage is near capacity. Clear older items or export data to continue uploading.",
+              storageClearCta: "Clear all stored items",
+              storageCancelCta: "Keep items",
+              storageManageCta: "Manage stored data",
+              storageWarningCta: "Review storage",
+            },
+            upload: {
+              waitingImages: "Waiting for images…",
+              waitingDocuments: "Waiting for files…",
+              validating: "{name} • validating",
+              progress: "{name} • {percent}%",
+              summaryImagesSingle: "{name} uploaded",
+              summaryImagesMultiple: "{count} images uploaded",
+              summaryDocumentsSingle: "{name} uploaded",
+              summaryDocumentsMultiple: "{count} documents uploaded",
+              completeImages: "Upload complete. Images are ready in the gallery.",
+              completeDocuments: "Upload complete. Documents are ready in the library.",
+              errorSelectImages: "Select at least one image to upload.",
+              errorSelectDocuments: "Select at least one document to upload.",
+              errorUnsupportedImage: "{name} is not a supported image type.",
+              errorImageTooLarge: "{name} exceeds the {limit}px dimension limit.",
+              errorImageDimensions: "Unable to read dimensions for {name}.",
+              errorUploadFailed: "Upload failed for {name}.",
+            },
+            gallery: {
+              selectImage: "Select {name}",
+            },
+          },
+        };
+
+        let activeLocale = locales[defaultLocale] ? defaultLocale : fallbackLocale;
+
+        function getString(key) {
+          const segments = key.split(".");
+          let current = locales[activeLocale] || locales[fallbackLocale];
+          for (const segment of segments) {
+            if (current && typeof current === "object" && segment in current) {
+              current = current[segment];
+            } else {
+              return key;
+            }
+          }
+          return typeof current === "string" ? current : key;
+        }
+
+        function format(template, replacements = {}) {
+          return template.replace(/\{(.*?)\}/g, (_, token) => {
+            const value = replacements[token.trim()];
+            return value ?? "";
+          });
+        }
+
+        function t(key, replacements) {
+          const template = getString(key);
+          return typeof template === "string" ? format(template, replacements) : key;
+        }
+
+        function apply(root = document) {
+          root
+            .querySelectorAll?.("[data-i18n-key]")
+            .forEach((node) => {
+              const key = node.getAttribute("data-i18n-key");
+              if (!key) return;
+              const text = t(key);
+              if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
+                node.placeholder = text;
+              } else {
+                node.textContent = text;
+              }
+            });
+        }
+
+        function setLocale(locale) {
+          if (!locales[locale]) return;
+          activeLocale = locale;
+          apply();
+        }
+
+        function getLocale() {
+          return activeLocale;
+        }
+
+        return { t, apply, setLocale, getLocale };
+      })();
+
+      Localization.apply();
+
+      const StorageManager = (() => {
+        const LIMIT_BYTES = 4.5 * 1024 * 1024; // 4.5 MB heuristic limit for localStorage
+        const BASE64_OVERHEAD = 1.37;
+        const WARNING_THRESHOLD = 0.8;
+        const trackedSizes = new Map();
+        const listeners = new Set();
+        const encoder = typeof TextEncoder !== "undefined" ? new TextEncoder() : null;
+
+        function measure(value) {
+          if (!value) return 0;
+          try {
+            if (encoder) {
+              return encoder.encode(value).length;
+            }
+            return unescape(encodeURIComponent(value)).length;
+          } catch (error) {
+            console.warn("Unable to measure storage value", error);
+            return value.length ?? 0;
+          }
+        }
+
+        function buildSnapshot(overrideKey, overrideSize) {
+          let used = 0;
+          trackedSizes.forEach((size, key) => {
+            if (overrideKey && key === overrideKey && typeof overrideSize === "number") {
+              used += overrideSize;
+            } else {
+              used += size;
+            }
+          });
+          if (overrideKey && !trackedSizes.has(overrideKey) && typeof overrideSize === "number") {
+            used += overrideSize;
+          }
+          const limit = LIMIT_BYTES;
+          const ratio = limit > 0 ? used / limit : 0;
+          return {
+            used,
+            limit,
+            ratio,
+            isWarning: ratio >= WARNING_THRESHOLD && ratio < 1,
+            isExceeded: ratio >= 1,
+          };
+        }
+
+        function notify(snapshot = buildSnapshot()) {
+          listeners.forEach((listener) => {
+            try {
+              listener({ ...snapshot });
+            } catch (error) {
+              console.warn("Storage listener error", error);
+            }
+          });
+        }
+
+        function register(key) {
+          if (!trackedSizes.has(key)) {
+            trackedSizes.set(key, 0);
+          }
+        }
+
+        function persist(key, value) {
+          register(key);
+          const serialized = JSON.stringify(value);
+          const size = measure(serialized);
+          const snapshot = buildSnapshot(key, size);
+          if (snapshot.isExceeded) {
+            const error = new Error(Localization.t("errors.quotaExceeded"));
+            error.code = "quota";
+            error.snapshot = snapshot;
+            throw error;
+          }
+          try {
+            localStorage.setItem(key, serialized);
+            trackedSizes.set(key, size);
+            notify(snapshot);
+          } catch (error) {
+            if (error && (error.name === "QuotaExceededError" || error.code === 22)) {
+              const quotaError = new Error(Localization.t("errors.quotaExceeded"));
+              quotaError.code = "quota";
+              quotaError.snapshot = snapshot;
+              throw quotaError;
+            }
+            const persistError = new Error(Localization.t("errors.persistFailure"));
+            persistError.code = "persist";
+            persistError.cause = error;
+            throw persistError;
+          }
+        }
+
+        function read(key) {
+          register(key);
+          const stored = localStorage.getItem(key);
+          const size = measure(stored ?? "");
+          trackedSizes.set(key, size);
+          notify();
+          if (!stored) return null;
+          return JSON.parse(stored);
+        }
+
+        function clear(key) {
+          register(key);
+          localStorage.removeItem(key);
+          trackedSizes.set(key, 0);
+          notify();
+        }
+
+        function clearAll() {
+          trackedSizes.forEach((_, key) => {
+            localStorage.removeItem(key);
+            trackedSizes.set(key, 0);
+          });
+          notify();
+        }
+
+        function subscribe(listener) {
+          if (typeof listener !== "function") return () => {};
+          listeners.add(listener);
+          listener(buildSnapshot());
+          return () => listeners.delete(listener);
+        }
+
+        function getSnapshot() {
+          return buildSnapshot();
+        }
+
+        function estimateImpact(bytes) {
+          if (!Number.isFinite(bytes) || bytes <= 0) return 0;
+          return Math.ceil(bytes * BASE64_OVERHEAD);
+        }
+
+        function getRemainingCapacity() {
+          const snapshot = buildSnapshot();
+          return Math.max(snapshot.limit - snapshot.used, 0);
+        }
+
+        function canStore(additionalBytes) {
+          if (!Number.isFinite(additionalBytes) || additionalBytes <= 0) return true;
+          const snapshot = buildSnapshot();
+          return snapshot.used + additionalBytes <= snapshot.limit;
+        }
+
+        return {
+          persist,
+          read,
+          clear,
+          clearAll,
+          subscribe,
+          getSnapshot,
+          estimateImpact,
+          getRemainingCapacity,
+          canStore,
+        };
+      })();
+
       const Utils = (() => {
         const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
         const bytesFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
@@ -1709,7 +2121,14 @@
           textNode.className = "toast__message";
           textNode.textContent = message;
 
-          toast.append(icon, textNode);
+          const dismissButton = document.createElement("button");
+          dismissButton.className = "toast__dismiss";
+          dismissButton.type = "button";
+          dismissButton.textContent = Localization.t("common.dismiss");
+          dismissButton.setAttribute("aria-label", Localization.t("common.dismiss"));
+
+          toast.append(icon, textNode, dismissButton);
+          toast.dataset.dismissButton = "";
           return toast;
         }
 
@@ -1731,7 +2150,13 @@
             );
           };
           const timer = window.setTimeout(dismiss, duration);
-          toastEl.addEventListener("click", () => {
+          toastEl.addEventListener("click", (event) => {
+            if (event.target instanceof HTMLButtonElement) return;
+            window.clearTimeout(timer);
+            dismiss();
+          });
+          toastEl.querySelector(".toast__dismiss")?.addEventListener("click", (event) => {
+            event.stopPropagation();
             window.clearTimeout(timer);
             dismiss();
           });
@@ -1812,12 +2237,12 @@
         if (!value) return;
         const success = await Utils.copyToClipboard(value);
         if (success) {
-          Notifications.toast("Link copied to clipboard.", "success");
+          Notifications.toast(Localization.t("common.copySuccess"), "success");
           if (modal) {
             openModal(trigger);
           }
         } else {
-          Notifications.toast("Copy failed. Please copy manually.", "error");
+          Notifications.toast(Localization.t("common.copyFailure"), "error");
           const selector = trigger.getAttribute("data-copy-target");
           if (selector) {
             const target = document.querySelector(selector);
@@ -2157,17 +2582,17 @@
         const listeners = new Set();
         let documents = [];
 
+        function toSerializable(items) {
+          return items.map(({ blobUrl, ...rest }) => rest);
+        }
+
         function notify() {
           listeners.forEach((listener) => listener([...documents]));
         }
 
-        function persist() {
-          try {
-            const serializable = documents.map(({ blobUrl, ...rest }) => rest);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
-          } catch (error) {
-            console.error("Unable to persist documents", error);
-          }
+        function persist(nextDocuments) {
+          const serializable = toSerializable(nextDocuments);
+          StorageManager.persist(STORAGE_KEY, serializable);
         }
 
         function hydrate(rawDocs) {
@@ -2180,17 +2605,16 @@
 
         function load() {
           try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (!stored) return;
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) {
-              documents = hydrate(parsed).sort(
+            const stored = StorageManager.read(STORAGE_KEY);
+            if (Array.isArray(stored)) {
+              documents = hydrate(stored).sort(
                 (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
               );
             }
           } catch (error) {
             console.error("Failed to load stored documents", error);
             documents = [];
+            StorageManager.clear(STORAGE_KEY);
           }
         }
 
@@ -2200,16 +2624,40 @@
             : `doc-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         }
 
+        function ensureUniqueName(name) {
+          if (!name) return name;
+          const trimmed = name.trim();
+          if (!trimmed) return trimmed;
+          const [base, extension] = (() => {
+            const lastDot = trimmed.lastIndexOf(".");
+            if (lastDot > 0 && lastDot < trimmed.length - 1) {
+              return [trimmed.slice(0, lastDot), trimmed.slice(lastDot)];
+            }
+            return [trimmed, ""];
+          })();
+          let candidate = trimmed;
+          let counter = 2;
+          while (documents.some((doc) => doc.name === candidate)) {
+            candidate = `${base} (${counter})${extension}`;
+            counter += 1;
+          }
+          if (candidate !== trimmed) {
+            Notifications.toast(Localization.t("notifications.duplicateName"), "info");
+          }
+          return candidate;
+        }
+
         function normalizeDocument(file, extras, dataUrl) {
           const now = new Date().toISOString();
           const title = extras.title?.trim();
           const description = extras.description?.trim() ?? "";
           const type = file.type || guessMimeType(file.name);
           const blobUrl = Utils.createObjectUrl(file);
+          const normalizedName = ensureUniqueName(file.name);
           return {
             id: generateId(),
-            name: file.name,
-            title: title || file.name,
+            name: normalizedName,
+            title: title || normalizedName,
             description,
             type,
             size: file.size,
@@ -2220,22 +2668,30 @@
         }
 
         function addDocument(doc) {
-          documents = [doc, ...documents].sort(
+          const nextDocuments = [doc, ...documents].sort(
             (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
           );
-          persist();
+          persist(nextDocuments);
+          documents = nextDocuments;
           notify();
         }
 
         async function createDocument(file, extras = {}, progressCallback) {
           if (!(file instanceof File)) {
-            const error = new Error("Invalid document file");
+            const error = new Error(Localization.t("errors.invalidDocument"));
             error.code = "invalid";
             throw error;
           }
           const dataUrl = await Utils.readFileAsDataUrl(file, progressCallback);
           const documentRecord = normalizeDocument(file, extras, dataUrl);
-          addDocument(documentRecord);
+          try {
+            addDocument(documentRecord);
+          } catch (error) {
+            if (documentRecord?.blobUrl) {
+              Utils.revokeObjectUrl(documentRecord.blobUrl);
+            }
+            throw error;
+          }
           return documentRecord;
         }
 
@@ -2246,7 +2702,23 @@
           if (removed?.blobUrl) {
             Utils.revokeObjectUrl(removed.blobUrl);
           }
-          persist();
+          try {
+            persist(documents);
+          } catch (error) {
+            console.error("Unable to persist after removal", error);
+            Notifications.toast(Localization.t("errors.persistFailure"), "error");
+          }
+          notify();
+        }
+
+        function clearAll() {
+          documents.forEach((doc) => {
+            if (doc?.blobUrl) {
+              Utils.revokeObjectUrl(doc.blobUrl);
+            }
+          });
+          documents = [];
+          StorageManager.clear(STORAGE_KEY);
           notify();
         }
 
@@ -2266,7 +2738,7 @@
 
         load();
 
-        return { subscribe, createDocument, removeDocument, getDocument, getDocuments };
+        return { subscribe, createDocument, removeDocument, getDocument, getDocuments, clearAll };
       })();
 
       const ImageStore = (() => {
@@ -2274,17 +2746,17 @@
         const listeners = new Set();
         let images = [];
 
+        function toSerializable(items) {
+          return items.map(({ blobUrl, ...rest }) => rest);
+        }
+
         function notify() {
           listeners.forEach((listener) => listener([...images]));
         }
 
-        function persist() {
-          try {
-            const serializable = images.map(({ blobUrl, ...rest }) => rest);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
-          } catch (error) {
-            console.error("Unable to persist images", error);
-          }
+        function persist(nextImages) {
+          const serializable = toSerializable(nextImages);
+          StorageManager.persist(STORAGE_KEY, serializable);
         }
 
         function hydrate(rawImages) {
@@ -2297,17 +2769,16 @@
 
         function load() {
           try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (!stored) return;
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) {
-              images = hydrate(parsed).sort(
+            const stored = StorageManager.read(STORAGE_KEY);
+            if (Array.isArray(stored)) {
+              images = hydrate(stored).sort(
                 (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
               );
             }
           } catch (error) {
             console.error("Failed to load stored images", error);
             images = [];
+            StorageManager.clear(STORAGE_KEY);
           }
         }
 
@@ -2317,6 +2788,29 @@
             : `img-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         }
 
+        function ensureUniqueName(name) {
+          if (!name) return name;
+          const trimmed = name.trim();
+          if (!trimmed) return trimmed;
+          const [base, extension] = (() => {
+            const lastDot = trimmed.lastIndexOf(".");
+            if (lastDot > 0 && lastDot < trimmed.length - 1) {
+              return [trimmed.slice(0, lastDot), trimmed.slice(lastDot)];
+            }
+            return [trimmed, ""];
+          })();
+          let candidate = trimmed;
+          let counter = 2;
+          while (images.some((image) => image.name === candidate)) {
+            candidate = `${base} (${counter})${extension}`;
+            counter += 1;
+          }
+          if (candidate !== trimmed) {
+            Notifications.toast(Localization.t("notifications.duplicateName"), "info");
+          }
+          return candidate;
+        }
+
         function normalizeImage(file, extras, dataUrl, dimensions, exif) {
           const now = new Date().toISOString();
           const title = extras.title?.trim();
@@ -2324,10 +2818,11 @@
           const type = file.type || guessMimeType(file.name, "image/png");
           const blobUrl = Utils.createObjectUrl(file);
           const capturedAtIso = formatExifDate(exif.dateTimeOriginal);
+          const normalizedName = ensureUniqueName(file.name);
           return {
             id: generateId(),
-            name: file.name,
-            title: title || file.name,
+            name: normalizedName,
+            title: title || normalizedName,
             alt: alt || "",
             type,
             size: file.size,
@@ -2342,22 +2837,23 @@
         }
 
         function addImage(image) {
-          images = [image, ...images].sort(
+          const nextImages = [image, ...images].sort(
             (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
           );
-          persist();
+          persist(nextImages);
+          images = nextImages;
           notify();
         }
 
         async function createImage(file, extras = {}, progressCallback) {
           if (!(file instanceof File)) {
-            const error = new Error("Invalid image file");
+            const error = new Error(Localization.t("errors.invalidImage"));
             error.code = "invalid";
             throw error;
           }
           const mimeType = file.type || guessMimeType(file.name, "image/png");
           if (!isSupportedImageType(mimeType)) {
-            const error = new Error("Unsupported image type");
+            const error = new Error(Localization.t("errors.unsupportedImageType"));
             error.code = "type";
             throw error;
           }
@@ -2366,7 +2862,7 @@
           try {
             dimensions = await getImageDimensions(file);
           } catch (error) {
-            const dimensionError = new Error("Unable to read image dimensions");
+            const dimensionError = new Error(Localization.t("errors.imageDimensions"));
             dimensionError.code = "dimensions";
             throw dimensionError;
           }
@@ -2376,7 +2872,7 @@
             dimensions.width > MAX_IMAGE_DIMENSION ||
             dimensions.height > MAX_IMAGE_DIMENSION
           ) {
-            const sizeError = new Error("Image exceeds maximum dimensions");
+            const sizeError = new Error(Localization.t("errors.imageTooLarge"));
             sizeError.code = "max-dimensions";
             sizeError.details = dimensions;
             throw sizeError;
@@ -2395,7 +2891,14 @@
           }
 
           const imageRecord = normalizeImage(file, extras, dataUrl, dimensions, exif);
-          addImage(imageRecord);
+          try {
+            addImage(imageRecord);
+          } catch (error) {
+            if (imageRecord?.blobUrl) {
+              Utils.revokeObjectUrl(imageRecord.blobUrl);
+            }
+            throw error;
+          }
           return imageRecord;
         }
 
@@ -2406,7 +2909,12 @@
           if (removed?.blobUrl) {
             Utils.revokeObjectUrl(removed.blobUrl);
           }
-          persist();
+          try {
+            persist(images);
+          } catch (error) {
+            console.error("Unable to persist images after removal", error);
+            Notifications.toast(Localization.t("errors.persistFailure"), "error");
+          }
           notify();
         }
 
@@ -2424,9 +2932,136 @@
           return [...images];
         }
 
+        function clearAll() {
+          images.forEach((image) => {
+            if (image?.blobUrl) {
+              Utils.revokeObjectUrl(image.blobUrl);
+            }
+          });
+          images = [];
+          StorageManager.clear(STORAGE_KEY);
+          notify();
+        }
+
         load();
 
-        return { subscribe, createImage, removeImage, getImage, getImages };
+        return { subscribe, createImage, removeImage, getImage, getImages, clearAll };
+      })();
+
+      const StorageUI = (() => {
+        const meter = document.querySelector("[data-storage-meter]");
+        const summaryEl = meter?.querySelector("[data-storage-summary]");
+        const limitEl = meter?.querySelector("[data-storage-limit]");
+        const progressRegion = meter?.querySelector("[data-storage-progress]");
+        const progressBar = meter?.querySelector("[data-storage-progress-bar]");
+        const warningEl = meter?.querySelector("[data-storage-warning]");
+        const manageButton = meter?.querySelector("[data-storage-manage]");
+        const storageModal = document.getElementById("storage-modal");
+        const clearButton = storageModal?.querySelector("[data-storage-clear]");
+        const cancelButton = storageModal?.querySelector("[data-storage-cancel]");
+        if (!meter) return null;
+        let lastState = "normal";
+        let lastTrigger = null;
+
+        function formatSummary(snapshot) {
+          return Localization.t("common.usageSummary", {
+            used: Utils.formatBytes(snapshot.used),
+            limit: Utils.formatBytes(snapshot.limit),
+          });
+        }
+
+        function update(snapshot = StorageManager.getSnapshot()) {
+          if (!snapshot) return;
+          const percent = snapshot.limit ? Math.min((snapshot.used / snapshot.limit) * 100, 100) : 0;
+          meter.setAttribute("aria-label", Localization.t("labels.storageUsed"));
+          if (limitEl) {
+            limitEl.textContent = `${Localization.t("labels.storageLimit")}: ${Utils.formatBytes(
+              snapshot.limit
+            )}`;
+          }
+          if (summaryEl) {
+            summaryEl.textContent = formatSummary(snapshot);
+          }
+          if (progressBar) {
+            progressBar.style.width = `${percent}%`;
+          }
+          if (progressRegion) {
+            progressRegion.setAttribute("aria-valuenow", String(Math.round(percent)));
+          }
+          const state = snapshot.isExceeded ? "error" : snapshot.isWarning ? "warning" : "normal";
+          meter.classList.toggle("is-warning", state !== "normal");
+          if (warningEl) {
+            if (state === "error") {
+              warningEl.textContent = Localization.t("notifications.storageQuotaExceeded");
+              warningEl.hidden = false;
+            } else if (state === "warning") {
+              warningEl.textContent = Localization.t("common.storageWarning", {
+                percent: Math.round(percent),
+              });
+              warningEl.hidden = false;
+            } else {
+              warningEl.textContent = "";
+              warningEl.hidden = true;
+            }
+          }
+          if (lastState !== state) {
+            if (state === "warning") {
+              Notifications.toast(
+                Localization.t("common.storageWarning", { percent: Math.round(percent) }),
+                "info"
+              );
+            } else if (state === "error") {
+              Notifications.toast(Localization.t("notifications.storageQuotaExceeded"), "error");
+            }
+          }
+          lastState = state;
+        }
+
+        function openDialog(trigger) {
+          if (!storageModal) return;
+          lastTrigger = trigger ?? null;
+          storageModal.classList.add("is-open");
+          cancelButton?.focus({ preventScroll: true });
+        }
+
+        function closeDialog() {
+          if (!storageModal) return;
+          storageModal.classList.remove("is-open");
+          if (lastTrigger) {
+            lastTrigger.focus?.({ preventScroll: true });
+            lastTrigger = null;
+          }
+        }
+
+        manageButton?.addEventListener("click", (event) => {
+          openDialog(event.currentTarget);
+        });
+
+        cancelButton?.addEventListener("click", closeDialog);
+        storageModal?.addEventListener("click", (event) => {
+          if (event.target === storageModal) {
+            closeDialog();
+          }
+        });
+        storageModal?.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeDialog();
+          }
+        });
+
+        clearButton?.addEventListener("click", () => {
+          DocumentStore.clearAll();
+          ImageStore.clearAll();
+          StorageManager.clearAll();
+          Notifications.toast(Localization.t("notifications.storageCleared"), "success");
+          closeDialog();
+        });
+
+        StorageManager.subscribe(update);
+        update(StorageManager.getSnapshot());
+
+        return { update };
       })();
 
       const DocumentViewer = (() => {
@@ -2745,7 +3380,7 @@
             const fallback = row.previousElementSibling?.dataset.id || row.nextElementSibling?.dataset.id || "search";
             pendingFocusTarget = fallback;
             DocumentStore.removeDocument(id);
-            Notifications.toast("Document removed from library.", "info");
+            Notifications.toast(Localization.t("notifications.documentRemoved"), "info");
           }
         });
 
@@ -2764,7 +3399,7 @@
             const fallback = row.previousElementSibling?.dataset.id || row.nextElementSibling?.dataset.id || "search";
             pendingFocusTarget = fallback;
             DocumentStore.removeDocument(id);
-            Notifications.toast("Document removed from library.", "info");
+            Notifications.toast(Localization.t("notifications.documentRemoved"), "info");
           }
         });
 
@@ -3205,7 +3840,8 @@
             button.type = "button";
             button.className = "image-gallery__thumb";
             button.dataset.id = image.id;
-            button.setAttribute("aria-label", `Select ${image.title || image.name}`);
+            const labelName = image.title || image.name || Localization.t("common.unknownFile");
+            button.setAttribute("aria-label", Localization.t("gallery.selectImage", { name: labelName }));
 
             const media = document.createElement("span");
             media.className = "image-gallery__thumb-media";
@@ -3251,7 +3887,7 @@
             const removeButton = document.createElement("button");
             removeButton.type = "button";
             removeButton.className = "image-gallery__delete";
-            removeButton.textContent = "Remove";
+            removeButton.textContent = Localization.t("common.remove");
             removeButton.addEventListener("click", (event) => {
               event.stopPropagation();
               const fallback = listItem.nextElementSibling?.querySelector(".image-gallery__thumb")?.dataset.id
@@ -3259,7 +3895,7 @@
                 || "search";
               pendingFocusId = fallback;
               ImageStore.removeImage(image.id);
-              Notifications.toast("Image removed from gallery.", "info");
+              Notifications.toast(Localization.t("notifications.imageRemoved"), "info");
             });
             actions.appendChild(removeButton);
 
@@ -3316,7 +3952,7 @@
               || "search";
             pendingFocusId = fallback;
             ImageStore.removeImage(id);
-            Notifications.toast("Image removed from gallery.", "info");
+            Notifications.toast(Localization.t("notifications.imageRemoved"), "info");
           }
         });
 
@@ -3358,7 +3994,7 @@
           progressContainer.hidden = true;
           progressFill.style.width = "0%";
           progressBar.setAttribute("aria-valuenow", "0");
-          progressLabel.textContent = "Waiting for images…";
+          progressLabel.textContent = Localization.t("upload.waitingImages");
         }
 
         function updateProgress(percent, label) {
@@ -3373,23 +4009,32 @@
         }
 
         function describeError(file, error) {
+          const fileName = file?.name ?? Localization.t("common.unknownFile");
           switch (error?.code) {
             case "type":
-              return `${file.name} is not a supported image type.`;
+              return Localization.t("upload.errorUnsupportedImage", { name: fileName });
             case "max-dimensions":
-              return `${file.name} exceeds the ${MAX_IMAGE_DIMENSION}px dimension limit.`;
+              return Localization.t("upload.errorImageTooLarge", {
+                name: fileName,
+                limit: MAX_IMAGE_DIMENSION,
+              });
             case "dimensions":
-              return `Unable to read dimensions for ${file.name}.`;
+              return Localization.t("upload.errorImageDimensions", { name: fileName });
+            case "quota":
+              return Localization.t("notifications.storageQuotaExceeded");
+            case "persist":
+              return Localization.t("errors.persistFailure");
             default:
-              return `Upload failed for ${file.name}.`;
+              return Localization.t("upload.errorUploadFailed", { name: fileName });
           }
         }
 
         async function processFiles(fileList) {
           const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
           if (!files.length) {
-            showFeedback("Select at least one image to upload.", "error");
-            Notifications.toast("Select at least one image to upload.", "error");
+            const message = Localization.t("upload.errorSelectImages");
+            showFeedback(message, "error");
+            Notifications.toast(message, "error");
             return;
           }
 
@@ -3397,9 +4042,29 @@
           let lastImage = null;
           const baseTitle = titleInput?.value.trim() ?? "";
           const baseAlt = altInput?.value.trim() ?? "";
+          let warnedLarge = false;
 
           for (const [index, file] of files.entries()) {
-            updateProgress((index / files.length) * 100, `${file.name} • validating`);
+            const estimatedImpact = StorageManager.estimateImpact(file.size);
+            const snapshot = StorageManager.getSnapshot();
+            if (!StorageManager.canStore(estimatedImpact)) {
+              const message = Localization.t("notifications.storageQuotaExceeded");
+              showFeedback(message, "error");
+              Notifications.toast(message, "error");
+              hideProgress();
+              return;
+            }
+            const predictedRatio = snapshot.limit
+              ? Math.round(((snapshot.used + estimatedImpact) / snapshot.limit) * 100)
+              : 100;
+            if (!warnedLarge && predictedRatio >= 85) {
+              Notifications.toast(Localization.t("notifications.largeFileWarning"), "info");
+              warnedLarge = true;
+            }
+            updateProgress(
+              (index / files.length) * 100,
+              Localization.t("upload.validating", { name: file.name })
+            );
             try {
               const imageRecord = await ImageStore.createImage(
                 file,
@@ -3417,7 +4082,13 @@
                 },
                 (progress) => {
                   const overall = ((index + progress) / files.length) * 100;
-                  updateProgress(overall, `${file.name} • ${Math.round(progress * 100)}%`);
+                  updateProgress(
+                    overall,
+                    Localization.t("upload.progress", {
+                      name: file.name,
+                      percent: Math.round(progress * 100),
+                    })
+                  );
                 }
               );
               lastImage = imageRecord;
@@ -3431,10 +4102,14 @@
             }
           }
 
-          const summary = files.length > 1 ? `${files.length} images uploaded` : `${files[0].name} uploaded`;
+          const firstImageName = files[0]?.name ?? Localization.t("common.unknownFile");
+          const summary =
+            files.length > 1
+              ? Localization.t("upload.summaryImagesMultiple", { count: files.length })
+              : Localization.t("upload.summaryImagesSingle", { name: firstImageName });
           updateProgress(100, summary);
-          showFeedback("Upload complete. Images are ready in the gallery.", "success");
-          Notifications.toast("Images uploaded successfully.", "success");
+          showFeedback(Localization.t("upload.completeImages"), "success");
+          Notifications.toast(Localization.t("notifications.imageUploadSuccess"), "success");
           form.reset();
           if (fileInput) {
             fileInput.value = "";
@@ -3516,7 +4191,7 @@
           progressContainer.hidden = true;
           progressFill.style.width = "0%";
           progressBar.setAttribute("aria-valuenow", "0");
-          progressLabel.textContent = "Waiting for files…";
+          progressLabel.textContent = Localization.t("upload.waitingDocuments");
         }
 
         function updateProgress(percent, label) {
@@ -3533,8 +4208,9 @@
         async function processFiles(fileList) {
           const files = Array.from(fileList ?? []).filter((item) => item instanceof File);
           if (!files.length) {
-            showFeedback("Select at least one document to upload.", "error");
-            Notifications.toast("Select at least one document to upload.", "error");
+            const message = Localization.t("upload.errorSelectDocuments");
+            showFeedback(message, "error");
+            Notifications.toast(message, "error");
             return;
           }
 
@@ -3542,9 +4218,29 @@
           let lastDocument = null;
           const baseTitle = titleInput?.value.trim() ?? "";
           const description = descriptionInput?.value.trim() ?? "";
+          let warnedLarge = false;
 
           for (const [index, file] of files.entries()) {
-            updateProgress((index / files.length) * 100, `${file.name} • 0%`);
+            const estimatedImpact = StorageManager.estimateImpact(file.size);
+            const snapshot = StorageManager.getSnapshot();
+            if (!StorageManager.canStore(estimatedImpact)) {
+              const message = Localization.t("notifications.storageQuotaExceeded");
+              showFeedback(message, "error");
+              Notifications.toast(message, "error");
+              hideProgress();
+              return;
+            }
+            const predictedRatio = snapshot.limit
+              ? Math.round(((snapshot.used + estimatedImpact) / snapshot.limit) * 100)
+              : 100;
+            if (!warnedLarge && predictedRatio >= 85) {
+              Notifications.toast(Localization.t("notifications.largeFileWarning"), "info");
+              warnedLarge = true;
+            }
+            updateProgress(
+              (index / files.length) * 100,
+              Localization.t("upload.progress", { name: file.name, percent: 0 })
+            );
             try {
               const documentRecord = await DocumentStore.createDocument(
                 file,
@@ -3558,23 +4254,40 @@
                 },
                 (progress) => {
                   const overall = ((index + progress) / files.length) * 100;
-                  updateProgress(overall, `${file.name} • ${Math.round(progress * 100)}%`);
+                  updateProgress(
+                    overall,
+                    Localization.t("upload.progress", {
+                      name: file.name,
+                      percent: Math.round(progress * 100),
+                    })
+                  );
                 }
               );
               lastDocument = documentRecord;
             } catch (error) {
               console.error("Upload failed", error);
-              showFeedback(`Upload failed for ${file.name}.`, "error");
-              Notifications.toast(`Upload failed for ${file.name}.`, "error");
+              const fileName = file?.name ?? Localization.t("common.unknownFile");
+              const message =
+                error?.code === "quota"
+                  ? Localization.t("notifications.storageQuotaExceeded")
+                  : error?.code === "persist"
+                  ? Localization.t("errors.persistFailure")
+                  : Localization.t("upload.errorUploadFailed", { name: fileName });
+              showFeedback(message, "error");
+              Notifications.toast(message, "error");
               hideProgress();
               return;
             }
           }
 
-          const summary = files.length > 1 ? `${files.length} documents uploaded` : `${files[0].name} uploaded`;
+          const firstDocName = files[0]?.name ?? Localization.t("common.unknownFile");
+          const summary =
+            files.length > 1
+              ? Localization.t("upload.summaryDocumentsMultiple", { count: files.length })
+              : Localization.t("upload.summaryDocumentsSingle", { name: firstDocName });
           updateProgress(100, summary);
-          showFeedback("Upload complete. Documents are ready in the library.", "success");
-          Notifications.toast("Documents uploaded successfully.", "success");
+          showFeedback(Localization.t("upload.completeDocuments"), "success");
+          Notifications.toast(Localization.t("notifications.documentUploadSuccess"), "success");
           form.reset();
           if (fileInput) {
             fileInput.value = "";
