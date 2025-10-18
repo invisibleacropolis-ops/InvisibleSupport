@@ -2521,6 +2521,31 @@
           return response.json();
         }
 
+        async function downloadFile(path) {
+          ensureConfigured();
+          const branch = encodeURIComponent(getBranch());
+          const url = `${buildApiUrl(`contents/${encodePath(path)}`)}?ref=${branch}`;
+          const response = await fetch(url, {
+            headers: buildHeaders({ Accept: "application/vnd.github.v3.raw" }),
+          });
+          if (!response.ok) {
+            let payload = null;
+            try {
+              payload = await response.json();
+            } catch (error) {
+              payload = null;
+            }
+            const error = new Error(payload?.message || Localization.t("errors.githubRequestFailed"));
+            error.code = "request";
+            error.status = response.status;
+            error.payload = payload;
+            throw error;
+          }
+          const contentType = response.headers.get("Content-Type") || "";
+          const arrayBuffer = await response.arrayBuffer();
+          return { arrayBuffer, contentType };
+        }
+
         async function readManifest(path) {
           const file = await getContents(path);
           if (!file) {
@@ -2615,6 +2640,7 @@
           testConnection,
           getStorageLimitBytes,
           buildRawUrl,
+          downloadFile,
         };
       })();
 
@@ -4629,8 +4655,8 @@
         }
 
         async function fetchDocumentResource(doc) {
+          if (!doc) return null;
           const url = getDocumentUrl(doc);
-          if (!url) return null;
           const revision = String(doc.sha || doc.updatedAt || "");
           const cached = previewCache.get(doc.id);
           if (cached && cached.revision === revision) {
@@ -4640,27 +4666,52 @@
             cached.dispose?.();
             previewCache.delete(doc.id);
           }
-          try {
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Unable to fetch preview (${response.status})`);
-            }
-            const blob = await response.blob();
-            const useExistingUrl = url.startsWith("blob:");
-            const objectUrl = useExistingUrl ? url : URL.createObjectURL(blob);
+          const useExistingUrl = url && url.startsWith("blob:");
+          const fallbackType = doc.type || "application/octet-stream";
+
+          async function cacheResourceFromBlob(blob) {
+            if (!blob) return null;
+            const objectUrl = useExistingUrl && url ? url : URL.createObjectURL(blob);
             const resource = {
               url: objectUrl,
-              type: blob.type || doc.type || "application/octet-stream",
+              type: blob.type || fallbackType,
               blob,
               revision,
-              dispose: useExistingUrl ? null : () => URL.revokeObjectURL(objectUrl),
+              dispose:
+                useExistingUrl && url
+                  ? null
+                  : () => {
+                      URL.revokeObjectURL(objectUrl);
+                    },
             };
             previewCache.set(doc.id, resource);
             return resource;
-          } catch (error) {
-            console.warn("Failed to fetch document preview", error);
-            return null;
           }
+
+          if (url) {
+            try {
+              const response = await fetch(url);
+              if (!response.ok) {
+                throw new Error(`Unable to fetch preview (${response.status})`);
+              }
+              const blob = await response.blob();
+              return cacheResourceFromBlob(blob);
+            } catch (error) {
+              console.warn("Failed to fetch document preview", error);
+            }
+          }
+
+          if (doc.repoPath && typeof GitHubIntegration?.downloadFile === "function") {
+            try {
+              const { arrayBuffer, contentType } = await GitHubIntegration.downloadFile(doc.repoPath);
+              const blob = new Blob([arrayBuffer], { type: contentType || fallbackType });
+              return cacheResourceFromBlob(blob);
+            } catch (error) {
+              console.warn("Failed to fetch document preview via GitHub API", error);
+            }
+          }
+
+          return null;
         }
 
         async function buildPreviewContent(doc) {
