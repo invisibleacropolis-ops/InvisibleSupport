@@ -1326,6 +1326,30 @@
         margin: 0;
       }
 
+      .viewer-card__docx {
+        width: 100%;
+        max-height: min(70vh, 42rem);
+        overflow-y: auto;
+        border-radius: var(--radius-md);
+        background: white;
+        box-shadow: var(--shadow-sm);
+        padding: var(--space-md);
+        color: var(--color-text);
+      }
+
+      .viewer-card__docx[data-state="loading"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--color-text-muted);
+      }
+
+      .viewer-card__docx-message {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
       .viewer-card__preview img {
         width: 100%;
         height: auto;
@@ -4269,6 +4293,9 @@
       const ADOBE_EMBED_CLIENT_ID = "d6b613e7ac104dc49aae04788ff781df";
       const pdfLocale = document.documentElement.lang || "en-US";
       let adobeSdkPromise = null;
+      const DOCX_PREVIEW_SCRIPT_URL =
+        "https://cdn.jsdelivr.net/npm/docx-preview@0.5.0/dist/docx-preview.min.js";
+      let docxPreviewPromise = null;
 
       function waitForAdobeSdk() {
         if (typeof window === "undefined") {
@@ -4303,6 +4330,44 @@
           });
         }
         return adobeSdkPromise;
+      }
+
+      function waitForDocxPreview() {
+        if (typeof window === "undefined" || typeof document === "undefined") {
+          return Promise.reject(new Error("DOCX preview is unavailable in this environment."));
+        }
+        if (window.docx?.renderAsync) {
+          return Promise.resolve(window.docx);
+        }
+        if (!docxPreviewPromise) {
+          docxPreviewPromise = new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = DOCX_PREVIEW_SCRIPT_URL;
+            script.async = true;
+            script.crossOrigin = "anonymous";
+            script.referrerPolicy = "no-referrer";
+            script.dataset.docxPreview = "true";
+
+            script.onload = () => {
+              if (window.docx?.renderAsync) {
+                resolve(window.docx);
+              } else {
+                docxPreviewPromise = null;
+                script.remove();
+                reject(new Error("docx-preview library failed to initialize."));
+              }
+            };
+
+            script.onerror = () => {
+              docxPreviewPromise = null;
+              script.remove();
+              reject(new Error("Failed to load the docx-preview library."));
+            };
+
+            document.head.appendChild(script);
+          });
+        }
+        return docxPreviewPromise;
       }
 
       function sanitizeForId(value) {
@@ -4660,12 +4725,78 @@
             }
           }
 
-          if (isOfficeDocument(type, extension) && directUrl) {
-            const frame = document.createElement("iframe");
-            frame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(directUrl)}`;
-            frame.title = `${displayName} preview`;
-            frame.loading = "lazy";
-            return frame;
+          if (isOfficeDocument(type, extension)) {
+            const isDocx =
+              extension === "docx" ||
+              type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            if (isDocx) {
+              const resource = await fetchDocumentResource(doc);
+              if (resource?.blob) {
+                const container = document.createElement("div");
+                container.className = "viewer-card__docx";
+                container.dataset.state = "loading";
+                container.setAttribute("aria-busy", "true");
+
+                const status = document.createElement("p");
+                status.className = "viewer-card__docx-message";
+                status.textContent = "Rendering document preview.";
+                container.appendChild(status);
+
+                const bufferPromise = resource.blob.arrayBuffer();
+
+                Promise.all([waitForDocxPreview(), bufferPromise])
+                  .then(([docxLib, buffer]) => {
+                    if (!container.isConnected || currentId !== doc.id) {
+                      return null;
+                    }
+                    if (typeof docxLib?.renderAsync !== "function") {
+                      throw new Error("docx-preview library did not expose renderAsync.");
+                    }
+                    status.remove();
+                    return docxLib.renderAsync(buffer, container, null, {
+                      inWrapper: false,
+                      useBase64URL: true,
+                      breakPages: true,
+                    });
+                  })
+                  .then(() => {
+                    if (!container.isConnected || currentId !== doc.id) {
+                      return;
+                    }
+                    container.dataset.state = "ready";
+                    container.removeAttribute("aria-busy");
+                  })
+                  .catch((error) => {
+                    console.warn("Failed to render DOCX preview", error);
+                    if (!container.isConnected || currentId !== doc.id) {
+                      return;
+                    }
+                    if (directUrl) {
+                      const frame = document.createElement("iframe");
+                      frame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(directUrl)}`;
+                      frame.title = `${displayName} preview`;
+                      frame.loading = "lazy";
+                      container.replaceWith(frame);
+                    } else {
+                      const fallback = createViewerFallback(
+                        doc,
+                        "Unable to load the DOCX preview. Use the controls below to open or download the document."
+                      );
+                      container.replaceWith(fallback);
+                    }
+                  });
+
+                return container;
+              }
+            }
+
+            if (directUrl) {
+              const frame = document.createElement("iframe");
+              frame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(directUrl)}`;
+              frame.title = `${displayName} preview`;
+              frame.loading = "lazy";
+              return frame;
+            }
           }
 
           if (isImage(type)) {
