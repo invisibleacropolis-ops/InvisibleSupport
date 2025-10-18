@@ -1334,7 +1334,12 @@
         background: white;
         box-shadow: var(--shadow-sm);
         padding: var(--space-md);
-        color: var(--color-text);
+        color: #111;
+        line-height: 1.65;
+      }
+
+      .viewer-card__docx * {
+        color: inherit !important;
       }
 
       .viewer-card__docx[data-state="loading"] {
@@ -4691,11 +4696,13 @@
           if (url) {
             try {
               const response = await fetch(url);
-              if (!response.ok) {
-                throw new Error(`Unable to fetch preview (${response.status})`);
+              if (response.ok) {
+                const blob = await response.blob();
+                return cacheResourceFromBlob(blob);
               }
-              const blob = await response.blob();
-              return cacheResourceFromBlob(blob);
+              if (response.status !== 404) {
+                console.warn("Failed to fetch document preview", new Error(`Unable to fetch preview (${response.status})`));
+              }
             } catch (error) {
               console.warn("Failed to fetch document preview", error);
             }
