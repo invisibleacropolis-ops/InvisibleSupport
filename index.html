@@ -4293,9 +4293,11 @@
       const ADOBE_EMBED_CLIENT_ID = "d6b613e7ac104dc49aae04788ff781df";
       const pdfLocale = document.documentElement.lang || "en-US";
       let adobeSdkPromise = null;
+      const DOCX_JSZIP_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
       const DOCX_PREVIEW_SCRIPT_URL =
         "https://cdn.jsdelivr.net/npm/docx-preview@0.5.0/dist/docx-preview.min.js";
       let docxPreviewPromise = null;
+      const scriptPromises = new Map();
 
       function waitForAdobeSdk() {
         if (typeof window === "undefined") {
@@ -4332,6 +4334,34 @@
         return adobeSdkPromise;
       }
 
+      function loadScriptOnce(src) {
+        if (scriptPromises.has(src)) {
+          return scriptPromises.get(src);
+        }
+        if (typeof document === "undefined") {
+          return Promise.reject(new Error("Cannot load scripts in this environment."));
+        }
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.async = true;
+          script.crossOrigin = "anonymous";
+          script.referrerPolicy = "no-referrer";
+          script.onload = () => {
+            window.setTimeout(() => script.remove(), 0);
+            resolve();
+          };
+          script.onerror = () => {
+            script.remove();
+            scriptPromises.delete(src);
+            reject(new Error(`Failed to load script: ${src}`));
+          };
+          document.head.appendChild(script);
+        });
+        scriptPromises.set(src, promise);
+        return promise;
+      }
+
       function waitForDocxPreview() {
         if (typeof window === "undefined" || typeof document === "undefined") {
           return Promise.reject(new Error("DOCX preview is unavailable in this environment."));
@@ -4340,32 +4370,23 @@
           return Promise.resolve(window.docx);
         }
         if (!docxPreviewPromise) {
-          docxPreviewPromise = new Promise((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = DOCX_PREVIEW_SCRIPT_URL;
-            script.async = true;
-            script.crossOrigin = "anonymous";
-            script.referrerPolicy = "no-referrer";
-            script.dataset.docxPreview = "true";
-
-            script.onload = () => {
-              if (window.docx?.renderAsync) {
-                resolve(window.docx);
-              } else {
-                docxPreviewPromise = null;
-                script.remove();
-                reject(new Error("docx-preview library failed to initialize."));
+          docxPreviewPromise = loadScriptOnce(DOCX_JSZIP_SCRIPT_URL)
+            .then(() => {
+              if (typeof window.JSZip === "undefined") {
+                throw new Error("JSZip library failed to initialize.");
               }
-            };
-
-            script.onerror = () => {
+              return loadScriptOnce(DOCX_PREVIEW_SCRIPT_URL);
+            })
+            .then(() => {
+              if (window.docx?.renderAsync) {
+                return window.docx;
+              }
+              throw new Error("docx-preview library failed to initialize.");
+            })
+            .catch((error) => {
               docxPreviewPromise = null;
-              script.remove();
-              reject(new Error("Failed to load the docx-preview library."));
-            };
-
-            document.head.appendChild(script);
-          });
+              throw error;
+            });
         }
         return docxPreviewPromise;
       }
@@ -4771,23 +4792,19 @@
                     if (!container.isConnected || currentId !== doc.id) {
                       return;
                     }
-                    if (directUrl) {
-                      const frame = document.createElement("iframe");
-                      frame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(directUrl)}`;
-                      frame.title = `${displayName} preview`;
-                      frame.loading = "lazy";
-                      container.replaceWith(frame);
-                    } else {
-                      const fallback = createViewerFallback(
-                        doc,
-                        "Unable to load the DOCX preview. Use the controls below to open or download the document."
-                      );
-                      container.replaceWith(fallback);
-                    }
+                    const fallback = createViewerFallback(
+                      doc,
+                      "Unable to load the DOCX preview. Use the controls below to open or download the document."
+                    );
+                    container.replaceWith(fallback);
                   });
 
                 return container;
               }
+              return createViewerFallback(
+                doc,
+                "Unable to load the DOCX preview. Use the controls below to open or download the document."
+              );
             }
 
             if (directUrl) {
