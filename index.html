@@ -4293,10 +4293,8 @@
       const ADOBE_EMBED_CLIENT_ID = "d6b613e7ac104dc49aae04788ff781df";
       const pdfLocale = document.documentElement.lang || "en-US";
       let adobeSdkPromise = null;
-      const DOCX_JSZIP_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
-      const DOCX_PREVIEW_SCRIPT_URL =
-        "https://cdn.jsdelivr.net/npm/docx-preview@0.5.0/dist/docx-preview.min.js";
-      let docxPreviewPromise = null;
+      const MAMMOTH_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js";
+      let mammothPromise = null;
       const scriptPromises = new Map();
 
       function waitForAdobeSdk() {
@@ -4362,33 +4360,27 @@
         return promise;
       }
 
-      function waitForDocxPreview() {
+      function waitForMammoth() {
         if (typeof window === "undefined" || typeof document === "undefined") {
           return Promise.reject(new Error("DOCX preview is unavailable in this environment."));
         }
-        if (window.docx?.renderAsync) {
-          return Promise.resolve(window.docx);
+        if (window.mammoth?.convertToHtml) {
+          return Promise.resolve(window.mammoth);
         }
-        if (!docxPreviewPromise) {
-          docxPreviewPromise = loadScriptOnce(DOCX_JSZIP_SCRIPT_URL)
+        if (!mammothPromise) {
+          mammothPromise = loadScriptOnce(MAMMOTH_SCRIPT_URL)
             .then(() => {
-              if (typeof window.JSZip === "undefined") {
-                throw new Error("JSZip library failed to initialize.");
+              if (window.mammoth?.convertToHtml) {
+                return window.mammoth;
               }
-              return loadScriptOnce(DOCX_PREVIEW_SCRIPT_URL);
-            })
-            .then(() => {
-              if (window.docx?.renderAsync) {
-                return window.docx;
-              }
-              throw new Error("docx-preview library failed to initialize.");
+              throw new Error("Mammoth failed to initialize.");
             })
             .catch((error) => {
-              docxPreviewPromise = null;
+              mammothPromise = null;
               throw error;
             });
         }
-        return docxPreviewPromise;
+        return mammothPromise;
       }
 
       function sanitizeForId(value) {
@@ -4765,33 +4757,53 @@
 
                 const bufferPromise = resource.blob.arrayBuffer();
 
-                Promise.all([waitForDocxPreview(), bufferPromise])
-                  .then(([docxLib, buffer]) => {
+                Promise.all([waitForMammoth(), bufferPromise])
+                  .then(([mammothLib, buffer]) => {
                     if (!container.isConnected || currentId !== doc.id) {
                       return null;
                     }
-                    if (typeof docxLib?.renderAsync !== "function") {
-                      throw new Error("docx-preview library did not expose renderAsync.");
+                    if (typeof mammothLib?.convertToHtml !== "function") {
+                      throw new Error("Mammoth library did not expose convertToHtml.");
                     }
-                    status.remove();
-                    return docxLib.renderAsync(buffer, container, null, {
-                      inWrapper: false,
-                      useBase64URL: true,
-                      breakPages: true,
-                    });
+                    const options =
+                      typeof mammothLib.images?.inline === "function"
+                        ? {
+                            convertImage: mammothLib.images.inline((element) =>
+                              element.read("base64").then((imageBuffer) => ({
+                                src: `data:${element.contentType};base64,${imageBuffer}`,
+                              }))
+                            ),
+                          }
+                        : {};
+                    return mammothLib.convertToHtml({ arrayBuffer: buffer }, options);
                   })
-                  .then(() => {
+                  .then((result) => {
                     if (!container.isConnected || currentId !== doc.id) {
                       return;
                     }
+                    if (!result) {
+                      throw new Error("Mammoth returned no result.");
+                    }
+                    const html = (result.value || "").trim();
+                    const messages = Array.isArray(result.messages) ? result.messages : [];
                     container.dataset.state = "ready";
                     container.removeAttribute("aria-busy");
+                    status.remove();
+                    if (!html) {
+                      throw new Error("Mammoth returned empty content.");
+                    }
+                    container.innerHTML = html;
+                    messages.forEach((message) => {
+                      console.warn("Mammoth message:", message);
+                    });
+                    container.scrollTop = 0;
                   })
                   .catch((error) => {
                     console.warn("Failed to render DOCX preview", error);
                     if (!container.isConnected || currentId !== doc.id) {
                       return;
                     }
+                    status.remove();
                     const fallback = createViewerFallback(
                       doc,
                       "Unable to load the DOCX preview. Use the controls below to open or download the document."
