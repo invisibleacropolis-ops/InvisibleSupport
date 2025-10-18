@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hyperspace Tunnel + Privacy Policy</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+      background: black;
+      height: 100%;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    body::-webkit-scrollbar {
+      display: none;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .text-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      perspective: 800px; /* 🌀 3D effect back here */
+      z-index: 1;
+      max-height: 80vh;
+      overflow-y: auto;
+      overflow-x: visible;
+      padding: 2rem;
+      box-sizing: border-box;
+      width: auto;
+      max-width: none;
+    }
+
+    .text-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pixel-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: #fff;
+      text-transform: uppercase;
+      font-weight: bold;
+      line-height: 1.2;
+      text-shadow:
+        2px 2px 0 #000,
+        4px 4px 0 #444;
+      transform-style: preserve-3d;
+      animation: float3d 6s ease-in-out infinite;
+      white-space: pre-wrap;
+    }
+
+    @keyframes float3d {
+      0%, 100% {
+        transform: rotateX(0deg) rotateY(0deg);
+      }
+      25% {
+        transform: rotateX(2deg) rotateY(1deg);
+      }
+      50% {
+        transform: rotateX(0deg) rotateY(2deg);
+      }
+      75% {
+        transform: rotateX(-2deg) rotateY(-1deg);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="hyperspace"></canvas>
+
+  <div class="text-container">
+    <div class="pixel-text">
+Privacy Policy
+
+Effective Date: 10/09/2025
+
+Invisible Acropolis Studios is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and disclose information when you use our mobile application ("Gifvision").
+
+By using the App, you agree to the collection and use of information in accordance with this policy. If you do not agree with our policies and practices, please do not use the App.
+
+1. Information We Collect
+
+We may collect the following types of information when you use the App:
+
+• Personal Information: We do not collect personally identifiable information unless you voluntarily provide it (e.g., through contact forms or support requests).
+• Usage Data: We may collect information about how the App is accessed and used, including device information, IP address, app features used, and diagnostics.
+• Ad Data: Our App may include advertising provided by third-party ad networks (such as Google AdMob). These partners may collect data using their own tracking technologies to serve personalized ads.
+
+2. Use of Information
+
+We use the information we collect to:
+• Operate and improve the App
+• Provide customer support
+• Monitor usage and fix issues
+• Serve relevant advertisements
+
+3. Sharing of Information
+
+We may share information with:
+• Service Providers: Third-party companies that perform services on our behalf (e.g., analytics, ad networks)
+• Legal Requirements: When required to do so by law or in response to valid legal requests
+
+4. Advertising and Analytics
+
+We may use Google AdMob and other third-party services to display ads and analyze user behavior. These services may collect and use data according to their own privacy policies. You can learn more at:
+<a href="https://policies.google.com/technologies/partner-sites" target="_blank" style="color:#00f;">https://policies.google.com/technologies/partner-sites</a></p>
+
+5. Data Security
+
+We take reasonable measures to protect your information but cannot guarantee absolute security.
+
+6. Children's Privacy
+
+Our App is not intended for children under the age of 13. We do not knowingly collect personal data from children.
+
+7. Changes to This Policy
+
+We may update our Privacy Policy from time to time. Changes will be posted in this document with an updated "Effective Date."
+
+8. Contact Us
+
+If you have any questions about this Privacy Policy, you can contact us at: invisibleacropolis@gmail.com
+</div>
+
+
+  </div>
+
+  <script>
+    const canvas = document.getElementById("hyperspace");
+    const ctx = canvas.getContext("2d");
+
+    let w, h;
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    class Star {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = (Math.random() - 0.5) * w;
+        this.y = (Math.random() - 0.5) * h;
+        this.z = Math.random() * w;
+        this.pz = this.z;
+      }
+
+      update(speed) {
+        this.z -= speed;
+        if (this.z <= 1) {
+          this.reset();
+          this.z = w;
+          this.pz = this.z;
+        }
+      }
+
+      draw(ctx) {
+        let sx = (this.x / this.z) * w/2 + w/2;
+        let sy = (this.y / this.z) * h/2 + h/2;
+        let px = (this.x / this.pz) * w/2 + w/2;
+        let py = (this.y / this.pz) * h/2 + h/2;
+
+        this.pz = this.z;
+
+        ctx.beginPath();
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = Math.max(1, 2 - this.z / w * 2);
+        ctx.moveTo(px, py);
+        ctx.lineTo(sx, sy);
+        ctx.stroke();
+      }
+    }
+
+    const stars = [];
+    const STAR_COUNT = 1000;
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push(new Star());
+    }
+
+    let speed = 10;
+    function animate() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+      ctx.fillRect(0, 0, w, h);
+
+      for (let star of stars) {
+        star.update(speed);
+        star.draw(ctx);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
