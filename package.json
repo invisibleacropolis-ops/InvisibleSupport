@@ -1,0 +1,27 @@
+{
+  "name": "invisiblesupport",
+  "version": "1.0.0",
+  "description": "Invisible Support Portal - Agent-optimized modular architecture",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:update": "npx playwright test --update-snapshots",
+    "serve": "npx http-server . -p 8080 -c-1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/invisibleacropolis-ops/InvisibleSupport.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/invisibleacropolis-ops/InvisibleSupport/issues"
+  },
+  "homepage": "https://github.com/invisibleacropolis-ops/InvisibleSupport#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "http-server": "^14.1.1"
+  }
+}
