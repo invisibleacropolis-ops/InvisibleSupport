@@ -1,55 +1,135 @@
 # Invisible Support Portal
 
-## Architecture Overview
-The portal ships as a single `index.html` file that combines layout, styling, and behavior via vanilla JavaScript modules (IIFE namespaces). Key layers include:
+A robust, agent-optimized, and modular support portal designed for long-term maintainability. This project demonstrates a **Vertical Slice Architecture (VSA)** implemented with **vanilla ES Modules**, ensuring zero build steps, zero dependency hell, and maximum compatibility with AI coding assistants.
 
-- **UI system** – Two-column layout, reusable card utilities, and responsive gallery/library components keep the experience consistent.
-- **Integration layer** – Modules such as `GitHubIntegration`, `StorageManager`, `DocumentStore`, and `ImageStore` orchestrate persistence, quota tracking, localization, and viewer synchronization without external dependencies.
-- **Accessibility** – Focus management, ARIA roles, and live regions surface upload status, quota warnings, and clipboard confirmations for assistive technology users.
+---
 
-## Repository-Backed Persistence
-Uploads persist to the GitHub repository that hosts the site. When the portal is served from GitHub Pages, the **Repository storage** card automatically pre-populates the owner and repository fields based on the current URL so you only need to supply authentication details. Configuration happens through the **Repository storage** card in the UI, which stores credentials in `localStorage` for client-side API calls and drives the following workflow:
+## 🏗️ Architecture & Philosophy
 
-| Store | Manifest path | Shape |
-| --- | --- | --- |
-| Documents | `storage/documents.json` | `{ id, name, title, description, type, size, updatedAt, repoPath, sha, downloadUrl }[]` |
-| Images | `storage/images.json` | `{ id, name, title, alt, type, size, width, height, updatedAt, capturedAt, exif, repoPath, sha, downloadUrl }[]` |
+### Vertical Slice Architecture (VSA)
+Instead of organizing code by technical layers (e.g., Controllers, Views), we organize by **Features**. Each feature (e.g., `Documents`, `Images`) is a self-contained slice containing its own UI, Logic, and State.
 
-`GitHubIntegration` commits both manifests and the uploaded binaries:
+### The "Zero-Build" Mandate
+- **No Webpack/Vite/Rollup**: The code you write is the code the browser runs.
+- **Native ES Modules**: Uses `<script type="module">` for dependency management.
+- **Agent-Friendly**: The file structure is explicitly designed to minimize context token usage for AI agents (Claude, Gemini, Copilot), allowing them to reason about single features without loading the entire codebase.
 
-- Files land under `uploads/documents/<id>/<filename>` and `uploads/images/<id>/<filename>`.
-- Each commit stores the blob SHA plus a shareable `download_url`, which powers direct links and previews.
-- `StorageManager` aggregates record sizes to enforce the configured storage budget.
+```mermaid
+graph TD
+    subgraph "Entry Point"
+        Index[index.html] --> Main[src/main.js]
+    end
 
-Because the data lives in GitHub, refreshing the page or loading the site from another device rehydrates the library and gallery from the manifests.
+    subgraph "Shared Infrastructure"
+        Main --> EventBus[Event Bus (Pub/Sub)]
+        Main --> Store[Global Store Proxy]
+        Main --> Utils[Utilities]
+        Main --> GitHub[GitHub Service]
+    end
 
-## Direct Links & Caching
-Direct-link inputs now point to GitHub’s raw content endpoints (e.g., `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/uploads/...`). These URLs remain stable until the underlying asset is removed. Previews stream directly from the raw asset; there is no longer a dependency on ephemeral `blob:` URLs.
+    subgraph "Vertical Slices"
+        Main --> DocSlice[Feature: Documents]
+        Main --> ImgSlice[Feature: Images]
+        Main --> SettingsSlice[Feature: Settings]
+        
+        DocSlice --> DocStore[Document Store]
+        DocSlice --> DocUI[Library View]
+        
+        ImgSlice --> ImgStore[Image Store]
+        ImgSlice --> ImgUI[Gallery View]
+    end
 
-## Operational Runbooks
-### Configure Repository Access
-1. Open the **Repository storage** card in the secondary column.
-2. Enter the repository owner, repository name, target branch, personal access token (with `repo` scope), and an optional storage limit in MB.
-3. Save the configuration, then run **Test connection** to verify credentials. Successful tests trigger a confirmation toast.
-
-### Reset the Libraries
-Uploading or removing items updates GitHub immediately. To reset the experience:
-1. Remove documents or images from the UI (each delete issues a `DELETE /contents/...` request).
-2. Alternatively, delete the manifest files (`storage/documents.json`, `storage/images.json`) and their corresponding `uploads/...` folders directly in GitHub.
-
-### Programmatic Maintenance
-The browser console exposes the same helpers used by the UI:
-
-```js
-await DocumentStore.clearAll();   // Deletes document files and manifest entries
-await ImageStore.clearAll();       // Deletes image files and manifest entries
-await StorageManager.clearAll();   // Removes manifests and resets quota tracking
+    GitHub --> DocStore
+    GitHub --> ImgStore
 ```
 
-## Developer Notes
-- `GitHubSettings` surfaces inline validation and mirrors the persisted configuration from `GitHubIntegration`.
-- Run `npx html-validate index.html` before committing to spot markup regressions (some legacy warnings may remain).
-- Large uploads are throttled through the storage budget defined in the settings card; adjust the limit there during testing.
-- The codebase avoids bundlers, so keep additions dependency-free and prefer IIFE modules for new functionality.
+---
 
-For detailed setup instructions (including PAT creation and repository settings), see `Setup.md`.
+## 🧩 System Breakdown
+
+### 1. Core Bootstrapper (`src/main.js`)
+The single entry point for the application.
+- **Responsibilities**:
+    - Imports all feature modules.
+    - Initializes the `Localization` system.
+    - Exposes necessary modules to the global `window` scope (only for legacy compatibility during migration).
+    - Waits for `DOMContentLoaded` to kick off the app.
+
+### 2. Shared Infrastructure (`src/shared/`)
+Reusable "plumbing" used by all features.
+- **`infrastructure/event-bus.js`**: A lightweight Pub/Sub system for decoupling features. Features emit events (`document:created`) rather than calling each other directly.
+- **`services/github.js`**: Deep integration with the GitHub API for persistence. Handles file uploads, content retrieval, and config validation.
+- **`services/storage-manager.js`**: Manages local storage quotas and persistence strategies.
+- **`localization/index.js`**: A zero-dependency i18n engine.
+
+### 3. Feature Slices (`src/features/`)
+#### 📄 Documents Slice
+Handles the uploading, listing, and visual management of PDF/DOCX files.
+- **`store.js`**: Manages the list of documents and syncs with `storage/documents.json` in the repo.
+- **`upload.js`**: Controls the drag-and-drop zone and upload queue.
+- **`library-view.js`**: Renders the document grid list.
+
+#### 🖼️ Images Slice
+Handles image assets with visual previews.
+- **`store.js`**: Manages image records and metadata (dimensions, types).
+- **`gallery.js`**: Renders the visual gallery grid.
+- **`viewer.js`**: Provides the full-screen image preview modal.
+
+---
+
+## 🔄 Data Interactivity
+
+The application uses an **Event-Driven State** model. Stores update their state and emit notifications, while UI components subscribe to these updates.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UploadUI as Upload Component
+    participant DocStore as Document Store
+    participant GitHub as GitHub API
+    participant EventBus
+    participant LibraryUI as Library View
+
+    User->>UploadUI: Drops File
+    UploadUI->>GitHub: Upload File (PUT)
+    GitHub-->>UploadUI: Return SHA/Path
+    UploadUI->>DocStore: createDocument(metadata)
+    DocStore->>DocStore: Update Local State
+    DocStore->>EventBus: Emit "documents:updated"
+    EventBus->>LibraryUI: Notify Subscribers
+    LibraryUI->>DocStore: getDocuments()
+    LibraryUI->>LibraryUI: Re-render List
+```
+
+---
+
+## 🚀 Usage & Workflows
+
+### 🔧 Configuration (First Run)
+Because this is a serverless application, it needs a backend to store files. We use **Your GitHub Repository** as the database.
+1. Open the **Repository storage** panel.
+2. Enter your **Repository Owner** (username) and **Repository Name**.
+3. Generate a **Personal Access Token** (Classic) with `repo` scope and paste it.
+4. Click **Save** and **Test Connection**.
+
+### 📤 Uploading Assets
+1. Drag & Drop files into the "Upload workflow" area.
+2. Watch the progress bar (files are being committed to `uploads/` folder in your repo).
+3. Once finished, assets appear instantly in the **Asset Library**.
+
+### 📦 Deployment
+This project is designed for **GitHub Pages**.
+1. Push the code to a `main` branch.
+2. Enable GitHub Pages in Repository Settings (Source: `Deploy from branch`, `/root`).
+3. The site is live! No build commands (`npm run build`) are ever needed.
+
+---
+
+## 🛠️ Developer Notes
+
+- **Adding a new feature**: Create a new folder in `src/features/`. Create a `store.js` for data and `index.js` for UI. Import it in `src/main.js`.
+- **Debugging**: Use `ReferenceError`? Check `src/main.js` to see if your module is imported.
+- **Testing**: Run `npm run serve` to test locally.
+
+---
+*Generated by Antigravity Agent · 2026*
