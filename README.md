@@ -21,16 +21,16 @@ graph TD
     end
 
     subgraph "Shared Infrastructure"
-        Main --> EventBus[Event Bus (Pub/Sub)]
-        Main --> Store[Global Store Proxy]
+        Main --> EventBus["Event Bus (Pub/Sub)"]
+        Main --> Store["Global Store Proxy"]
         Main --> Utils[Utilities]
         Main --> GitHub[GitHub Service]
     end
 
     subgraph "Vertical Slices"
-        Main --> DocSlice[Feature: Documents]
-        Main --> ImgSlice[Feature: Images]
-        Main --> SettingsSlice[Feature: Settings]
+        Main --> DocSlice["Feature: Documents"]
+        Main --> ImgSlice["Feature: Images"]
+        Main --> SettingsSlice["Feature: Settings"]
         
         DocSlice --> DocStore[Document Store]
         DocSlice --> DocUI[Library View]
