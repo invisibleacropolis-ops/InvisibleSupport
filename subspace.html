@@ -51,6 +51,23 @@
 
 <body>
     <div id="container"></div>
+    <div id="error-log"
+        style="position:fixed; top:50px; left:10px; color:red; background:rgba(0,0,0,0.8); z-index:1000; padding:10px; display:none;">
+    </div>
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            const log = document.getElementById('error-log');
+            log.style.display = 'block';
+            log.innerHTML += `<div>Error: ${msg} <br>URL: ${url} <br>Line: ${line}</div><hr>`;
+            console.error('Captured Error:', msg, error);
+        };
+        // Capture unhandled promise rejections (like import failures)
+        window.addEventListener('unhandledrejection', function (event) {
+            const log = document.getElementById('error-log');
+            log.style.display = 'block';
+            log.innerHTML += `<div>Promise Error: ${event.reason}</div><hr>`;
+        });
+    </script>
     <div id="info">SubSpace - 3D Grid Terrain Visualization</div>
     <button id="backButton" onclick="window.location.href='index.html'">Back to Portal</button>
 
