@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Testing
+playwright-report/
+test-results/
+
+# Build & Runtime
+dist/
+build/
+.cache/
+
+# User Uploads (Local dev only)
+uploads/
+
+# Backups & Temporary Files
+*.bak
+*.tmp
+Refactor.txt
+
+# System Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.venv/
