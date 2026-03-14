@@ -85,11 +85,6 @@ function render() {
         titleCell.appendChild(titleWrapper);
         row.appendChild(titleCell);
 
-        // Type cell
-        const typeCell = document.createElement('td');
-        typeCell.textContent = doc.type || 'Unknown';
-        row.appendChild(typeCell);
-
         // Size cell
         const sizeCell = document.createElement('td');
         sizeCell.textContent = Utils.formatBytes(doc.size);
