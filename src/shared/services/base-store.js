@@ -98,6 +98,34 @@ export class BaseResourceStore {
             this.items = [];
         }
         this.notify();
+        this.reconcile();
+    }
+
+    /**
+     * Reconciles stored items against what actually exists in the GitHub repo.
+     * Removes manifest entries whose upload folders no longer exist.
+     * Runs in the background after load — non-blocking.
+     */
+    async reconcile() {
+        if (!GitHubIntegration.isConfigured() || this.items.length === 0) return;
+        try {
+            const dirContents = await GitHubIntegration.getContents(this.baseUploadPath);
+            if (!Array.isArray(dirContents)) return;
+            const existingFolders = new Set(dirContents.map((entry) => entry.name));
+            const depthOffset = this.baseUploadPath.split('/').filter(Boolean).length;
+            const validItems = this.items.filter((item) => {
+                if (!item.repoPath) return true;
+                const idSegment = item.repoPath.split('/').filter(Boolean)[depthOffset];
+                return !idSegment || existingFolders.has(idSegment);
+            });
+            if (validItems.length !== this.items.length) {
+                this.items = validItems;
+                await this.persist(validItems);
+                this.notify();
+            }
+        } catch (e) {
+            console.warn(`Reconciliation skipped for ${this.storageKey}:`, e?.message ?? e);
+        }
     }
 
     /**
