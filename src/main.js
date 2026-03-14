@@ -44,6 +44,11 @@ import * as GitHubSettings from './features/settings/github-settings.js';
 import * as StorageUI from './features/storage/ui.js';
 
 // =====================================================================
+// Shared UI Components
+// =====================================================================
+import * as SplitPane from './shared/ui/split-pane.js';
+
+// =====================================================================
 // Expose to global scope for legacy compatibility during migration
 // =====================================================================
 window.Utils = Utils;
@@ -65,6 +70,21 @@ window.LibraryView = LibraryView;
 // =====================================================================
 
 /**
+ * Initialize panel collapse/expand toggle buttons.
+ */
+function initPanelToggles() {
+    document.querySelectorAll('[data-panel-toggle]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.u-card');
+            if (!card) return;
+            const collapsed = card.classList.toggle('is-collapsed');
+            btn.textContent = collapsed ? 'Expand' : 'Collapse';
+            btn.setAttribute('aria-label', collapsed ? 'Expand panel' : 'Collapse panel');
+        });
+    });
+}
+
+/**
  * Initialize the application once the DOM is ready
  */
 function init() {
@@ -82,6 +102,10 @@ function init() {
     ImageViewer.init();
     ImageGallery.init();
     ImageUpload.init();
+
+    // Initialize UI components
+    SplitPane.init();
+    initPanelToggles();
 
     // Expose modal functions globally for legacy code
     window.openStorageModal = StorageUI.openModal;
