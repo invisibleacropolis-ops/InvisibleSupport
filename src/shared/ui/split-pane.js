@@ -5,8 +5,8 @@
  */
 
 const STORAGE_KEY_PREFIX = 'splitPane:';
-const MIN_PANEL_PX = 200;
-const HANDLE_WIDTH = 6;
+const MIN_PCT = 15;
+const MAX_PCT = 85;
 
 /** @type {Map<HTMLElement, { cleanup: () => void }>} */
 const instances = new Map();
@@ -26,10 +26,17 @@ function load(id) {
         const raw = localStorage.getItem(STORAGE_KEY_PREFIX + id);
         if (raw !== null) {
             const n = parseFloat(raw);
-            if (Number.isFinite(n) && n >= 15 && n <= 85) return n;
+            if (Number.isFinite(n) && n >= MIN_PCT && n <= MAX_PCT) return n;
         }
     } catch { /* private browsing */ }
     return null;
+}
+
+/**
+ * Clamp a percentage value to the allowed range.
+ */
+function clamp(pct) {
+    return Math.max(MIN_PCT, Math.min(MAX_PCT, pct));
 }
 
 /**
@@ -47,80 +54,95 @@ function initPane(container) {
 
     let dragging = false;
 
-    function onMove(e) {
-        if (!dragging) return;
-        e.preventDefault();
-        const rect = container.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const x = clientX - rect.left;
-        const containerW = rect.width;
-
-        const minPct = (MIN_PANEL_PX / containerW) * 100;
-        const maxPct = ((containerW - MIN_PANEL_PX - HANDLE_WIDTH) / containerW) * 100;
-        const pct = Math.max(minPct, Math.min(maxPct, (x / containerW) * 100));
-        const rounded = Math.round(pct * 10) / 10;
-
+    function update(pct) {
+        const rounded = Math.round(clamp(pct) * 10) / 10;
         container.style.setProperty('--split-left', rounded + '%');
         handle.setAttribute('aria-valuenow', String(Math.round(rounded)));
+        return rounded;
     }
 
-    function onUp() {
+    function getClientX(e) {
+        if (e.touches && e.touches.length > 0) return e.touches[0].clientX;
+        if (typeof e.clientX === 'number') return e.clientX;
+        return null;
+    }
+
+    function onPointerMove(e) {
+        if (!dragging) return;
+        const clientX = getClientX(e);
+        if (clientX === null) return;
+
+        e.preventDefault();
+        const rect = container.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const pct = (x / rect.width) * 100;
+        update(pct);
+    }
+
+    function stopDrag() {
         if (!dragging) return;
         dragging = false;
         handle.classList.remove('is-dragging');
         document.body.style.userSelect = '';
         document.body.style.cursor = '';
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onUp);
+        document.removeEventListener('mousemove', onPointerMove, true);
+        document.removeEventListener('mouseup', stopDrag, true);
+        document.removeEventListener('touchmove', onPointerMove);
+        document.removeEventListener('touchend', stopDrag);
 
         if (paneId) {
-            const val = parseFloat(container.style.getPropertyValue('--split-left'));
+            const raw = container.style.getPropertyValue('--split-left');
+            const val = parseFloat(raw);
             if (Number.isFinite(val)) save(paneId, Math.round(val * 10) / 10);
         }
     }
 
-    function onDown(e) {
-        if (e.button && e.button !== 0) return;
+    function startDrag(e) {
+        // Only left mouse button
+        if (e.type === 'mousedown' && e.button !== 0) return;
         e.preventDefault();
+        e.stopPropagation();
         dragging = true;
         handle.classList.add('is-dragging');
         document.body.style.userSelect = 'none';
         document.body.style.cursor = 'col-resize';
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('touchend', onUp);
+
+        if (e.type === 'touchstart') {
+            document.addEventListener('touchmove', onPointerMove, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+        } else {
+            document.addEventListener('mousemove', onPointerMove, true);
+            document.addEventListener('mouseup', stopDrag, true);
+        }
     }
 
     function onKeydown(e) {
         const step = e.shiftKey ? 5 : 1;
-        const currentVal = parseFloat(container.style.getPropertyValue('--split-left')) || 50;
+        const raw = container.style.getPropertyValue('--split-left');
+        const currentVal = parseFloat(raw) || 50;
         let next = currentVal;
 
-        if (e.key === 'ArrowLeft') { next = Math.max(15, currentVal - step); }
-        else if (e.key === 'ArrowRight') { next = Math.min(85, currentVal + step); }
-        else if (e.key === 'Home') { next = 15; }
-        else if (e.key === 'End') { next = 85; }
+        if (e.key === 'ArrowLeft') { next = currentVal - step; }
+        else if (e.key === 'ArrowRight') { next = currentVal + step; }
+        else if (e.key === 'Home') { next = MIN_PCT; }
+        else if (e.key === 'End') { next = MAX_PCT; }
         else return;
 
         e.preventDefault();
-        container.style.setProperty('--split-left', next + '%');
-        handle.setAttribute('aria-valuenow', String(Math.round(next)));
-        if (paneId) save(paneId, Math.round(next * 10) / 10);
+        const rounded = update(next);
+        if (paneId) save(paneId, rounded);
     }
 
-    handle.addEventListener('mousedown', onDown);
-    handle.addEventListener('touchstart', onDown, { passive: false });
+    handle.addEventListener('mousedown', startDrag);
+    handle.addEventListener('touchstart', startDrag, { passive: false });
     handle.addEventListener('keydown', onKeydown);
 
     instances.set(container, {
         cleanup() {
-            handle.removeEventListener('mousedown', onDown);
-            handle.removeEventListener('touchstart', onDown);
+            handle.removeEventListener('mousedown', startDrag);
+            handle.removeEventListener('touchstart', startDrag);
             handle.removeEventListener('keydown', onKeydown);
-            onUp();
+            stopDrag();
         }
     });
 }
@@ -129,7 +151,8 @@ function initPane(container) {
  * Initialize all split-pane containers on the page.
  */
 export function init() {
-    document.querySelectorAll('.split-pane').forEach(initPane);
+    const panes = document.querySelectorAll('.split-pane');
+    panes.forEach(initPane);
 }
 
 export default { init };
