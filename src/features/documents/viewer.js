@@ -297,6 +297,21 @@ export function init() {
     selectInput = document.querySelector('[data-viewer-select]');
     emptyTemplate = preview?.querySelector('[data-viewer-empty]')?.cloneNode(true) ?? null;
 
+    if (openLink) {
+        openLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (openLink.getAttribute('aria-disabled') === 'true') return;
+            const doc = currentId ? DocumentStore.getDocument(currentId) : null;
+            if (!doc) return;
+            try {
+                const res = await fetchDocumentResource(doc);
+                if (res?.url) window.open(res.url, '_blank', 'noopener');
+            } catch (err) {
+                console.warn('Failed to open document in new tab', err);
+            }
+        });
+    }
+
     selectInput?.addEventListener('change', e => {
         const id = e.target.value;
         if (!id) { renderEmpty(); return; }

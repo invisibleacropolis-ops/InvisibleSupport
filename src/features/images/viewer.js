@@ -5,6 +5,7 @@
 
 import * as Utils from '../../shared/utils.js';
 import * as ImageStore from './store.js';
+import * as GitHubIntegration from '../../shared/services/github.js';
 
 let initialized = false;
 let canvas = null;
@@ -182,6 +183,29 @@ export function init() {
     openLink = document.querySelector('[data-image-open]');
     exifContainer = document.querySelector('[data-image-exif]');
     exifList = document.querySelector('[data-image-exif-list]');
+
+    if (openLink) {
+        openLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (openLink.getAttribute('aria-disabled') === 'true') return;
+            const image = currentId ? ImageStore.getImage(currentId) : null;
+            if (!image) return;
+            try {
+                if (image.repoPath && GitHubIntegration.isConfigured()) {
+                    const { arrayBuffer, contentType } = await GitHubIntegration.downloadFile(image.repoPath);
+                    const blob = new Blob([arrayBuffer], { type: contentType || image.type || 'application/octet-stream' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    window.open(blobUrl, '_blank', 'noopener');
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                } else {
+                    const url = image.blobUrl || image.downloadUrl;
+                    if (url) window.open(url, '_blank', 'noopener');
+                }
+            } catch (err) {
+                console.warn('Failed to open image in new tab', err);
+            }
+        });
+    }
 
     fitButtons.forEach(b => b.addEventListener('click', () => { const fit = b.dataset.imageFit; if (fit) setFit(fit); }));
     if (zoomSlider) {
