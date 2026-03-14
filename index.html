@@ -23,9 +23,6 @@
         --color-danger: #f25757;
         --color-immersive: 200 56% 16%;
 
-        --document-viewer-width: 40%;
-        --image-viewer-width: 40%;
-
         --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
         --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
 
@@ -251,22 +248,133 @@
 
       .portal__grid {
         display: grid;
-        grid-template-columns:
-          minmax(0, calc(100% - var(--document-viewer-width)))
-          minmax(0, var(--document-viewer-width));
+        gap: var(--space-xl);
+      }
+
+      .portal__top-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
         gap: var(--space-xl);
         align-items: start;
       }
 
-      @media (max-width: 960px) {
-        .portal__grid {
-          --document-viewer-width: 100%;
+      @media (max-width: 640px) {
+        .portal__top-row {
           grid-template-columns: 1fr;
         }
+      }
 
-        .portal__column--secondary {
-          order: -1;
+      /* Split-pane: two panels separated by a draggable handle */
+      .split-pane {
+        display: grid;
+        grid-template-columns:
+          minmax(15rem, var(--split-left, 50%))
+          auto
+          minmax(15rem, 1fr);
+        align-items: stretch;
+      }
+
+      .split-pane > :first-child {
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .split-pane > :last-child {
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .split-pane__handle {
+        width: 6px;
+        margin: 0 var(--space-xs);
+        cursor: col-resize;
+        background: color-mix(in srgb, var(--color-border) 60%, transparent 40%);
+        border-radius: 3px;
+        transition: background-color var(--transition-base), box-shadow var(--transition-base);
+        position: relative;
+        align-self: stretch;
+        touch-action: none;
+      }
+
+      .split-pane__handle::before {
+        content: '';
+        position: absolute;
+        inset: 0 -8px;
+      }
+
+      .split-pane__handle::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 2px;
+        height: 2rem;
+        border-radius: 1px;
+        background: color-mix(in srgb, var(--color-text-muted) 40%, transparent 60%);
+        transition: background-color var(--transition-base), height var(--transition-base);
+      }
+
+      .split-pane__handle:hover,
+      .split-pane__handle.is-dragging {
+        background: color-mix(in srgb, var(--color-accent) 50%, transparent 50%);
+        box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 25%, transparent 75%);
+      }
+
+      .split-pane__handle:hover::after,
+      .split-pane__handle.is-dragging::after {
+        background: var(--color-accent);
+        height: 3rem;
+      }
+
+      .split-pane__handle:focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--color-accent) 65%, white 35%);
+        outline-offset: 2px;
+        border-radius: 3px;
+      }
+
+      @media (max-width: 960px) {
+        .split-pane {
+          grid-template-columns: 1fr;
+          gap: var(--space-xl);
         }
+
+        .split-pane__handle {
+          display: none;
+        }
+      }
+
+      /* Panel collapse toggle */
+      .panel-toggle {
+        appearance: none;
+        border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent 40%);
+        background: color-mix(in srgb, var(--color-surface) 80%, transparent 20%);
+        border-radius: var(--radius-sm);
+        padding: var(--space-2xs) var(--space-xs);
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        transition: background-color var(--transition-base), color var(--transition-base);
+        margin-left: auto;
+      }
+
+      .panel-toggle:hover {
+        background: color-mix(in srgb, var(--color-accent) 12%, transparent 88%);
+        color: var(--color-accent-strong);
+      }
+
+      .u-card.is-collapsed > :not(.u-card__header) {
+        display: none;
+      }
+
+      .u-card.is-collapsed {
+        gap: 0;
+      }
+
+      .u-card__header-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
       }
 
       .image-portal {
@@ -279,27 +387,6 @@
         flex-direction: column;
         gap: var(--space-sm);
         max-width: 48rem;
-      }
-
-      .image-portal__grid {
-        display: grid;
-        grid-template-columns:
-          minmax(0, calc(100% - var(--image-viewer-width)))
-          minmax(0, var(--image-viewer-width));
-        gap: var(--space-xl);
-        align-items: start;
-      }
-
-      .image-portal__column {
-        display: grid;
-        gap: var(--space-xl);
-      }
-
-      @media (max-width: 960px) {
-        .image-portal__grid {
-          --image-viewer-width: 100%;
-          grid-template-columns: 1fr;
-        }
       }
 
       .toast-stack {
@@ -1074,7 +1161,8 @@
         border-radius: var(--radius-lg);
         border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
         background: color-mix(in srgb, var(--color-surface) 92%, transparent 8%);
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
       }
 
       .library-table {
@@ -1242,25 +1330,9 @@
       }
 
       .viewer-card__resize,
-      .image-viewer__resize {
-        display: flex;
-        align-items: center;
-        gap: var(--space-xs);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-      }
-
-      .viewer-card__resize input,
-      .image-viewer__resize input {
-        width: min(12rem, 40vw);
-        accent-color: var(--color-accent);
-      }
-
-      .viewer-card__resize-value,
-      .image-viewer__resize-value {
-        font-variant-numeric: tabular-nums;
-        font-weight: 600;
-        color: var(--color-text);
+      .image-viewer__resize,
+      .image-viewer__toolbar {
+        display: none;
       }
 
       .viewer-card__preview {
@@ -1516,11 +1588,14 @@
       </header>
 
       <div class="portal__grid">
-        <!-- Primary column: Upload workflow -->
-        <section class="portal__column portal__column--primary">
+        <!-- Top row: Upload workflow + Repository storage side by side -->
+        <div class="portal__top-row">
           <article class="u-card upload-card" aria-labelledby="upload-workflow">
             <div class="u-card__header">
-              <h2 class="u-card__title" id="upload-workflow">Upload workflow</h2>
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="upload-workflow">Upload workflow</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse upload panel">Collapse</button>
+              </div>
               <p class="u-card__subtitle">
                 Centralize artifacts by dragging, dropping, or linking your diagnostic assets.
               </p>
@@ -1625,13 +1700,13 @@
               </div>
             </form>
           </article>
-        </section>
 
-        <!-- Secondary column: Library and viewer panels -->
-        <section class="portal__column portal__column--secondary">
           <article class="u-card" aria-labelledby="repo-storage">
             <div class="u-card__header">
-              <h2 class="u-card__title" id="repo-storage">Repository storage</h2>
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="repo-storage">Repository storage</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse settings panel">Collapse</button>
+              </div>
               <p class="u-card__subtitle">
                 Configure GitHub integration so uploads persist to this repository.
               </p>
@@ -1673,9 +1748,16 @@
               </div>
             </form>
           </article>
+        </div>
+
+        <!-- Bottom row: Asset Library and Document Viewer side by side with resizable split -->
+        <div class="split-pane" data-split-id="doc-split" style="--split-left: 45%;">
           <article class="u-card library-card" aria-labelledby="asset-library">
             <div class="u-card__header">
-              <h2 class="u-card__title" id="asset-library">Asset library</h2>
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="asset-library">Asset library</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse library panel">Collapse</button>
+              </div>
               <p class="u-card__subtitle">
                 Reference previously uploaded artifacts to accelerate triage.
               </p>
@@ -1711,11 +1793,27 @@
               </div>
             </div>
           </article>
+
+          <div
+            class="split-pane__handle"
+            data-split-handle
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Drag to resize library and viewer panels"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-valuenow="45"
+            tabindex="0"
+          ></div>
+
           <article class="u-card viewer-card" aria-labelledby="document-viewer">
-              <div class="u-card__header">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
                 <h2 class="u-card__title" id="document-viewer">Document viewer</h2>
-                <p class="u-card__subtitle">Preview uploaded documents inline or switch to immersive mode.</p>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse viewer panel">Collapse</button>
               </div>
+              <p class="u-card__subtitle">Preview uploaded documents inline or switch to immersive mode.</p>
+            </div>
 
             <div class="viewer-card__toolbar" role="group" aria-label="Document viewer controls">
               <label class="viewer-card__selector">
@@ -1723,23 +1821,6 @@
                 <select class="u-input viewer-card__select" data-viewer-select aria-label="Select document">
                   <option value="" selected>Select a document…</option>
                 </select>
-              </label>
-              <label class="viewer-card__resize" for="document-viewer-width">
-                <span>Viewer width</span>
-                <input
-                  id="document-viewer-width"
-                  type="range"
-                  min="25"
-                  max="100"
-                  step="5"
-                  value="40"
-                  aria-valuemin="25"
-                  aria-valuemax="100"
-                  aria-valuenow="40"
-                  aria-label="Document viewer width"
-                  data-viewer-resize
-                />
-                <span class="viewer-card__resize-value" data-viewer-resize-value>40%</span>
               </label>
             </div>
 
@@ -1799,254 +1880,253 @@
               </div>
             </div>
           </article>
-        </section>
+        </div>
       </div>
 
       <section class="image-portal" aria-labelledby="image-management">
         <div class="image-portal__header">
           <h2 class="portal__heading" id="image-management">Image management</h2>
-          <p class="portal__lede">        
+          <p class="portal__lede">
           </p>
         </div>
 
-        <div class="image-portal__grid">
-          <div class="image-portal__column">
-            <article class="u-card image-upload-card" aria-labelledby="image-upload-title">
-              <div class="u-card__header">
-                <h2 class="u-card__title" id="image-upload-title">Image upload</h2>
-                <p class="u-card__subtitle">
-                  
-                </p>
-              </div>
-
-              <form class="stack stack--lg" data-image-form novalidate>
-                <div class="stack">
-                  <div class="upload-card__dropzone" role="region" aria-label="Image upload dropzone" data-image-dropzone>
-                    <svg viewBox="0 0 48 48" role="presentation" aria-hidden="true">
-                      <path
-                        fill="currentColor"
-                        d="M24 6a12 12 0 0 0-12 12v3H8a6 6 0 0 0 0 12h32a6 6 0 0 0 1-11.9V18A12 12 0 0 0 24 6Zm0 4a8 8 0 0 1 8 8v3h-4.5a1.5 1.5 0 0 0-1.07.44L24 23.86l-2.43-2.42A1.5 1.5 0 0 0 20.5 21H16v-3a8 8 0 0 1 8-8Zm-2 11.62 1.43 1.43a1.5 1.5 0 0 0 2.12 0L27 21.05l3.45 3.45a1.5 1.5 0 0 0 1.06.44H36a2 2 0 0 1 0 4H12a2 2 0 1 1 0-4h4.5l4.5-4.38Z"
-                      />
-                    </svg>
-                    <p class="portal__lede">
-                      Drag and drop visual assets or browse your workstation. Files are inspected before upload.
-                    </p>
-                    <div class="upload-card__actions">
-                      <label class="u-btn u-btn--primary" for="image-upload-input">Browse images</label>
-                      <span aria-hidden="true">or</span>
-                      <span class="u-card__subtitle">Drop anywhere to upload</span>
-                    </div>
-                    <p class="upload-card__accepted">
-                      JPEG, PNG, WebP, AVIF, GIF, and HEIC · Max dimension 8,192&nbsp;px on either side.
-                    </p>
-                  </div>
-                  <input
-                    class="u-input"
-                    type="file"
-                    id="image-upload-input"
-                    name="images"
-                    accept="image/*"
-                    multiple
-                    data-image-file-input
-                  />
-                </div>
-
-                <div class="form-grid form-grid--split">
-                  <label class="stack" for="image-title">
-                    <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
-                    <input
-                      class="u-input"
-                      type="text"
-                      id="image-title"
-                      placeholder="e.g. PagerDuty status overview"
-                      data-image-title
-                    />
-                  </label>
-                  <label class="stack" for="image-alt">
-                    <span class="u-card__subtitle">Alt text <span aria-hidden="true">(optional)</span></span>
-                    <input
-                      class="u-input"
-                      type="text"
-                      id="image-alt"
-                      placeholder="Accessible description for screen readers"
-                      data-image-alt
-                    />
-                  </label>
-                </div>
-
-                <div class="stack">
-                  <span class="u-card__subtitle">Upload progress</span>
-                  <div class="upload-progress" data-image-progress hidden>
-                    <div
-                      class="upload-progress__bar"
-                      role="progressbar"
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      aria-valuenow="0"
-                      data-image-progress-bar
-                    >
-                      <span class="upload-progress__fill" data-image-progress-fill></span>
-                    </div>
-                    <p class="upload-progress__label" data-image-progress-label>Waiting for images…</p>
-                  </div>
-                </div>
-
-                <p class="upload-feedback" data-image-feedback role="alert" hidden></p>
-
-                <div class="upload-card__actions" style="justify-content: flex-start;">
-                  <button class="u-btn u-btn--primary" type="submit">Upload images</button>
-                  <button class="u-btn u-btn--ghost" type="reset">Reset</button>
-                </div>
-              </form>
-            </article>
-
-            <article class="u-card image-gallery-card" aria-labelledby="image-gallery">
-              <div class="u-card__header">
-                <h2 class="u-card__title" id="image-gallery">Image gallery</h2>
-                <p class="u-card__subtitle">Switch between grid and list layouts while thumbnails lazy-load in view.</p>
-              </div>
-
-              <div class="stack">
-                <div class="image-gallery__toolbar">
-                  <label class="stack image-gallery__search" for="image-gallery-search">
-                    <span class="u-card__subtitle">Filter images</span>
-                    <input
-                      class="u-input"
-                      type="search"
-                      id="image-gallery-search"
-                      placeholder="Search by title, file name, or EXIF metadata"
-                      autocomplete="off"
-                      data-image-search
-                    />
-                  </label>
-                  <div class="image-gallery__views" role="group" aria-label="Select gallery view">
-                    <button class="image-gallery__view is-active" type="button" data-image-view="grid">Grid</button>
-                    <button class="image-gallery__view" type="button" data-image-view="list">List</button>
-                  </div>
-                </div>
-
-                <ul class="image-gallery__items image-gallery__items--grid" data-image-gallery-items aria-live="polite"></ul>
-                <p class="image-gallery__empty" data-image-gallery-empty hidden>No images uploaded yet.</p>
-              </div>
-            </article>
+        <!-- Image upload (full width) -->
+        <article class="u-card image-upload-card" aria-labelledby="image-upload-title">
+          <div class="u-card__header">
+            <div class="u-card__header-row">
+              <h2 class="u-card__title" id="image-upload-title">Image upload</h2>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse image upload panel">Collapse</button>
+            </div>
+            <p class="u-card__subtitle">
+              Drag and drop visual assets or browse your workstation.
+            </p>
           </div>
 
-          <div class="image-portal__column">
-            <article class="u-card image-viewer-card" aria-labelledby="image-viewer">
-              <div class="u-card__header">
-                <h2 class="u-card__title" id="image-viewer">Image viewer</h2>
-                <p class="u-card__subtitle"></p>
+          <form class="stack stack--lg" data-image-form novalidate>
+            <div class="stack">
+              <div class="upload-card__dropzone" role="region" aria-label="Image upload dropzone" data-image-dropzone>
+                <svg viewBox="0 0 48 48" role="presentation" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M24 6a12 12 0 0 0-12 12v3H8a6 6 0 0 0 0 12h32a6 6 0 0 0 1-11.9V18A12 12 0 0 0 24 6Zm0 4a8 8 0 0 1 8 8v3h-4.5a1.5 1.5 0 0 0-1.07.44L24 23.86l-2.43-2.42A1.5 1.5 0 0 0 20.5 21H16v-3a8 8 0 0 1 8-8Zm-2 11.62 1.43 1.43a1.5 1.5 0 0 0 2.12 0L27 21.05l3.45 3.45a1.5 1.5 0 0 0 1.06.44H36a2 2 0 0 1 0 4H12a2 2 0 1 1 0-4h4.5l4.5-4.38Z"
+                  />
+                </svg>
+                <p class="portal__lede">
+                  Drag and drop visual assets or browse your workstation. Files are inspected before upload.
+                </p>
+                <div class="upload-card__actions">
+                  <label class="u-btn u-btn--primary" for="image-upload-input">Browse images</label>
+                  <span aria-hidden="true">or</span>
+                  <span class="u-card__subtitle">Drop anywhere to upload</span>
+                </div>
+                <p class="upload-card__accepted">
+                  JPEG, PNG, WebP, AVIF, GIF, and HEIC · Max dimension 8,192&nbsp;px on either side.
+                </p>
+              </div>
+              <input
+                class="u-input"
+                type="file"
+                id="image-upload-input"
+                name="images"
+                accept="image/*"
+                multiple
+                data-image-file-input
+              />
+            </div>
+
+            <div class="form-grid form-grid--split">
+              <label class="stack" for="image-title">
+                <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
+                <input
+                  class="u-input"
+                  type="text"
+                  id="image-title"
+                  placeholder="e.g. PagerDuty status overview"
+                  data-image-title
+                />
+              </label>
+              <label class="stack" for="image-alt">
+                <span class="u-card__subtitle">Alt text <span aria-hidden="true">(optional)</span></span>
+                <input
+                  class="u-input"
+                  type="text"
+                  id="image-alt"
+                  placeholder="Accessible description for screen readers"
+                  data-image-alt
+                />
+              </label>
+            </div>
+
+            <div class="stack">
+              <span class="u-card__subtitle">Upload progress</span>
+              <div class="upload-progress" data-image-progress hidden>
+                <div
+                  class="upload-progress__bar"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  data-image-progress-bar
+                >
+                  <span class="upload-progress__fill" data-image-progress-fill></span>
+                </div>
+                <p class="upload-progress__label" data-image-progress-label>Waiting for images…</p>
+              </div>
+            </div>
+
+            <p class="upload-feedback" data-image-feedback role="alert" hidden></p>
+
+            <div class="upload-card__actions" style="justify-content: flex-start;">
+              <button class="u-btn u-btn--primary" type="submit">Upload images</button>
+              <button class="u-btn u-btn--ghost" type="reset">Reset</button>
+            </div>
+          </form>
+        </article>
+
+        <!-- Image Gallery and Image Viewer side by side with resizable split -->
+        <div class="split-pane" data-split-id="img-split" style="--split-left: 40%;">
+          <article class="u-card image-gallery-card" aria-labelledby="image-gallery">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="image-gallery">Image gallery</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse gallery panel">Collapse</button>
+              </div>
+              <p class="u-card__subtitle">Switch between grid and list layouts while thumbnails lazy-load in view.</p>
+            </div>
+
+            <div class="stack">
+              <div class="image-gallery__toolbar">
+                <label class="stack image-gallery__search" for="image-gallery-search">
+                  <span class="u-card__subtitle">Filter images</span>
+                  <input
+                    class="u-input"
+                    type="search"
+                    id="image-gallery-search"
+                    placeholder="Search by title, file name, or EXIF metadata"
+                    autocomplete="off"
+                    data-image-search
+                  />
+                </label>
+                <div class="image-gallery__views" role="group" aria-label="Select gallery view">
+                  <button class="image-gallery__view is-active" type="button" data-image-view="grid">Grid</button>
+                  <button class="image-gallery__view" type="button" data-image-view="list">List</button>
+                </div>
               </div>
 
-              <div class="image-viewer__toolbar" role="group" aria-label="Image viewer controls">
-                <label class="image-viewer__resize" for="image-viewer-width">
-                  <span>Viewer width</span>
+              <ul class="image-gallery__items image-gallery__items--grid" data-image-gallery-items aria-live="polite"></ul>
+              <p class="image-gallery__empty" data-image-gallery-empty hidden>No images uploaded yet.</p>
+            </div>
+          </article>
+
+          <div
+            class="split-pane__handle"
+            data-split-handle
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Drag to resize gallery and viewer panels"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-valuenow="40"
+            tabindex="0"
+          ></div>
+
+          <article class="u-card image-viewer-card" aria-labelledby="image-viewer">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="image-viewer">Image viewer</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse viewer panel">Collapse</button>
+              </div>
+              <p class="u-card__subtitle">Preview images with zoom controls and EXIF metadata.</p>
+            </div>
+
+            <div class="stack" data-image-viewer>
+              <div class="image-viewer__canvas" data-image-canvas data-fit="contain">
+                <div class="image-viewer__empty" data-image-empty>
+                  <h3>Waiting for a selection</h3>
+                  <p class="portal__lede" style="font-size: 0.95rem;">
+                    Choose a thumbnail to open a rich preview with zoom controls and EXIF-aware metadata.
+                  </p>
+                </div>
+                <img data-image-preview alt="" hidden />
+              </div>
+
+              <div class="image-viewer__controls" data-image-controls hidden>
+                <div class="image-viewer__control-group" role="group" aria-label="Fit controls">
+                  <button class="image-viewer__control is-active" type="button" data-image-fit="contain">Fit</button>
+                  <button class="image-viewer__control" type="button" data-image-fit="cover">Fill</button>
+                  <button class="image-viewer__control" type="button" data-image-fit="actual">Actual</button>
+                </div>
+                <label class="stack" style="gap: var(--space-2xs); min-width: 10rem;">
+                  <span class="u-card__subtitle">Zoom</span>
                   <input
-                    id="image-viewer-width"
+                    class="image-viewer__slider"
                     type="range"
                     min="25"
-                    max="100"
+                    max="200"
                     step="5"
-                    value="40"
-                    aria-valuemin="25"
-                    aria-valuemax="100"
-                    aria-valuenow="40"
-                    aria-label="Image viewer width"
-                    data-image-resize
+                    value="100"
+                    data-image-zoom
                   />
-                  <span class="image-viewer__resize-value" data-image-resize-value>40%</span>
                 </label>
               </div>
 
-              <div class="stack" data-image-viewer>
-                <div class="image-viewer__canvas" data-image-canvas data-fit="contain">
-                  <div class="image-viewer__empty" data-image-empty>
-                    <h3>Waiting for a selection</h3>
-                    <p class="portal__lede" style="font-size: 0.95rem;">
-                      Choose a thumbnail to open a rich preview with zoom controls and EXIF-aware metadata.
-                    </p>
+              <div class="image-viewer__meta" data-image-meta hidden>
+                <dl class="image-viewer__details">
+                  <div>
+                    <dt>Title</dt>
+                    <dd data-image-name>—</dd>
                   </div>
-                  <img data-image-preview alt="" hidden />
+                  <div>
+                    <dt>File name</dt>
+                    <dd data-image-filename>—</dd>
+                  </div>
+                  <div>
+                    <dt>Dimensions</dt>
+                    <dd data-image-dimensions>—</dd>
+                  </div>
+                  <div>
+                    <dt>Size</dt>
+                    <dd data-image-size>—</dd>
+                  </div>
+                  <div>
+                    <dt>Type</dt>
+                    <dd data-image-type>—</dd>
+                  </div>
+                  <div>
+                    <dt>Alt text</dt>
+                    <dd data-image-alt>—</dd>
+                  </div>
+                  <div>
+                    <dt>Captured</dt>
+                    <dd data-image-taken>—</dd>
+                  </div>
+                </dl>
+
+                <div class="image-viewer__exif" data-image-exif hidden>
+                  <h3>EXIF metadata</h3>
+                  <div class="image-viewer__exif-list" data-image-exif-list></div>
                 </div>
 
-                <div class="image-viewer__controls" data-image-controls hidden>
-                  <div class="image-viewer__control-group" role="group" aria-label="Fit controls">
-                    <button class="image-viewer__control is-active" type="button" data-image-fit="contain">Fit</button>
-                    <button class="image-viewer__control" type="button" data-image-fit="cover">Fill</button>
-                    <button class="image-viewer__control" type="button" data-image-fit="actual">Actual</button>
-                  </div>
-                  <label class="stack" style="gap: var(--space-2xs); min-width: 10rem;">
-                    <span class="u-card__subtitle">Zoom</span>
+                <div class="stack">
+                  <span class="u-card__subtitle">Direct link</span>
+                  <div class="viewer-card__link">
                     <input
-                      class="image-viewer__slider"
-                      type="range"
-                      min="25"
-                      max="200"
-                      step="5"
-                      value="100"
-                      data-image-zoom
+                      class="u-input viewer-card__link-input"
+                      type="text"
+                      readonly
+                      id="image-direct-link"
+                      data-image-link
+                      value=""
                     />
-                  </label>
-                </div>
-
-                <div class="image-viewer__meta" data-image-meta hidden>
-                  <dl class="image-viewer__details">
-                    <div>
-                      <dt>Title</dt>
-                      <dd data-image-name>—</dd>
-                    </div>
-                    <div>
-                      <dt>File name</dt>
-                      <dd data-image-filename>—</dd>
-                    </div>
-                    <div>
-                      <dt>Dimensions</dt>
-                      <dd data-image-dimensions>—</dd>
-                    </div>
-                    <div>
-                      <dt>Size</dt>
-                      <dd data-image-size>—</dd>
-                    </div>
-                    <div>
-                      <dt>Type</dt>
-                      <dd data-image-type>—</dd>
-                    </div>
-                    <div>
-                      <dt>Alt text</dt>
-                      <dd data-image-alt>—</dd>
-                    </div>
-                    <div>
-                      <dt>Captured</dt>
-                      <dd data-image-taken>—</dd>
-                    </div>
-                  </dl>
-
-                  <div class="image-viewer__exif" data-image-exif hidden>
-                    <h3>EXIF metadata</h3>
-                    <div class="image-viewer__exif-list" data-image-exif-list></div>
-                  </div>
-
-                  <div class="stack">
-                    <span class="u-card__subtitle">Direct link</span>
-                    <div class="viewer-card__link">
-                      <input
-                        class="u-input viewer-card__link-input"
-                        type="text"
-                        readonly
-                        id="image-direct-link"
-                        data-image-link
-                        value=""
-                      />
-                      <button class="u-btn u-btn--ghost" type="button" data-copy-target="#image-direct-link">Copy</button>
-                      <a class="u-btn u-btn--primary" href="#" target="_blank" rel="noopener" data-image-open aria-disabled="true">
-                        Open in new tab
-                      </a>
-                    </div>
+                    <button class="u-btn u-btn--ghost" type="button" data-copy-target="#image-direct-link">Copy</button>
+                    <a class="u-btn u-btn--primary" href="#" target="_blank" rel="noopener" data-image-open aria-disabled="true">
+                      Open in new tab
+                    </a>
                   </div>
                 </div>
               </div>
-            </article>
-          </div>
+            </div>
+          </article>
         </div>
       </section>
     </main>
