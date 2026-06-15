@@ -1,19 +1,27 @@
 /**
  * @fileoverview GitHub API client for file storage operations.
  * Provides CRUD operations for files stored in a GitHub repository.
+ *
+ * Authentication is delegated to the Cloudflare Worker auth proxy
+ * (see `./auth-client.js`). This service obtains a short-lived installation
+ * token on demand for every REST call.
  */
 
 import { t } from '../localization/index.js';
+import { fetchInstallationToken, isConnected, AuthError } from './auth-client.js';
 
 // Configuration keys
 const CONFIG_KEY = 'invisibleSupport.githubConfig';
+const REJECTED_TOKEN_PREFIXES = ['ghp_', 'github_pat_', 'gho_', 'ghu_', 'ghs_', 'ghr_'];
 
 // Text encoding/decoding utilities
 const textEncoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
 const textDecoder = typeof TextDecoder !== 'undefined' ? new TextDecoder() : null;
 
 /**
- * Infers repository defaults from GitHub Pages URL
+ * Infers repository defaults from GitHub Pages URL.
+ * The actual account/repo are populated by the auth client's session
+ * probe; this is purely a hint for the Settings form's initial value.
  */
 function inferRepositoryDefaults() {
     try {
@@ -38,13 +46,11 @@ function inferRepositoryDefaults() {
     }
 }
 
-// Default configuration with inferred values
 const inferred = inferRepositoryDefaults();
 const DEFAULT_CONFIG = {
     owner: inferred.owner,
     repo: inferred.repo,
     branch: 'main',
-    token: '',
     storageLimitMb: 200,
 };
 
@@ -52,9 +58,6 @@ const DEFAULT_CONFIG = {
 const configListeners = new Set();
 let config = loadConfigFromStorage();
 
-/**
- * Sanitizes raw config input
- */
 function sanitizeConfig(raw) {
     if (!raw || typeof raw !== 'object') {
         return { ...DEFAULT_CONFIG };
@@ -68,14 +71,10 @@ function sanitizeConfig(raw) {
         owner: owner || DEFAULT_CONFIG.owner,
         repo: repo || DEFAULT_CONFIG.repo,
         branch,
-        token: typeof raw.token === 'string' ? raw.token.trim() : '',
         storageLimitMb: Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_CONFIG.storageLimitMb,
     };
 }
 
-/**
- * Loads configuration from localStorage
- */
 function loadConfigFromStorage() {
     try {
         const stored = localStorage.getItem(CONFIG_KEY);
@@ -88,9 +87,6 @@ function loadConfigFromStorage() {
     }
 }
 
-/**
- * Notifies all config subscribers
- */
 function notifyConfigListeners() {
     const snapshot = getConfig();
     configListeners.forEach((listener) => {
@@ -102,9 +98,6 @@ function notifyConfigListeners() {
     });
 }
 
-/**
- * Persists config to localStorage
- */
 function persistConfig(next) {
     config = sanitizeConfig({ ...config, ...next });
     try {
@@ -115,16 +108,10 @@ function persistConfig(next) {
     notifyConfigListeners();
 }
 
-/**
- * Gets a copy of current config
- */
 export function getConfig() {
     return { ...config };
 }
 
-/**
- * Subscribes to config changes
- */
 export function subscribe(listener) {
     if (typeof listener !== 'function') return () => { };
     configListeners.add(listener);
@@ -132,23 +119,18 @@ export function subscribe(listener) {
     return () => configListeners.delete(listener);
 }
 
-/**
- * Updates configuration with partial values
- */
 export function updateConfig(partial = {}) {
+    // Refuse any attempt to set a classic or fine-grained PAT.
+    if (typeof partial.token === 'string' && partial.token.trim()) {
+        throw new Error('Personal access tokens are no longer supported. Connect via the GitHub App.');
+    }
     persistConfig(partial);
 }
 
-/**
- * Checks if GitHub is fully configured
- */
 export function isConfigured() {
-    return Boolean(config.owner && config.repo && config.token);
+    return Boolean(config.owner && config.repo && isConnected());
 }
 
-/**
- * Throws if not configured
- */
 function ensureConfigured() {
     if (isConfigured()) return;
     const error = new Error(t('errors.githubConfigMissing'));
@@ -156,35 +138,23 @@ function ensureConfigured() {
     throw error;
 }
 
-/**
- * Gets the configured branch
- */
 function getBranch() {
     return config.branch && config.branch.trim() ? config.branch.trim() : DEFAULT_CONFIG.branch;
 }
 
-/**
- * Builds the API base URL
- */
 function buildApiBase() {
     return `https://api.github.com/repos/${config.owner}/${config.repo}`;
 }
 
-/**
- * Builds a full API URL
- */
 function buildApiUrl(path = '') {
     const base = buildApiBase();
     return path ? `${base}/${path}` : base;
 }
 
-/**
- * Builds request headers
- */
-function buildHeaders(extra) {
+function buildHeaders(token, extra) {
     const headers = { Accept: 'application/vnd.github+json' };
-    if (config.token) {
-        headers.Authorization = `Bearer ${config.token}`;
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
     }
     if (extra) {
         Object.assign(headers, extra);
@@ -192,9 +162,6 @@ function buildHeaders(extra) {
     return headers;
 }
 
-/**
- * Encodes a path for API URLs
- */
 function encodePath(path) {
     return path
         .split('/')
@@ -203,9 +170,6 @@ function encodePath(path) {
         .join('/');
 }
 
-/**
- * Encodes a string to base64
- */
 function encodeBase64(value) {
     if (!value) return '';
     if (textEncoder) {
@@ -219,9 +183,6 @@ function encodeBase64(value) {
     return btoa(unescape(encodeURIComponent(value)));
 }
 
-/**
- * Decodes base64 to string
- */
 function decodeBase64(value) {
     if (!value) return '';
     try {
@@ -238,36 +199,72 @@ function decodeBase64(value) {
 }
 
 /**
- * Gets file contents from GitHub
+ * Wraps a REST call: gets a fresh installation token, invokes the call,
+ * and re-tries once on a 401 by re-fetching a token.
+ * @template T
+ * @param {(token: string) => Promise<T>} fn
+ * @returns {Promise<T>}
  */
+async function withFreshToken(fn) {
+    let token;
+    try {
+        token = await fetchInstallationToken();
+    } catch (e) {
+        if (e instanceof AuthError) {
+            const error = new Error(t('errors.githubAuthRequired'));
+            error.code = 'auth';
+            error.cause = e;
+            throw error;
+        }
+        throw e;
+    }
+    try {
+        return await fn(token);
+    } catch (err) {
+        if (err?.status === 401) {
+            // Token may have been revoked or expired; retry once.
+            try {
+                const newToken = await fetchInstallationToken();
+                return await fn(newToken);
+            } catch (e2) {
+                if (e2 instanceof AuthError) {
+                    const error = new Error(t('errors.githubAuthRequired'));
+                    error.code = 'auth';
+                    error.cause = e2;
+                    throw error;
+                }
+                throw e2;
+            }
+        }
+        throw err;
+    }
+}
+
+function makeApiError(message, response, payload) {
+    const error = new Error(payload?.message || message);
+    error.code = 'request';
+    error.status = response.status;
+    error.payload = payload;
+    return error;
+}
+
 export async function getContents(path) {
     ensureConfigured();
     const encodedPath = encodePath(path);
     const branch = encodeURIComponent(getBranch());
     const url = `${buildApiUrl(`contents/${encodedPath}`)}?ref=${branch}`;
-    const response = await fetch(url, { headers: buildHeaders() });
-    if (response.status === 404) {
-        return null;
-    }
-    if (!response.ok) {
+    return withFreshToken(async (token) => {
+        const response = await fetch(url, { headers: buildHeaders(token) });
+        if (response.status === 404) return null;
         let payload = null;
-        try {
-            payload = await response.json();
-        } catch (e) {
-            payload = null;
+        if (!response.ok) {
+            try { payload = await response.json(); } catch (e) { payload = null; }
+            throw makeApiError(t('errors.githubRequestFailed'), response, payload);
         }
-        const error = new Error(payload?.message || t('errors.githubRequestFailed'));
-        error.code = 'request';
-        error.status = response.status;
-        error.payload = payload;
-        throw error;
-    }
-    return response.json();
+        return response.json();
+    });
 }
 
-/**
- * Puts file contents to GitHub
- */
 async function putContents(path, { message, content, sha } = {}) {
     ensureConfigured();
     const body = {
@@ -275,33 +272,22 @@ async function putContents(path, { message, content, sha } = {}) {
         content,
         branch: getBranch(),
     };
-    if (sha) {
-        body.sha = sha;
-    }
-    const response = await fetch(buildApiUrl(`contents/${encodePath(path)}`), {
-        method: 'PUT',
-        headers: buildHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-        let payload = null;
-        try {
-            payload = await response.json();
-        } catch (e) {
-            payload = null;
+    if (sha) body.sha = sha;
+    return withFreshToken(async (token) => {
+        const response = await fetch(buildApiUrl(`contents/${encodePath(path)}`), {
+            method: 'PUT',
+            headers: buildHeaders(token, { 'Content-Type': 'application/json' }),
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            let payload = null;
+            try { payload = await response.json(); } catch (e) { payload = null; }
+            throw makeApiError(t('errors.githubRequestFailed'), response, payload);
         }
-        const error = new Error(payload?.message || t('errors.githubRequestFailed'));
-        error.code = 'request';
-        error.status = response.status;
-        error.payload = payload;
-        throw error;
-    }
-    return response.json();
+        return response.json();
+    });
 }
 
-/**
- * Deletes file contents from GitHub
- */
 async function deleteContents(path, { message, sha } = {}) {
     ensureConfigured();
     const body = {
@@ -309,66 +295,44 @@ async function deleteContents(path, { message, sha } = {}) {
         sha,
         branch: getBranch(),
     };
-    const response = await fetch(buildApiUrl(`contents/${encodePath(path)}`), {
-        method: 'DELETE',
-        headers: buildHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(body),
-    });
-    if (response.status === 404) {
-        return null;
-    }
-    if (!response.ok) {
-        let payload = null;
-        try {
-            payload = await response.json();
-        } catch (e) {
-            payload = null;
+    return withFreshToken(async (token) => {
+        const response = await fetch(buildApiUrl(`contents/${encodePath(path)}`), {
+            method: 'DELETE',
+            headers: buildHeaders(token, { 'Content-Type': 'application/json' }),
+            body: JSON.stringify(body),
+        });
+        if (response.status === 404) return null;
+        if (!response.ok) {
+            let payload = null;
+            try { payload = await response.json(); } catch (e) { payload = null; }
+            throw makeApiError(t('errors.githubRequestFailed'), response, payload);
         }
-        const error = new Error(payload?.message || t('errors.githubRequestFailed'));
-        error.code = 'request';
-        error.status = response.status;
-        error.payload = payload;
-        throw error;
-    }
-    return response.json();
+        return response.json();
+    });
 }
 
-/**
- * Downloads a file's raw content
- */
 export async function downloadFile(path) {
     ensureConfigured();
     const branch = encodeURIComponent(getBranch());
     const url = `${buildApiUrl(`contents/${encodePath(path)}`)}?ref=${branch}`;
-    const response = await fetch(url, {
-        headers: buildHeaders({ Accept: 'application/vnd.github.v3.raw' }),
-    });
-    if (!response.ok) {
-        let payload = null;
-        try {
-            payload = await response.json();
-        } catch (e) {
-            payload = null;
+    return withFreshToken(async (token) => {
+        const response = await fetch(url, {
+            headers: buildHeaders(token, { Accept: 'application/vnd.github.v3.raw' }),
+        });
+        if (!response.ok) {
+            let payload = null;
+            try { payload = await response.json(); } catch (e) { payload = null; }
+            throw makeApiError(t('errors.githubRequestFailed'), response, payload);
         }
-        const error = new Error(payload?.message || t('errors.githubRequestFailed'));
-        error.code = 'request';
-        error.status = response.status;
-        error.payload = payload;
-        throw error;
-    }
-    const contentType = response.headers.get('Content-Type') || '';
-    const arrayBuffer = await response.arrayBuffer();
-    return { arrayBuffer, contentType };
+        const contentType = response.headers.get('Content-Type') || '';
+        const arrayBuffer = await response.arrayBuffer();
+        return { arrayBuffer, contentType };
+    });
 }
 
-/**
- * Reads a JSON manifest file
- */
 export async function readManifest(path) {
     const file = await getContents(path);
-    if (!file) {
-        return { items: [], sha: null };
-    }
+    if (!file) return { items: [], sha: null };
     const text = decodeBase64(file.content || '');
     let data = [];
     if (text) {
@@ -383,9 +347,6 @@ export async function readManifest(path) {
     return { items: data, sha: file.sha };
 }
 
-/**
- * Writes a JSON manifest file
- */
 export async function writeManifest(path, items, sha) {
     const payload = JSON.stringify(items ?? [], null, 2);
     const response = await putContents(path, {
@@ -399,16 +360,10 @@ export async function writeManifest(path, items, sha) {
     };
 }
 
-/**
- * Deletes a manifest file
- */
 export async function deleteManifest(path, sha) {
     await deleteContents(path, { sha, message: `Remove ${path}` });
 }
 
-/**
- * Uploads a file to GitHub
- */
 export async function uploadFile(path, base64Content, message) {
     const response = await putContents(path, { content: base64Content, message });
     const content = response?.content ?? {};
@@ -419,37 +374,23 @@ export async function uploadFile(path, base64Content, message) {
     };
 }
 
-/**
- * Deletes a file from GitHub
- */
 export async function deleteFile(path, sha, message) {
     await deleteContents(path, { sha, message });
 }
 
-/**
- * Tests the GitHub connection
- */
 export async function testConnection() {
     ensureConfigured();
-    const response = await fetch(buildApiUrl(), { headers: buildHeaders() });
-    if (!response.ok) {
-        let payload = null;
-        try {
-            payload = await response.json();
-        } catch (e) {
-            payload = null;
+    return withFreshToken(async (token) => {
+        const response = await fetch(buildApiUrl(), { headers: buildHeaders(token) });
+        if (!response.ok) {
+            let payload = null;
+            try { payload = await response.json(); } catch (e) { payload = null; }
+            throw makeApiError(t('errors.githubRequestFailed'), response, payload);
         }
-        const error = new Error(payload?.message || t('errors.githubRequestFailed'));
-        error.code = 'request';
-        error.status = response.status;
-        throw error;
-    }
-    return true;
+        return true;
+    });
 }
 
-/**
- * Gets storage limit in bytes
- */
 export function getStorageLimitBytes() {
     const limitMb = Number(config.storageLimitMb);
     if (Number.isFinite(limitMb) && limitMb > 0) {
@@ -458,12 +399,18 @@ export function getStorageLimitBytes() {
     return DEFAULT_CONFIG.storageLimitMb * 1024 * 1024;
 }
 
-/**
- * Builds a raw GitHub URL for a file
- */
 export function buildRawUrl(path) {
     if (!config.owner || !config.repo) return '';
     return `https://raw.githubusercontent.com/${config.owner}/${config.repo}/${getBranch()}/${path}`;
+}
+
+/**
+ * Returns true if the value looks like a Personal Access Token (classic or fine-grained).
+ * Useful for the UI to refuse pasted PATs even if the underlying service would reject them.
+ */
+export function looksLikePat(value) {
+    if (typeof value !== 'string') return false;
+    return REJECTED_TOKEN_PREFIXES.some((p) => value.trim().startsWith(p));
 }
 
 // Default export
@@ -481,4 +428,5 @@ export default {
     getStorageLimitBytes,
     buildRawUrl,
     downloadFile,
+    looksLikePat,
 };

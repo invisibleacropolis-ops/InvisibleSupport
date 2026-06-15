@@ -77,6 +77,20 @@ Handles image assets with visual previews.
 
 ---
 
+## 🔐 Authentication
+
+This portal authenticates to GitHub via a **GitHub App** fronted by a **Cloudflare Worker**. There are no long-lived credentials in the browser.
+
+- The browser calls the Worker (`/token`) to get a short-lived installation token (~1 hour).
+- The Worker signs an RS256 JWT with the App's private key, exchanges it with GitHub for an installation access token, and caches the token in Cloudflare KV.
+- The browser attaches the token to REST calls as `Authorization: Bearer ...`.
+- The browser never sees the App's private key. There is no PAT to rotate.
+- If the Worker is unreachable or the App install is revoked, the portal shows a "Connect GitHub" banner and disables uploads.
+
+See [`worker/README.md`](./worker/README.md) for the deploy + secret-rotation runbook, and [`Setup.md`](./Setup.md) for the one-time setup.
+
+---
+
 ## 🔄 Data Interactivity
 
 The application uses an **Event-Driven State** model. Stores update their state and emit notifications, while UI components subscribe to these updates.
@@ -106,11 +120,15 @@ sequenceDiagram
 ## 🚀 Usage & Workflows
 
 ### 🔧 Configuration (First Run)
-Because this is a serverless application, it needs a backend to store files. We use **Your GitHub Repository** as the database.
+Because this is a serverless application, it needs a backend to store files. We use **Your GitHub Repository** as the database, and a **Cloudflare Worker** as the auth proxy that mints short-lived installation tokens on demand.
+
 1. Open the **Repository storage** panel.
 2. Enter your **Repository Owner** (username) and **Repository Name**.
-3. Generate a **Personal Access Token** (Classic) with `repo` scope and paste it.
-4. Click **Save** and **Test Connection**.
+3. Enter the **Auth worker URL** (deployed from the [`worker/`](./worker/README.md) directory; see [Setup.md](./Setup.md) for the one-time setup).
+4. Click **Save**, then **Connect GitHub**. You'll be redirected to GitHub to install the App on the target repository.
+5. Click **Test connection** to verify that the Worker can mint tokens and the App has the right permissions.
+
+> **No personal access tokens.** This portal deliberately refuses classic PATs (`ghp_…`, `github_pat_…`, etc.) and fine-grained PATs. The only supported credential is the Worker-issued installation token.
 
 ### 📤 Uploading Assets
 1. Drag & Drop files into the "Upload workflow" area.

@@ -1,0 +1,19 @@
+name = "invisible-support-auth"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+[vars]
+# Set with `wrangler secret put`:
+#   GITHUB_APP_ID
+#   GITHUB_APP_CLIENT_ID
+#   GITHUB_APP_CLIENT_SECRET
+#   GITHUB_APP_PRIVATE_KEY (PEM, including BEGIN/END lines)
+# Set ALLOWED_ORIGIN as a plain var:
+ALLOWED_ORIGIN = "http://localhost:8080"
+
+[[kv_namespaces]]
+binding = "INSTALLATIONS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[observability]
+enabled = true

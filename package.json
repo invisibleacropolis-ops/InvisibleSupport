@@ -7,7 +7,11 @@
   "scripts": {
     "test": "npx playwright test",
     "test:update": "npx playwright test --update-snapshots",
-    "serve": "npx http-server . -p 8080 -c-1"
+    "test:e2e": "npx playwright test tests/e2e",
+    "serve": "npx http-server . -p 8080 -c-1",
+    "worker:dev": "npm --prefix worker run dev",
+    "worker:deploy": "npm --prefix worker run deploy",
+    "worker:test": "npm --prefix worker test"
   },
   "repository": {
     "type": "git",

@@ -19,6 +19,7 @@ import * as Store from './shared/infrastructure/store.js';
 // Phase V: Integration Modules
 // =====================================================================
 import * as GitHubIntegration from './shared/services/github.js';
+import * as AuthClient from './shared/services/auth-client.js';
 import * as StorageManager from './shared/services/storage-manager.js';
 
 // =====================================================================
@@ -57,6 +58,7 @@ window.Notifications = Notifications;
 window.EventBus = EventBus;
 window.Store = Store;
 window.GitHubIntegration = GitHubIntegration;
+window.AuthClient = AuthClient;
 window.StorageManager = StorageManager;
 window.DocumentStore = DocumentStore;
 window.ImageStore = ImageStore;
@@ -85,13 +87,39 @@ function initPanelToggles() {
 }
 
 /**
+ * Toggles the top-of-page banner that prompts the user to connect the
+ * GitHub App. Returns the connection state for callers that want to gate
+ * further initialization.
+ */
+function applyAuthGate() {
+    const banner = document.querySelector('[data-auth-banner]');
+    const connected = AuthClient.isConnected();
+    if (banner) {
+        banner.hidden = connected;
+    }
+    return connected;
+}
+
+/**
  * Initialize the application once the DOM is ready
  */
 function init() {
-    console.log('[ESM] Invisible Support Portal initialized (17 modules loaded)');
+    console.log('[ESM] Invisible Support Portal initialized (18 modules loaded)');
 
     // Apply translations to the DOM
     Localization.apply();
+
+    // Probe the Worker's session on every page load so the UI reflects
+    // the current connection state even after a hard refresh.
+    AuthClient.fetchSession()
+        .catch((e) => console.warn('Initial session probe failed', e))
+        .finally(() => {
+            applyAuthGate();
+        });
+
+    AuthClient.subscribe(() => {
+        applyAuthGate();
+    });
 
     // Initialize feature modules
     GitHubSettings.init();
