@@ -5,7 +5,7 @@
 
 import * as Utils from '../../shared/utils.js';
 import * as ImageStore from './store.js';
-import * as GitHubIntegration from '../../shared/services/github.js';
+import * as SupabaseStorage from '../../shared/services/supabase-storage.js';
 
 let initialized = false;
 let canvas = null;
@@ -191,8 +191,8 @@ export function init() {
             const image = currentId ? ImageStore.getImage(currentId) : null;
             if (!image) return;
             try {
-                if (image.repoPath && GitHubIntegration.isConfigured()) {
-                    const { arrayBuffer, contentType } = await GitHubIntegration.downloadFile(image.repoPath);
+                if (image.repoPath && SupabaseStorage.isConfigured()) {
+                    const { arrayBuffer, contentType } = await SupabaseStorage.downloadFile(image.repoPath);
                     const blob = new Blob([arrayBuffer], { type: contentType || image.type || 'application/octet-stream' });
                     const blobUrl = URL.createObjectURL(blob);
                     window.open(blobUrl, '_blank', 'noopener');

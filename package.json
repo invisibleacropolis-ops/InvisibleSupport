@@ -9,9 +9,8 @@
     "test:update": "npx playwright test --update-snapshots",
     "test:e2e": "npx playwright test tests/e2e",
     "serve": "npx http-server . -p 8080 -c-1",
-    "worker:dev": "npm --prefix worker run dev",
-    "worker:deploy": "npm --prefix worker run deploy",
-    "worker:test": "npm --prefix worker test"
+    "supabase:smoke": "powershell -ExecutionPolicy Bypass -File scripts\\supabase-smoke.ps1",
+    "supabase:migrate": "powershell -ExecutionPolicy Bypass -File scripts\\migrate-to-supabase.ps1"
   },
   "repository": {
     "type": "git",

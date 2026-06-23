@@ -1,6 +1,6 @@
 /**
  * @fileoverview Document store for CRUD operations on documents.
- * Manages document persistence via GitHub and provides subscription model.
+ * Manages document persistence via Supabase and provides subscription model.
  */
 
 import { t } from '../../shared/localization/index.js';
@@ -79,7 +79,7 @@ class DocumentStore extends BaseResourceStore {
         const base64 = Utils.dataUrlToBase64(dataUrl);
         const documentRecord = this.normalizeDocument(file, extras);
 
-        const uploadInfo = await this.uploadToGitHub(
+        const uploadInfo = await this.uploadToSupabase(
             documentRecord.id,
             documentRecord.name,
             base64

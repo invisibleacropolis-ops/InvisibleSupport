@@ -54,17 +54,17 @@ test.describe('Baseline Visual Regression Tests', () => {
         await expect(page).toHaveScreenshot('images-tab.png');
     });
 
-    test('github settings expanded', async ({ page }) => {
-        // Expand the GitHub settings section
-        const settingsToggle = page.locator('[data-github-settings], [data-settings-toggle]').first();
+    test('supabase settings expanded', async ({ page }) => {
+        // Expand the Supabase settings section
+        const settingsToggle = page.locator('[data-supabase-settings], [data-settings-toggle]').first();
         if (await settingsToggle.isVisible()) {
             // If it's a collapsible, try to expand it
-            const details = page.locator('details:has([data-github-settings])').first();
+            const details = page.locator('details:has([data-supabase-settings])').first();
             if (await details.isVisible()) {
                 await details.evaluate((el) => el.setAttribute('open', ''));
             }
         }
-        await expect(page).toHaveScreenshot('github-settings.png');
+        await expect(page).toHaveScreenshot('supabase-settings.png');
     });
 
     test('storage meter visible', async ({ page }) => {

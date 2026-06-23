@@ -18,7 +18,7 @@ import * as Store from './shared/infrastructure/store.js';
 // =====================================================================
 // Phase V: Integration Modules
 // =====================================================================
-import * as GitHubIntegration from './shared/services/github.js';
+import * as SupabaseStorage from './shared/services/supabase-storage.js';
 import * as AuthClient from './shared/services/auth-client.js';
 import * as StorageManager from './shared/services/storage-manager.js';
 
@@ -41,7 +41,7 @@ import * as ImageUpload from './features/images/upload.js';
 // =====================================================================
 // Phase VI: Feature Slices - Settings & Storage
 // =====================================================================
-import * as GitHubSettings from './features/settings/github-settings.js';
+import * as SupabaseSettings from './features/settings/supabase-settings.js';
 import * as StorageUI from './features/storage/ui.js';
 
 // =====================================================================
@@ -57,7 +57,7 @@ window.Localization = Localization;
 window.Notifications = Notifications;
 window.EventBus = EventBus;
 window.Store = Store;
-window.GitHubIntegration = GitHubIntegration;
+window.SupabaseStorage = SupabaseStorage;
 window.AuthClient = AuthClient;
 window.StorageManager = StorageManager;
 window.DocumentStore = DocumentStore;
@@ -87,8 +87,8 @@ function initPanelToggles() {
 }
 
 /**
- * Toggles the top-of-page banner that prompts the user to connect the
- * GitHub App. Returns the connection state for callers that want to gate
+ * Toggles the top-of-page banner that prompts the user to sign in with
+ * Supabase. Returns the connection state for callers that want to gate
  * further initialization.
  */
 function applyAuthGate() {
@@ -109,9 +109,10 @@ function init() {
     // Apply translations to the DOM
     Localization.apply();
 
-    // Probe the Worker's session on every page load so the UI reflects
-    // the current connection state even after a hard refresh.
-    AuthClient.fetchSession()
+    // Initialize Supabase Auth on every page load so the UI reflects the
+    // current connection state even after a hard refresh or magic-link return.
+    AuthClient.initAuth()
+        .then(() => AuthClient.fetchSession())
         .catch((e) => console.warn('Initial session probe failed', e))
         .finally(() => {
             applyAuthGate();
@@ -122,7 +123,7 @@ function init() {
     });
 
     // Initialize feature modules
-    GitHubSettings.init();
+    SupabaseSettings.init();
     StorageUI.init();
     DocumentViewer.init();
     LibraryView.init();

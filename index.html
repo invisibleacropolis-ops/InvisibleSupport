@@ -1740,61 +1740,56 @@
             </form>
           </article>
 
-          <article class="u-card" aria-labelledby="repo-storage">
+          <article class="u-card" aria-labelledby="supabase-storage">
             <div class="u-card__header">
               <div class="u-card__header-row">
-                <h2 class="u-card__title" id="repo-storage">Repository storage</h2>
+                <h2 class="u-card__title" id="supabase-storage">Supabase storage</h2>
                 <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse settings panel">Collapse</button>
               </div>
               <p class="u-card__subtitle">
-                Configure GitHub integration so uploads persist to this repository.
+                Sign in with Supabase so uploads persist to private durable storage.
               </p>
             </div>
 
-            <form class="stack stack--lg" data-github-settings novalidate>
+            <form class="stack stack--lg" data-supabase-settings novalidate>
               <div class="form-grid form-grid--split">
-                <label class="stack" for="github-owner">
-                  <span class="u-card__subtitle" data-i18n-key="labels.githubOwner"></span>
-                  <input class="u-input" type="text" id="github-owner" name="github-owner" autocomplete="off" data-github-owner />
-                </label>
-                <label class="stack" for="github-repo">
-                  <span class="u-card__subtitle" data-i18n-key="labels.githubRepo"></span>
-                  <input class="u-input" type="text" id="github-repo" name="github-repo" autocomplete="off" data-github-repo />
-                </label>
+                <div class="stack">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseProject"></span>
+                  <span class="u-copy__value" data-supabase-project-value>—</span>
+                </div>
+                <div class="stack">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseBucket"></span>
+                  <span class="u-copy__value" data-supabase-bucket-value>—</span>
+                </div>
               </div>
 
               <div class="form-grid form-grid--split">
-                <label class="stack" for="github-branch">
-                  <span class="u-card__subtitle" data-i18n-key="labels.githubBranch"></span>
-                  <input class="u-input" type="text" id="github-branch" name="github-branch" autocomplete="off" placeholder="main" data-github-branch />
+                <label class="stack" for="supabase-email">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseEmail"></span>
+                  <input class="u-input" type="email" id="supabase-email" name="supabase-email" autocomplete="email" placeholder="you@example.com" data-supabase-email />
                 </label>
-                <label class="stack" for="github-limit">
-                  <span class="u-card__subtitle" data-i18n-key="labels.githubStorageLimit"></span>
-                  <input class="u-input" type="number" min="1" step="1" id="github-limit" name="github-limit" data-github-limit />
+                <label class="stack" for="supabase-limit">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseStorageLimit"></span>
+                  <input class="u-input" type="number" min="1" step="1" id="supabase-limit" name="supabase-limit" data-supabase-limit />
                 </label>
               </div>
 
-              <label class="stack" for="github-worker-url">
-                <span class="u-card__subtitle" data-i18n-key="labels.githubWorkerUrl"></span>
-                <input class="u-input" type="url" id="github-worker-url" name="github-worker-url" autocomplete="off" placeholder="https://invisible-support-auth.<sub>.workers.dev" data-github-worker-url />
-              </label>
-
-              <section class="stack" data-github-connection>
-                <p class="u-card__subtitle" data-i18n-key="labels.githubConnectionStatus"></p>
-                <p class="u-copy" data-github-connection-summary>
-                  <span class="u-copy__value" data-github-connection-value>—</span>
+              <section class="stack" data-supabase-connection>
+                <p class="u-card__subtitle" data-i18n-key="labels.supabaseConnectionStatus"></p>
+                <p class="u-copy" data-supabase-connection-summary>
+                  <span class="u-copy__value" data-supabase-connection-value>—</span>
                 </p>
                 <div class="upload-card__actions" style="justify-content: flex-start;">
-                  <button class="u-btn u-btn--primary" type="button" data-github-connect data-i18n-key="labels.githubConnect"></button>
-                  <button class="u-btn u-btn--ghost" type="button" data-github-disconnect data-i18n-key="labels.githubDisconnect" hidden></button>
+                  <button class="u-btn u-btn--primary" type="button" data-supabase-signin data-i18n-key="labels.supabaseSendMagicLink"></button>
+                  <button class="u-btn u-btn--ghost" type="button" data-supabase-signout data-i18n-key="labels.supabaseSignOut" hidden></button>
                 </div>
               </section>
 
-              <p class="upload-feedback" data-github-feedback hidden></p>
+              <p class="upload-feedback" data-supabase-feedback hidden></p>
 
               <div class="upload-card__actions" style="justify-content: flex-start;">
                 <button class="u-btn u-btn--primary" type="submit" data-i18n-key="common.save"></button>
-                <button class="u-btn u-btn--ghost" type="button" data-github-test>Test connection</button>
+                <button class="u-btn u-btn--ghost" type="button" data-supabase-test data-i18n-key="labels.supabaseTestConnection"></button>
               </div>
             </form>
           </article>

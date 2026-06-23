@@ -104,7 +104,7 @@ async function processFiles(fileList) {
             try {
                 const rec = await DocumentStore.createDocument(file, { title: baseTitle ? (files.length > 1 ? `${baseTitle} (${i + 1})` : baseTitle) : undefined, description: desc }, p => updateProgress(((i + p) / files.length) * 100, t('upload.progress', { name: file.name, percent: Math.round(p * 100) })));
                 lastDoc = rec;
-            } catch (err) { console.error('Upload failed', err); const msg = err?.code === 'config' ? t('upload.errorMissingConfiguration') : err?.code === 'quota' ? t('notifications.storageQuotaExceeded') : err?.code === 'persist' ? t('errors.persistFailure') : t('upload.errorUploadFailed', { name: file?.name ?? t('common.unknownFile') }); showFeedback(msg, 'error'); Notifications.toast(msg, 'error'); hideProgress(); return; }
+            } catch (err) { console.error('Upload failed', err); const msg = err?.code === 'config' || err?.code === 'auth' ? t('upload.errorMissingConfiguration') : err?.code === 'quota' ? t('notifications.storageQuotaExceeded') : err?.code === 'persist' ? t('errors.persistFailure') : t('upload.errorUploadFailed', { name: file?.name ?? t('common.unknownFile') }); showFeedback(msg, 'error'); Notifications.toast(msg, 'error'); hideProgress(); return; }
         }
         const summary = files.length > 1 ? t('upload.summaryDocumentsMultiple', { count: files.length }) : t('upload.summaryDocumentsSingle', { name: files[0]?.name ?? t('common.unknownFile') });
         updateProgress(100, summary); showFeedback(t('upload.complete'), 'success'); Notifications.toast(t('notifications.documentUploadSuccess'), 'success');
