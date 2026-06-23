@@ -1,6 +1,6 @@
 /**
  * @fileoverview Image store for CRUD operations on images.
- * Manages image persistence via GitHub, EXIF/dimension validation, and subscriptions.
+ * Manages image persistence via Supabase, dimension validation, and subscriptions.
  */
 
 import { t } from '../../shared/localization/index.js';
@@ -172,7 +172,7 @@ class ImageStore extends BaseResourceStore {
         const base64 = Utils.dataUrlToBase64(dataUrl);
         const imageRecord = this.normalizeImage(file, extras, dimensions, exif);
 
-        const uploadInfo = await this.uploadToGitHub(
+        const uploadInfo = await this.uploadToSupabase(
             imageRecord.id,
             imageRecord.name,
             base64

@@ -4,7 +4,7 @@
  */
 
 import { t } from '../localization/index.js';
-import * as GitHubIntegration from './github.js';
+import * as SupabaseStorage from './supabase-storage.js';
 
 // Warning threshold (80% of quota)
 const WARNING_THRESHOLD = 0.8;
@@ -14,10 +14,10 @@ const trackedSizes = new Map();
 const manifestMeta = new Map();
 const listeners = new Set();
 
-// Map storage keys to GitHub paths
+// Map storage keys to asset kinds
 const KEY_PATH_MAP = new Map([
-    ['invisibleSupport.documents', 'storage/documents.json'],
-    ['invisibleSupport.images', 'storage/images.json'],
+    ['invisibleSupport.documents', 'document'],
+    ['invisibleSupport.images', 'image'],
 ]);
 
 /**
@@ -31,7 +31,7 @@ function calculateSize(value) {
 /**
  * Resolves a storage key to its manifest path
  */
-function resolvePath(key) {
+function resolveKind(key) {
     return KEY_PATH_MAP.get(key) ?? null;
 }
 
@@ -50,7 +50,7 @@ function buildSnapshot(overrideKey, overrideSize) {
     if (overrideKey && !trackedSizes.has(overrideKey) && typeof overrideSize === 'number') {
         used += overrideSize;
     }
-    const limit = GitHubIntegration.getStorageLimitBytes();
+    const limit = SupabaseStorage.getStorageLimitBytes();
     const ratio = limit > 0 ? used / limit : 0;
     return {
         used,
@@ -75,12 +75,12 @@ function notify(snapshot = buildSnapshot()) {
 }
 
 /**
- * Persists data to GitHub and updates tracking
+ * Persists asset metadata to Supabase and updates tracking
  */
 export async function persist(key, value) {
-    const path = resolvePath(key);
-    if (!path) {
-        console.warn(`No manifest path registered for key: ${key}`);
+    const kind = resolveKind(key);
+    if (!kind) {
+        console.warn(`No asset kind registered for key: ${key}`);
         return value;
     }
     const size = calculateSize(value);
@@ -92,14 +92,13 @@ export async function persist(key, value) {
         throw error;
     }
     try {
-        const meta = manifestMeta.get(key);
-        const result = await GitHubIntegration.writeManifest(path, value, meta?.sha);
+        const result = await SupabaseStorage.writeItems(kind, value);
         manifestMeta.set(key, { sha: result.sha });
         trackedSizes.set(key, size);
         notify();
         return value;
     } catch (error) {
-        if (error?.code === 'config') {
+        if (error?.code === 'config' || error?.code === 'auth') {
             throw error;
         }
         const persistError = new Error(t('errors.persistFailure'));
@@ -110,20 +109,20 @@ export async function persist(key, value) {
 }
 
 /**
- * Reads data from GitHub and updates tracking
+ * Reads asset metadata from Supabase and updates tracking
  */
 export async function read(key) {
-    const path = resolvePath(key);
-    if (!path) return null;
+    const kind = resolveKind(key);
+    if (!kind) return null;
     try {
-        const result = await GitHubIntegration.readManifest(path);
-        manifestMeta.set(key, { sha: result.sha });
-        const size = calculateSize(result.items);
+        const items = await SupabaseStorage.readItems(kind);
+        manifestMeta.set(key, { sha: null });
+        const size = calculateSize(items);
         trackedSizes.set(key, size);
         notify();
-        return result.items;
+        return items;
     } catch (error) {
-        if (error?.code === 'config') {
+        if (error?.code === 'config' || error?.code === 'auth') {
             trackedSizes.set(key, 0);
             notify();
             throw error;
@@ -139,13 +138,12 @@ export async function read(key) {
  * Clears a specific storage key
  */
 export async function clear(key) {
-    const path = resolvePath(key);
-    if (!path) return;
-    const meta = manifestMeta.get(key);
+    const kind = resolveKind(key);
+    if (!kind) return;
     try {
-        await GitHubIntegration.deleteManifest(path, meta?.sha ?? null);
+        await SupabaseStorage.clearItems(kind);
     } catch (error) {
-        console.warn('Failed to remove manifest', error);
+        console.warn('Failed to clear Supabase assets', error);
     }
     manifestMeta.delete(key);
     trackedSizes.set(key, 0);
@@ -202,8 +200,8 @@ export function canStore(additionalBytes) {
     return snapshot.used + additionalBytes <= snapshot.limit;
 }
 
-// Subscribe to GitHub config changes to update notifications
-GitHubIntegration.subscribe(() => {
+// Subscribe to Supabase config changes to update notifications
+SupabaseStorage.subscribe(() => {
     notify();
 });
 

@@ -1,209 +1,162 @@
 /**
- * @fileoverview Auth client for the Cloudflare Worker auth proxy.
- *
- * The browser does not hold a long-lived GitHub credential. Instead, the
- * Worker mints short-lived installation tokens on demand. This module:
- *   1. Persists the Worker URL locally (set in the Settings panel).
- *   2. Asks the Worker for a fresh installation token before every REST call.
- *   3. Surfaces connection state via subscribers so the UI can react.
- *
- * Classic Personal Access Tokens (PATs) are no longer accepted by this app.
+ * @fileoverview Supabase Auth client for email magic-link sign-in.
  */
 
-const WORKER_URL_KEY = 'invisibleSupport.workerUrl';
-const SESSION_KEY = 'invisibleSupport.session';
+import { getRedirectUrl, getSupabaseClient, isSupabaseConfigured } from './supabase-client.js';
 
-const DEFAULT_WORKER_URL = '';
+const LAST_EMAIL_KEY = 'invisibleSupport.supabaseEmail';
 
 const listeners = new Set();
-let state = loadState();
+let state = {
+    configured: isSupabaseConfigured(),
+    user: null,
+    email: '',
+    lastEmail: loadLastEmail(),
+};
+let initialized = false;
 
-function loadState() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    if (stored && typeof stored === 'object') {
-      return {
-        workerUrl: typeof stored.workerUrl === 'string' ? stored.workerUrl : DEFAULT_WORKER_URL,
-        account: typeof stored.account === 'string' ? stored.account : '',
-        repo: typeof stored.repo === 'string' ? stored.repo : '',
-        installationId: typeof stored.installationId === 'string' ? stored.installationId : '',
-        installedAt: typeof stored.installedAt === 'string' ? stored.installedAt : '',
-      };
+function loadLastEmail() {
+    try {
+        return localStorage.getItem(LAST_EMAIL_KEY) || '';
+    } catch {
+        return '';
     }
-  } catch (e) {
-    console.warn('Failed to read auth state', e);
-  }
-  return {
-    workerUrl: localStorage.getItem(WORKER_URL_KEY) || DEFAULT_WORKER_URL,
-    account: '',
-    repo: '',
-    installationId: '',
-    installedAt: '',
-  };
 }
 
-function persist() {
-  try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn('Failed to persist auth state', e);
-  }
+function persistLastEmail(email) {
+    state = { ...state, lastEmail: email || '' };
+    try {
+        if (email) localStorage.setItem(LAST_EMAIL_KEY, email);
+        else localStorage.removeItem(LAST_EMAIL_KEY);
+    } catch (e) {
+        console.warn('Failed to persist Supabase email', e);
+    }
 }
 
 function notify() {
-  const snapshot = getState();
-  listeners.forEach((listener) => {
-    try {
-      listener(snapshot);
-    } catch (e) {
-      console.warn('Auth state listener error', e);
-    }
-  });
+    const snapshot = getState();
+    listeners.forEach((listener) => {
+        try {
+            listener(snapshot);
+        } catch (e) {
+            console.warn('Auth state listener error', e);
+        }
+    });
+}
+
+function applyUser(user) {
+    state = {
+        ...state,
+        configured: isSupabaseConfigured(),
+        user: user || null,
+        email: user?.email || '',
+    };
+    notify();
 }
 
 export function getState() {
-  return { ...state };
-}
-
-export function getWorkerUrl() {
-  return state.workerUrl || '';
-}
-
-export function setWorkerUrl(url) {
-  state = { ...state, workerUrl: String(url || '').trim() };
-  persist();
-  notify();
+    return {
+        configured: state.configured,
+        user: state.user,
+        email: state.email,
+        lastEmail: state.lastEmail,
+    };
 }
 
 export function isConnected() {
-  return Boolean(state.workerUrl && state.account && state.repo);
+    return Boolean(state.user?.id);
+}
+
+export function getUserId() {
+    return state.user?.id || '';
 }
 
 export function subscribe(listener) {
-  if (typeof listener !== 'function') return () => {};
-  listeners.add(listener);
-  listener(getState());
-  return () => listeners.delete(listener);
+    if (typeof listener !== 'function') return () => {};
+    listeners.add(listener);
+    listener(getState());
+    return () => listeners.delete(listener);
 }
 
-export function onUnauthorized() {
-  state = { ...state, account: '', repo: '', installationId: '' };
-  persist();
-  notify();
-}
+export async function initAuth() {
+    if (initialized) return getState();
+    initialized = true;
 
-/**
- * Fetches a fresh installation access token from the Worker.
- * Throws an `AuthError` if the Worker URL is missing or the session is invalid.
- * @returns {Promise<string>}
- */
-export async function fetchInstallationToken() {
-  const url = state.workerUrl;
-  if (!url) {
-    throw new AuthError('worker_url_missing', 'Worker URL is not configured.');
-  }
-  let response;
-  try {
-    response = await fetch(trimUrl(url) + '/token', {
-      method: 'GET',
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
+    if (!isSupabaseConfigured()) {
+        state = { ...state, configured: false };
+        notify();
+        return getState();
+    }
+
+    const client = await getSupabaseClient();
+    const { data } = await client.auth.getSession();
+    applyUser(data?.session?.user || null);
+
+    client.auth.onAuthStateChange((_event, session) => {
+        applyUser(session?.user || null);
     });
-  } catch (e) {
-    throw new AuthError('network', `Could not reach the auth worker: ${e.message}`);
-  }
-  if (response.status === 401) {
-    onUnauthorized();
-    throw new AuthError('unauthorized', 'No active session. Connect GitHub in Settings.');
-  }
-  if (!response.ok) {
-    throw new AuthError('request_failed', `Token request failed (${response.status}).`);
-  }
-  const body = await response.json();
-  if (!body || typeof body.token !== 'string') {
-    throw new AuthError('invalid_payload', 'Worker returned an unexpected token payload.');
-  }
-  return body.token;
+
+    return getState();
 }
 
-/**
- * Fetches session metadata (account, repo) from the Worker.
- * @returns {Promise<{ account: string, repo: string, installationId: string, installedAt: string } | null>}
- */
 export async function fetchSession() {
-  const url = state.workerUrl;
-  if (!url) return null;
-  let response;
-  try {
-    response = await fetch(trimUrl(url) + '/auth/me', {
-      method: 'GET',
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
+    if (!isSupabaseConfigured()) {
+        state = { ...state, configured: false, user: null, email: '' };
+        notify();
+        return null;
+    }
+
+    const client = await getSupabaseClient();
+    const { data, error } = await client.auth.getUser();
+    if (error) {
+        applyUser(null);
+        return null;
+    }
+    applyUser(data?.user || null);
+    return getState();
+}
+
+export async function sendMagicLink(email) {
+    const normalized = String(email || '').trim().toLowerCase();
+    if (!normalized) {
+        const error = new AuthError('email_required', 'Enter an email address first.');
+        throw error;
+    }
+    if (!isSupabaseConfigured()) {
+        throw new AuthError('config', 'Supabase is not configured.');
+    }
+
+    const client = await getSupabaseClient();
+    const { error } = await client.auth.signInWithOtp({
+        email: normalized,
+        options: {
+            emailRedirectTo: getRedirectUrl(),
+        },
     });
-  } catch (e) {
-    console.warn('Session probe failed', e);
-    return null;
-  }
-  if (response.status === 401) {
-    state = { ...state, account: '', repo: '', installationId: '' };
-    persist();
+    if (error) {
+        throw new AuthError('request_failed', error.message || 'Unable to send magic link.');
+    }
+    persistLastEmail(normalized);
     notify();
-    return null;
-  }
-  if (!response.ok) return null;
-  const body = await response.json();
-  state = {
-    ...state,
-    account: body.account || '',
-    repo: body.repo || '',
-    installationId: body.installationId || '',
-    installedAt: body.installedAt || '',
-  };
-  persist();
-  notify();
-  return getState();
 }
 
-/**
- * Begins the install flow by redirecting the browser to the Worker, which
- * in turn redirects to GitHub's App install page.
- */
-export function beginInstall() {
-  const url = state.workerUrl;
-  if (!url) {
-    throw new AuthError('worker_url_missing', 'Worker URL is not configured.');
-  }
-  window.location.assign(trimUrl(url) + '/auth/install');
-}
-
-/**
- * Sends a POST to /auth/signout to invalidate the session.
- */
 export async function signOut() {
-  const url = state.workerUrl;
-  if (!url) return;
-  try {
-    await fetch(trimUrl(url) + '/auth/signout', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    });
-  } catch (e) {
-    console.warn('Sign-out request failed', e);
-  }
-  state = { ...state, account: '', repo: '', installationId: '', installedAt: '' };
-  persist();
-  notify();
-}
-
-function trimUrl(url) {
-  return String(url).replace(/\/+$/, '');
+    if (!isSupabaseConfigured()) {
+        applyUser(null);
+        return;
+    }
+    const client = await getSupabaseClient();
+    const { error } = await client.auth.signOut();
+    if (error) {
+        throw new AuthError('request_failed', error.message || 'Unable to sign out.');
+    }
+    applyUser(null);
 }
 
 export class AuthError extends Error {
-  constructor(code, message) {
-    super(message);
-    this.name = 'AuthError';
-    this.code = code;
-  }
+    constructor(code, message) {
+        super(message);
+        this.name = 'AuthError';
+        this.code = code;
+    }
 }

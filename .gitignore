@@ -1,13 +1,10 @@
 # Dependencies
 node_modules/
 
-# Wrangler local dev vars (mirrors .dev.vars.example in repo)
-worker/.dev.vars
-worker/.dev.vars.*.local
-
 # Testing
 playwright-report/
 test-results/
+.playwright-mcp/
 
 # Build & Runtime
 dist/

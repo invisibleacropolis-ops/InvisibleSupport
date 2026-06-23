@@ -1,18 +1,18 @@
 /**
  * @fileoverview Base class for resource stores.
- * Provides common functionality for state management, persistence, and GitHub integration.
+ * Provides common functionality for state management, persistence, and Supabase integration.
  */
 
 import { t } from '../localization/index.js';
 import * as Utils from '../utils.js';
 import * as Notifications from '../ui/notifications.js';
-import * as GitHubIntegration from './github.js';
+import * as SupabaseStorage from './supabase-storage.js';
 import * as StorageManager from './storage-manager.js';
 
 export class BaseResourceStore {
     /**
      * @param {string} storageKey - unique key for StorageManager
-     * @param {string} baseUploadPath - base path for GitHub uploads (e.g. 'uploads/images')
+     * @param {string} baseUploadPath - legacy upload path prefix used to derive Supabase object paths
      * @param {Function} [normalizeFn] - function to normalize items before adding
      */
     constructor(storageKey, baseUploadPath, normalizeFn = null) {
@@ -22,8 +22,8 @@ export class BaseResourceStore {
         this.items = [];
         this.listeners = new Set();
 
-        // Auto-subscribe to GitHub config changes
-        GitHubIntegration.subscribe(() => {
+        // Auto-subscribe to Supabase config changes
+        SupabaseStorage.subscribe(() => {
             this.load();
         });
     }
@@ -44,7 +44,7 @@ export class BaseResourceStore {
      */
     hydrate(rawItems) {
         return rawItems.map((item) => {
-            const downloadUrl = item.downloadUrl || (item.repoPath ? GitHubIntegration.buildRawUrl(item.repoPath) : '');
+            const downloadUrl = item.downloadUrl || '';
             return { ...item, downloadUrl, blobUrl: downloadUrl };
         });
     }
@@ -92,7 +92,7 @@ export class BaseResourceStore {
                 this.items = [];
             }
         } catch (error) {
-            if (error?.code !== 'config') {
+            if (error?.code !== 'config' && error?.code !== 'auth') {
                 console.error(`Failed to load stored items for ${this.storageKey}`, error);
             }
             this.items = [];
@@ -102,30 +102,12 @@ export class BaseResourceStore {
     }
 
     /**
-     * Reconciles stored items against what actually exists in the GitHub repo.
-     * Removes manifest entries whose upload folders no longer exist.
-     * Runs in the background after load — non-blocking.
+     * Reconciliation is unnecessary for Supabase. Object and metadata deletion
+     * happen through one storage adapter, so there is no repository manifest to
+     * compare against.
      */
     async reconcile() {
-        if (!GitHubIntegration.isConfigured() || this.items.length === 0) return;
-        try {
-            const dirContents = await GitHubIntegration.getContents(this.baseUploadPath);
-            if (!Array.isArray(dirContents)) return;
-            const existingFolders = new Set(dirContents.map((entry) => entry.name));
-            const depthOffset = this.baseUploadPath.split('/').filter(Boolean).length;
-            const validItems = this.items.filter((item) => {
-                if (!item.repoPath) return true;
-                const idSegment = item.repoPath.split('/').filter(Boolean)[depthOffset];
-                return !idSegment || existingFolders.has(idSegment);
-            });
-            if (validItems.length !== this.items.length) {
-                this.items = validItems;
-                await this.persist(validItems);
-                this.notify();
-            }
-        } catch (e) {
-            console.warn(`Reconciliation skipped for ${this.storageKey}:`, e?.message ?? e);
-        }
+        return Promise.resolve();
     }
 
     /**
@@ -183,7 +165,7 @@ export class BaseResourceStore {
     }
 
     /**
-     * Removes an item by ID (and deletes from GitHub if repoPath exists)
+     * Removes an item by ID and deletes the Supabase object when present.
      * @param {string} id 
      */
     async remove(id) {
@@ -192,9 +174,8 @@ export class BaseResourceStore {
 
         try {
             if (item.repoPath) {
-                await GitHubIntegration.deleteFile(
+                await SupabaseStorage.deleteFile(
                     item.repoPath,
-                    item.sha,
                     `Remove ${item.name || 'item'}`
                 );
             }
@@ -213,15 +194,14 @@ export class BaseResourceStore {
     }
 
     /**
-     * Clears all items (and deletes from GitHub)
+     * Clears all items and deletes Supabase objects.
      */
     async clearAll() {
         await Promise.all(
             this.items.map((item) => {
                 if (!item.repoPath) return Promise.resolve();
-                return GitHubIntegration.deleteFile(
+                return SupabaseStorage.deleteFile(
                     item.repoPath,
-                    item.sha,
                     `Remove ${item.name || 'item'}`
                 ).catch((error) => {
                     console.warn(`Failed to delete remote item ${item.id}`, error);
@@ -258,15 +238,15 @@ export class BaseResourceStore {
     }
 
     /**
-     * Uploads a file to GitHub and adds it to the store
+     * Uploads a file to Supabase and adds it to the store
      * @param {string} id 
      * @param {string} name 
      * @param {string} base64Content 
-     * @returns {Promise<Object>} GitHub upload response partial { path, sha, downloadUrl }
+     * @returns {Promise<Object>} Supabase upload response partial { path, sha, downloadUrl }
      */
-    async uploadToGitHub(id, name, base64Content) {
-        if (!GitHubIntegration.isConfigured()) {
-            const error = new Error(t('errors.githubConfigMissing'));
+    async uploadToSupabase(id, name, base64Content) {
+        if (!SupabaseStorage.isConfigured()) {
+            const error = new Error(t('errors.supabaseConfigMissing'));
             error.code = 'config';
             throw error;
         }
@@ -274,7 +254,7 @@ export class BaseResourceStore {
         const repoPath = `${this.baseUploadPath}/${id}/${encodeURIComponent(name)}`;
 
         try {
-            const upload = await GitHubIntegration.uploadFile(
+            const upload = await SupabaseStorage.uploadFile(
                 repoPath,
                 base64Content,
                 `Add ${name}`
@@ -286,7 +266,7 @@ export class BaseResourceStore {
             };
         } catch (error) {
             const failure =
-                error?.code === 'config' || error?.code === 'quota' || error?.code === 'persist'
+                error?.code === 'config' || error?.code === 'auth' || error?.code === 'quota' || error?.code === 'persist'
                     ? error
                     : new Error(t('errors.persistFailure'));
 

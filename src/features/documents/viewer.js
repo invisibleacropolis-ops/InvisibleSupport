@@ -4,7 +4,7 @@
  */
 
 import * as Utils from '../../shared/utils.js';
-import * as GitHubIntegration from '../../shared/services/github.js';
+import * as SupabaseStorage from '../../shared/services/supabase-storage.js';
 import * as DocumentStore from './store.js';
 
 // Configuration
@@ -153,11 +153,11 @@ async function fetchDocumentResource(doc) {
         } catch (e) { console.warn('Fetch failed', e); }
     }
 
-    if (doc.repoPath && GitHubIntegration?.downloadFile) {
+    if (doc.repoPath && SupabaseStorage?.downloadFile) {
         try {
-            const { arrayBuffer, contentType } = await GitHubIntegration.downloadFile(doc.repoPath);
+            const { arrayBuffer, contentType } = await SupabaseStorage.downloadFile(doc.repoPath);
             return cacheFromBlob(new Blob([arrayBuffer], { type: contentType || fallbackType }));
-        } catch (e) { console.warn('GitHub download failed', e); }
+        } catch (e) { console.warn('Supabase download failed', e); }
     }
     return null;
 }

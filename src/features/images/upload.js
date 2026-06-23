@@ -46,7 +46,8 @@ function updateProgress(percent, label) {
 function describeError(file, error) {
     const fileName = file?.name ?? t('common.unknownFile');
     switch (error?.code) {
-        case 'config': return t('upload.errorMissingConfiguration');
+        case 'config':
+        case 'auth': return t('upload.errorMissingConfiguration');
         case 'type': return t('upload.errorUnsupportedImage', { name: fileName });
         case 'max-dimensions': return t('upload.errorImageTooLarge', { name: fileName, limit: MAX_IMAGE_DIMENSION });
         case 'dimensions': return t('upload.errorImageDimensions', { name: fileName });
