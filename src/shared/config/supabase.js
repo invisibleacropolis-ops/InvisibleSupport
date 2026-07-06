@@ -6,8 +6,8 @@
  */
 
 export const SUPABASE_CONFIG = {
-    projectUrl: 'https://YOUR-PROJECT-REF.supabase.co',
-    publishableKey: 'YOUR-SUPABASE-PUBLISHABLE-KEY',
+    projectUrl: 'https://guoyqsfvqllyhlsrknml.supabase.co',
+    publishableKey: 'sb_publishable_ed-VTx2u60tI9SnQeVbGRQ_IEHA36FO',
     bucket: 'invisible-support-assets',
     assetsTable: 'assets',
     storageLimitMb: 200,
