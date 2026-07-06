@@ -2,7 +2,7 @@
  * @fileoverview Lazy Supabase browser client.
  */
 
-import { SUPABASE_CONFIG, isConfigured as hasSupabaseConfig } from '../config/supabase.js';
+import { SUPABASE_CONFIG, isConfigured as hasSupabaseConfig } from '../config/supabase.js?v=20260706';
 
 const SUPABASE_JS_URL = 'https://esm.sh/@supabase/supabase-js@2';
 
