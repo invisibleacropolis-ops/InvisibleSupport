@@ -55,7 +55,8 @@ on public.assets for delete
 to authenticated
 using (owner_id = auth.uid());
 
-alter table storage.objects enable row level security;
+-- Supabase manages RLS on storage.objects. Do not attempt to alter that
+-- managed table directly; recent projects reject it with "must be owner".
 
 drop policy if exists "invisible_support_objects_select_own" on storage.objects;
 drop policy if exists "invisible_support_objects_insert_own" on storage.objects;
