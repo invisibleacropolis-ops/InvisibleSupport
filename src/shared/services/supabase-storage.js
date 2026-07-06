@@ -3,8 +3,8 @@
  */
 
 import { t } from '../localization/index.js';
-import { SUPABASE_CONFIG, isConfigured as hasSupabaseConfig } from '../config/supabase.js?v=20260706';
-import { getSupabaseClient } from './supabase-client.js';
+import { SUPABASE_CONFIG, isConfigured as hasSupabaseConfig } from '../config/supabase.js?v=20260706-2';
+import { getSupabaseClient } from './supabase-client.js?v=20260706-2';
 
 const CONFIG_KEY = 'invisibleSupport.supabaseConfig';
 const configListeners = new Set();

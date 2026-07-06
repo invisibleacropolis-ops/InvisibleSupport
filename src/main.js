@@ -18,9 +18,9 @@ import * as Store from './shared/infrastructure/store.js';
 // =====================================================================
 // Phase V: Integration Modules
 // =====================================================================
-import * as SupabaseStorage from './shared/services/supabase-storage.js';
-import * as AuthClient from './shared/services/auth-client.js';
-import * as StorageManager from './shared/services/storage-manager.js';
+import * as SupabaseStorage from './shared/services/supabase-storage.js?v=20260706-2';
+import * as AuthClient from './shared/services/auth-client.js?v=20260706-2';
+import * as StorageManager from './shared/services/storage-manager.js?v=20260706-2';
 
 // =====================================================================
 // Phase VI: Feature Slices - Documents
@@ -41,7 +41,7 @@ import * as ImageUpload from './features/images/upload.js';
 // =====================================================================
 // Phase VI: Feature Slices - Settings & Storage
 // =====================================================================
-import * as SupabaseSettings from './features/settings/supabase-settings.js';
+import * as SupabaseSettings from './features/settings/supabase-settings.js?v=20260706-2';
 import * as StorageUI from './features/storage/ui.js';
 
 // =====================================================================

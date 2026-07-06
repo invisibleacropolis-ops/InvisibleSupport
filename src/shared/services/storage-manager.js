@@ -4,7 +4,7 @@
  */
 
 import { t } from '../localization/index.js';
-import * as SupabaseStorage from './supabase-storage.js';
+import * as SupabaseStorage from './supabase-storage.js?v=20260706-2';
 
 // Warning threshold (80% of quota)
 const WARNING_THRESHOLD = 0.8;

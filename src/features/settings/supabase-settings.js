@@ -4,8 +4,8 @@
 
 import { t } from '../../shared/localization/index.js';
 import * as Notifications from '../../shared/ui/notifications.js';
-import * as SupabaseStorage from '../../shared/services/supabase-storage.js';
-import * as AuthClient from '../../shared/services/auth-client.js';
+import * as SupabaseStorage from '../../shared/services/supabase-storage.js?v=20260706-2';
+import * as AuthClient from '../../shared/services/auth-client.js?v=20260706-2';
 
 let initialized = false;
 

@@ -2,7 +2,7 @@
  * @fileoverview Supabase Auth client for email magic-link sign-in.
  */
 
-import { getRedirectUrl, getSupabaseClient, isSupabaseConfigured } from './supabase-client.js';
+import { getRedirectUrl, getSupabaseClient, isSupabaseConfigured } from './supabase-client.js?v=20260706-2';
 
 const LAST_EMAIL_KEY = 'invisibleSupport.supabaseEmail';
 
