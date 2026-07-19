@@ -79,9 +79,6 @@ const locales = {
             supabaseTestConnection: 'Test connection',
             supabaseSignedOut: '— signed out —',
             supabaseNotConfigured: '— Supabase not configured —',
-            authBannerTitle: 'Supabase sign-in required',
-            authBannerBody: 'Uploads and library sync are disabled until you sign in with Supabase.',
-            authBannerCta: 'Open settings',
         },
         upload: {
             waitingImages: 'Waiting for images…',

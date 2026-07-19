@@ -87,20 +87,6 @@ function initPanelToggles() {
 }
 
 /**
- * Toggles the top-of-page banner that prompts the user to sign in with
- * Supabase. Returns the connection state for callers that want to gate
- * further initialization.
- */
-function applyAuthGate() {
-    const banner = document.querySelector('[data-auth-banner]');
-    const connected = AuthClient.isConnected();
-    if (banner) {
-        banner.hidden = connected;
-    }
-    return connected;
-}
-
-/**
  * Initialize the application once the DOM is ready
  */
 function init() {
@@ -113,14 +99,7 @@ function init() {
     // current connection state even after a hard refresh or magic-link return.
     AuthClient.initAuth()
         .then(() => AuthClient.fetchSession())
-        .catch((e) => console.warn('Initial session probe failed', e))
-        .finally(() => {
-            applyAuthGate();
-        });
-
-    AuthClient.subscribe(() => {
-        applyAuthGate();
-    });
+        .catch((e) => console.warn('Initial session probe failed', e));
 
     // Initialize feature modules
     SupabaseSettings.init();

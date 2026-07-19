@@ -2,11 +2,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Supabase auth UI', () => {
-  test('shows the signed-out banner and Supabase settings controls', async ({ page }) => {
+  test('shows the Supabase settings controls when signed out', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.locator('[data-auth-banner]')).toBeVisible();
+    // The sign-in banner was removed; the settings panel is the sole surface
+    // for connection state on this single-user site.
+    await expect(page.locator('[data-auth-banner]')).toHaveCount(0);
     await expect(page.locator('[data-supabase-settings]')).toBeVisible();
     await expect(page.locator('[data-supabase-email]')).toBeVisible();
     await expect(page.locator('[data-supabase-signin]')).toBeVisible();

@@ -1552,41 +1552,6 @@
         gap: var(--space-sm);
       }
 
-      .u-banner {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        display: flex;
-        align-items: center;
-        gap: var(--space-md);
-        padding: var(--space-sm) var(--space-md);
-        background: color-mix(in srgb, var(--color-danger) 15%, var(--color-surface) 85%);
-        border-bottom: 1px solid color-mix(in srgb, var(--color-danger) 40%, transparent 60%);
-        color: var(--color-text);
-      }
-
-      /* The class selector above outranks the UA `[hidden] { display: none }`
-         rule, so the banner needs its own hidden case to stay dismissable. */
-      .u-banner[hidden] {
-        display: none;
-      }
-
-      .u-banner__content {
-        flex: 1 1 auto;
-        display: grid;
-        gap: var(--space-2xs);
-      }
-
-      .u-banner__content strong {
-        font-size: 0.95rem;
-      }
-
-      .u-banner__content p {
-        margin: 0;
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-      }
-
       footer {
         text-align: center;
         padding-bottom: var(--space-xl);
@@ -2182,14 +2147,6 @@
     </main>
 
     <div class="toast-stack" role="status" aria-live="polite" aria-atomic="false" data-toast-stack></div>
-
-    <div class="u-banner" data-auth-banner hidden role="alert">
-      <div class="u-banner__content">
-        <strong data-i18n-key="labels.authBannerTitle"></strong>
-        <p class="u-card__subtitle" data-i18n-key="labels.authBannerBody"></p>
-      </div>
-      <a class="u-btn u-btn--primary" href="#supabase-storage" data-auth-banner-cta data-i18n-key="labels.authBannerCta"></a>
-    </div>
 
     <div class="u-modal" id="clipboard-confirm" role="dialog" aria-modal="true" aria-labelledby="clipboard-title">
       <div class="u-modal__dialog">
