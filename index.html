@@ -1565,6 +1565,12 @@
         color: var(--color-text);
       }
 
+      /* The class selector above outranks the UA `[hidden] { display: none }`
+         rule, so the banner needs its own hidden case to stay dismissable. */
+      .u-banner[hidden] {
+        display: none;
+      }
+
       .u-banner__content {
         flex: 1 1 auto;
         display: grid;
@@ -2182,7 +2188,7 @@
         <strong data-i18n-key="labels.authBannerTitle"></strong>
         <p class="u-card__subtitle" data-i18n-key="labels.authBannerBody"></p>
       </div>
-      <a class="u-btn u-btn--primary" href="#repo-storage" data-auth-banner-cta data-i18n-key="labels.authBannerCta"></a>
+      <a class="u-btn u-btn--primary" href="#supabase-storage" data-auth-banner-cta data-i18n-key="labels.authBannerCta"></a>
     </div>
 
     <div class="u-modal" id="clipboard-confirm" role="dialog" aria-modal="true" aria-labelledby="clipboard-title">
