@@ -10,21 +10,24 @@
         Tokens are exposed as CSS custom properties so themes can be swapped or extended.
       */
       :root {
-        color-scheme: light dark;
-        --color-surface: #ffffff;
-        --color-surface-muted: #f5f7fa;
-        --color-elevated: #ffffffee;
-        --color-border: #d8dee6;
-        --color-text: #1c2333;
-        --color-text-muted: #546173;
-        --color-accent: #4b6bfb;
-        --color-accent-strong: #2e51f0;
-        --color-success: #3bb273;
-        --color-danger: #f25757;
-        --color-immersive: 200 56% 16%;
+        /* Dark-only terminal palette. Surfaces are near-black and separated by
+           hairline borders rather than elevation, so nothing needs a shadow. */
+        color-scheme: dark;
+        --color-surface: #0b1116;
+        --color-surface-muted: #05080a;
+        --color-elevated: #0e161c;
+        /* With shadows removed, hairlines are the only structural cue between
+           panels, so this needs real contrast against the surface (~2.8:1). */
+        --color-border: #425f72;
+        --color-text: #cfdae1;
+        --color-text-muted: #71838f;
+        --color-accent: #38b6c4;
+        --color-accent-strong: #5fd6e4;
+        --color-success: #4caf7d;
+        --color-danger: #e2575f;
 
-        --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-        --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
+        --font-sans: "JetBrains Mono", "SFMono-Regular", ui-monospace, "Cascadia Mono", Consolas, monospace;
+        --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, "Cascadia Mono", Consolas, monospace;
 
         --space-2xs: 0.25rem;
         --space-xs: 0.5rem;
@@ -34,25 +37,15 @@
         --space-xl: 2rem;
         --space-2xl: 3rem;
 
-        --radius-sm: 0.5rem;
-        --radius-md: 0.75rem;
-        --radius-lg: 1.5rem;
+        /* Square by design. Kept as tokens so the 39 call sites stay valid. */
+        --radius-sm: 0;
+        --radius-md: 0;
+        --radius-lg: 0;
 
-        --shadow-sm: 0 8px 20px rgba(28, 35, 51, 0.08);
-        --shadow-lg: 0 24px 60px rgba(28, 35, 51, 0.16);
+        --shadow-sm: none;
+        --shadow-lg: none;
 
-        --transition-base: 180ms ease;
-      }
-
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --color-surface: #101321;
-          --color-surface-muted: #161a2d;
-          --color-elevated: rgba(18, 22, 38, 0.9);
-          --color-border: rgba(119, 131, 160, 0.3);
-          --color-text: #f5f7ff;
-          --color-text-muted: #a6b2d2;
-        }
+        --transition-base: 120ms ease;
       }
 
       *,
@@ -105,45 +98,6 @@
         position: relative;
         overflow-x: hidden;
         overflow-y: visible;
-      }
-
-      .theme--immersive::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: radial-gradient(
-            circle at 10% 20%,
-            hsla(var(--color-immersive) / 0.6) 0,
-            transparent 55%
-          ),
-          radial-gradient(
-            circle at 80% 10%,
-            hsla(220 60% 40% / 0.55) 0,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 50% 100%,
-            hsla(260 65% 45% / 0.45) 0,
-            transparent 60%
-          );
-        pointer-events: none;
-        opacity: 0.9;
-        z-index: -2;
-      }
-
-      .theme--immersive::after {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: linear-gradient(
-          180deg,
-          rgba(12, 16, 28, 0.35) 0%,
-          rgba(12, 16, 28, 0.1) 35%,
-          rgba(12, 16, 28, 0.65) 100%
-        );
-        mix-blend-mode: multiply;
-        pointer-events: none;
-        z-index: -1;
       }
 
       .portal {
@@ -204,12 +158,12 @@
         inset: 0;
         width: 0%;
         border-radius: inherit;
-        background: linear-gradient(90deg, var(--color-accent), var(--color-accent-strong));
+        background: var(--color-accent);
         transition: width var(--transition-base);
       }
 
       .storage-meter.is-warning .storage-meter__progress-bar {
-        background: linear-gradient(90deg, var(--color-danger), color-mix(in srgb, var(--color-danger) 70%, var(--color-accent) 30%));
+        background: var(--color-danger);
       }
 
       .storage-meter.is-exceeded .storage-meter__progress-bar {
@@ -302,7 +256,7 @@
         width: 4px;
         height: 100%;
         min-height: 4rem;
-        border-radius: 2px;
+        border-radius: 0;
         background: color-mix(in srgb, var(--color-border) 60%, transparent 40%);
         transition: background-color var(--transition-base), width var(--transition-base);
       }
@@ -315,7 +269,7 @@
         transform: translate(-50%, -50%);
         width: 2px;
         height: 2rem;
-        border-radius: 1px;
+        border-radius: 0;
         background: color-mix(in srgb, var(--color-text-muted) 40%, transparent 60%);
         transition: background-color var(--transition-base), height var(--transition-base);
       }
@@ -333,9 +287,9 @@
       }
 
       .split-pane__handle:focus-visible {
-        outline: 2px solid color-mix(in srgb, var(--color-accent) 65%, white 35%);
-        outline-offset: -2px;
-        border-radius: 3px;
+        outline: 1px solid var(--color-accent);
+        outline-offset: -1px;
+        border-radius: 0;
       }
 
       @media (max-width: 960px) {
@@ -532,18 +486,19 @@
       }
 
       .u-btn:focus-visible {
-        outline: 3px solid color-mix(in srgb, var(--color-accent) 60%, white 40%);
-        outline-offset: 2px;
+        outline: 1px solid var(--color-accent);
+        outline-offset: 1px;
       }
 
       .u-btn--primary {
-        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
-        color: white;
-        box-shadow: 0 12px 24px rgba(75, 107, 251, 0.32);
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        color: var(--color-surface-muted);
       }
 
       .u-btn--primary:hover {
-        transform: translateY(-1px);
+        background: var(--color-accent-strong);
+        border-color: var(--color-accent-strong);
       }
 
       .u-btn--ghost {
@@ -564,8 +519,8 @@
       }
 
       .u-input:focus {
-        border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border) 40%);
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 16%, transparent 84%);
+        border-color: var(--color-accent);
+        box-shadow: none;
         outline: none;
       }
 
@@ -604,7 +559,7 @@
         display: none;
         place-items: center;
         padding: var(--space-xl);
-        background: rgba(12, 16, 28, 0.45);
+        background: rgba(2, 4, 6, 0.78);
         backdrop-filter: blur(10px);
       }
 
@@ -719,11 +674,7 @@
         text-align: center;
         display: grid;
         gap: var(--space-md);
-        background: color-mix(
-          in srgb,
-          var(--color-surface) 85%,
-          rgba(255, 255, 255, 0.85) 15%
-        );
+        background: var(--color-elevated);
         transition: border-color var(--transition-base),
           background-color var(--transition-base),
           transform var(--transition-base);
@@ -731,8 +682,7 @@
 
       .upload-card__dropzone.is-dragover {
         border-color: color-mix(in srgb, var(--color-accent) 60%, transparent 40%);
-        background: color-mix(in srgb, var(--color-surface) 75%, rgba(75, 107, 251, 0.12) 25%);
-        transform: translateY(-2px);
+        background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface) 90%);
       }
 
       .upload-card__dropzone input[type="file"] {
@@ -920,14 +870,13 @@
       .image-gallery__thumb:hover,
       .image-gallery__thumb:focus-visible {
         outline: none;
-        border-color: color-mix(in srgb, var(--color-accent) 50%, transparent 50%);
-        box-shadow: 0 12px 24px rgba(75, 107, 251, 0.16);
-        transform: translateY(-1px);
+        border-color: var(--color-accent);
+        box-shadow: none;
       }
 
       .image-gallery__thumb.is-selected {
-        border-color: color-mix(in srgb, var(--color-accent) 65%, transparent 35%);
-        box-shadow: 0 16px 32px rgba(75, 107, 251, 0.24);
+        border-color: var(--color-accent);
+        box-shadow: inset 0 0 0 1px var(--color-accent);
       }
 
       .image-gallery__thumb-media {
@@ -1291,7 +1240,7 @@
         position: absolute;
         inset: 0;
         width: 0%;
-        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
+        background: var(--color-accent);
         border-radius: inherit;
         transition: width 120ms ease;
       }
@@ -1413,10 +1362,13 @@
         max-height: min(70vh, 42rem);
         overflow-y: auto;
         border-radius: var(--radius-md);
-        background: white;
-        box-shadow: var(--shadow-sm);
+        /* Document previews stay light: they render real document content
+           whose own backgrounds we cannot restyle, so forcing light text
+           would break any doc with a white table cell or highlight. */
+        background: #ffffff;
+        border: 1px solid var(--color-border);
         padding: var(--space-md);
-        color: #111;
+        color: #111111;
         line-height: 1.65;
       }
 
@@ -1561,7 +1513,7 @@
     </style>
     <script src="https://documentcloud.adobe.com/view-sdk/main.js" defer></script>
   </head>
-  <body class="theme theme--immersive">
+  <body class="theme">
     <main class="portal" id="support-portal">
       <header class="portal__header">
         <p class="u-copy" role="status" aria-live="polite">         
