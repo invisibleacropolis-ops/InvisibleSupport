@@ -4,6 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Invisible Support Portal</title>
+    <!-- Silkscreen (SIL Open Font License). The page previously declared
+         JetBrains Mono but never loaded a webfont, so it fell back to the
+         system monospace. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       /*
         Design tokens create a consistent visual system for engineers and designers.
@@ -13,9 +22,11 @@
         /* Dark-only terminal palette. Surfaces are near-black and separated by
            hairline borders rather than elevation, so nothing needs a shadow. */
         color-scheme: dark;
-        --color-surface: #0b1116;
+        /* Panels sit flush on the page background; borders do all the
+           separating, so every surface shares one near-black value. */
+        --color-surface: #05080a;
         --color-surface-muted: #05080a;
-        --color-elevated: #0e161c;
+        --color-elevated: #05080a;
         /* With shadows removed, hairlines are the only structural cue between
            panels, so this needs real contrast against the surface (~2.8:1). */
         --color-border: #425f72;
@@ -26,8 +37,8 @@
         --color-success: #4caf7d;
         --color-danger: #e2575f;
 
-        --font-sans: "JetBrains Mono", "SFMono-Regular", ui-monospace, "Cascadia Mono", Consolas, monospace;
-        --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, "Cascadia Mono", Consolas, monospace;
+        --font-sans: "Silkscreen", "Courier New", monospace;
+        --font-mono: "Silkscreen", "Courier New", monospace;
 
         --space-2xs: 0.25rem;
         --space-xs: 0.5rem;
