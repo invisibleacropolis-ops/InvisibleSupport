@@ -916,6 +916,9 @@
       .image-gallery__thumb {
         width: 100%;
         display: grid;
+        /* An `auto` track floors at min-content, so an unbreakable filename
+           would widen the column past the card. minmax(0, …) floors at zero. */
+        grid-template-columns: minmax(0, 1fr);
         gap: var(--space-sm);
         padding: var(--space-sm);
         border-radius: var(--radius-lg);
@@ -963,9 +966,18 @@
 
       .image-gallery__thumb-meta {
         display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: var(--space-2xs);
         font-size: 0.85rem;
         color: var(--color-text-muted);
+      }
+
+      /* Uploaded names are long hashes with no break opportunities, so they
+         need an explicit wrap rule or they overflow the card. */
+      .image-gallery__meta-title,
+      .image-gallery__meta-subtitle {
+        min-width: 0;
+        overflow-wrap: anywhere;
       }
 
       .image-gallery__meta-title {
