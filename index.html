@@ -387,18 +387,6 @@
         gap: var(--space-sm);
       }
 
-      .image-portal {
-        display: grid;
-        gap: var(--space-xl);
-      }
-
-      .image-portal__header {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-sm);
-        max-width: 48rem;
-      }
-
       .toast-stack {
         position: fixed;
         bottom: var(--space-xl);
@@ -1581,436 +1569,10 @@
         <h1 class="portal__heading">Invisible Support Upload Hub</h1>
         <p class="portal__lede">
         </p>
-<section
-          class="storage-meter"
-          role="region"
-          aria-live="polite"
-          aria-label="Storage usage"
-          data-storage-meter
-        >
-          <div class="storage-meter__heading">
-            <span data-i18n-key="labels.storageUsed"></span>
-            <span data-storage-limit></span>
-          </div>
-          <div class="storage-meter__values">
-            <span data-storage-summary></span>
-            <button
-              class="u-btn u-btn--ghost storage-meter__button"
-              type="button"
-              data-storage-manage
-              data-i18n-key="labels.storageManageCta"
-            ></button>
-            <a href="subspace.html" class="u-btn u-btn--primary">SubSpace</a>
-          </div>
-          <div class="storage-meter__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-storage-progress>
-            <span class="storage-meter__progress-bar" data-storage-progress-bar></span>
-          </div>
-          <p class="storage-meter__warning" data-storage-warning hidden></p>
-        </section>
       </header>
 
       <div class="portal__grid">
-        <!-- Top row: Upload workflow + Repository storage side by side -->
-        <div class="portal__top-row">
-          <article class="u-card upload-card" aria-labelledby="upload-workflow">
-            <div class="u-card__header">
-              <div class="u-card__header-row">
-                <h2 class="u-card__title" id="upload-workflow">Upload workflow</h2>
-                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse upload panel">Collapse</button>
-              </div>
-              <p class="u-card__subtitle">
-                Centralize artifacts by dragging, dropping, or linking your diagnostic assets.
-              </p>
-            </div>
-
-            <form class="stack stack--lg" id="document-upload-form" aria-label="Document upload" novalidate>
-              <div
-                class="upload-card__dropzone"
-                role="region"
-                aria-label="Upload dropzone"
-                data-dropzone
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" role="presentation">
-                  <path
-                    fill="currentColor"
-                    d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1Zm-7 9a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1 1-1Z"
-                  />
-                </svg>
-                <div class="stack">
-                  <p class="portal__lede" style="font-size: 1rem;">
-                    Drop files here or browse to upload.
-                  </p>
-                  <div class="upload-card__actions">
-                    <label class="u-btn u-btn--primary" for="primary-upload">Browse files</label>
-                    <span aria-hidden="true">or</span>
-                    <span class="u-card__subtitle">Paste from clipboard (⌘/Ctrl + V)</span>
-                  </div>
-                  <p class="upload-card__accepted">PDF, DOCX, PPTX, XLSX, images, CSV, and more.</p>
-                </div>
-                <input
-                  class="u-input"
-                  type="file"
-                  id="primary-upload"
-                  name="documents"
-                  multiple
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.png,.jpg,.jpeg,.gif,.webp,.heic,.mp4,.mov,.json,.log,.zip"
-                  aria-label="Upload files"
-                  data-file-input
-                />
-              </div>
-
-              <section
-                class="upload-card__queue stack"
-                data-upload-queue
-                hidden
-                aria-live="polite"
-              >
-                <div class="upload-card__queue-header">
-                  <span class="u-card__subtitle" data-i18n-key="upload.queueTitle"></span>
-                  <button
-                    class="u-btn u-btn--ghost u-btn--sm"
-                    type="button"
-                    data-queue-clear
-                    data-i18n-key="upload.queueClear"
-                  ></button>
-                </div>
-                <p class="upload-card__queue-summary" data-queue-summary hidden></p>
-                <p class="upload-card__queue-empty" data-queue-empty data-i18n-key="upload.queueEmpty"></p>
-                <ul class="upload-card__queue-list" data-queue-list></ul>
-              </section>
-
-              <div class="form-grid form-grid--split">
-                <label class="stack" for="document-title">
-                  <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
-                  <input
-                    class="u-input"
-                    type="text"
-                    id="document-title"
-                    name="title"
-                    placeholder="e.g. Database latency analysis"
-                    data-title-input
-                  />
-                </label>
-                <label class="stack" for="document-description">
-                  <span class="u-card__subtitle">Description <span aria-hidden="true">(optional)</span></span>
-                  <input
-                    class="u-input"
-                    type="text"
-                    id="document-description"
-                    name="description"
-                    placeholder="Short note about the document"
-                    data-description-input
-                  />
-                </label>
-              </div>
-
-              <div class="stack">
-                <span class="u-card__subtitle">Upload progress</span>
-                <div class="upload-progress" data-upload-progress hidden>
-                  <div class="upload-progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                    <span class="upload-progress__fill" data-progress-fill></span>
-                  </div>
-                  <p class="upload-progress__label" data-progress-label>Waiting for files…</p>
-                </div>
-              </div>
-
-              <p class="upload-feedback" data-upload-feedback role="alert" hidden></p>
-
-              <div class="upload-card__actions" style="justify-content: flex-start;">
-                <button class="u-btn u-btn--primary" type="submit">Upload documents</button>
-                <button class="u-btn u-btn--ghost" type="reset">Reset</button>
-              </div>
-            </form>
-          </article>
-
-          <article class="u-card" aria-labelledby="supabase-storage">
-            <div class="u-card__header">
-              <div class="u-card__header-row">
-                <h2 class="u-card__title" id="supabase-storage">Supabase storage</h2>
-                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse settings panel">Collapse</button>
-              </div>
-              <p class="u-card__subtitle">
-                Sign in with Supabase so uploads persist to private durable storage.
-              </p>
-            </div>
-
-            <form class="stack stack--lg" data-supabase-settings novalidate>
-              <div class="form-grid form-grid--split">
-                <div class="stack">
-                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseProject"></span>
-                  <span class="u-copy__value" data-supabase-project-value>—</span>
-                </div>
-                <div class="stack">
-                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseBucket"></span>
-                  <span class="u-copy__value" data-supabase-bucket-value>—</span>
-                </div>
-              </div>
-
-              <div class="form-grid form-grid--split">
-                <label class="stack" for="supabase-email">
-                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseEmail"></span>
-                  <input class="u-input" type="email" id="supabase-email" name="supabase-email" autocomplete="email" placeholder="you@example.com" data-supabase-email />
-                </label>
-                <label class="stack" for="supabase-limit">
-                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseStorageLimit"></span>
-                  <input class="u-input" type="number" min="1" step="1" id="supabase-limit" name="supabase-limit" data-supabase-limit />
-                </label>
-              </div>
-
-              <section class="stack" data-supabase-connection>
-                <p class="u-card__subtitle" data-i18n-key="labels.supabaseConnectionStatus"></p>
-                <p class="u-copy" data-supabase-connection-summary>
-                  <span class="u-copy__value" data-supabase-connection-value>—</span>
-                </p>
-                <div class="upload-card__actions" style="justify-content: flex-start;">
-                  <button class="u-btn u-btn--primary" type="button" data-supabase-signin data-i18n-key="labels.supabaseSendMagicLink"></button>
-                  <button class="u-btn u-btn--ghost" type="button" data-supabase-signout data-i18n-key="labels.supabaseSignOut" hidden></button>
-                </div>
-              </section>
-
-              <p class="upload-feedback" data-supabase-feedback hidden></p>
-
-              <div class="upload-card__actions" style="justify-content: flex-start;">
-                <button class="u-btn u-btn--primary" type="submit" data-i18n-key="common.save"></button>
-                <button class="u-btn u-btn--ghost" type="button" data-supabase-test data-i18n-key="labels.supabaseTestConnection"></button>
-              </div>
-            </form>
-          </article>
-        </div>
-
-        <!-- Bottom row: Asset Library and Document Viewer side by side with resizable split -->
-        <div class="split-pane" data-split-id="doc-split" style="--split-left: 45%;">
-          <article class="u-card library-card" aria-labelledby="asset-library">
-            <div class="u-card__header">
-              <div class="u-card__header-row">
-                <h2 class="u-card__title" id="asset-library">Asset library</h2>
-                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse library panel">Collapse</button>
-              </div>
-              <p class="u-card__subtitle">
-                Reference previously uploaded artifacts to accelerate triage.
-              </p>
-            </div>
-
-            <div class="stack" role="region" aria-live="polite">
-              <label class="stack" for="library-search">
-                <span class="u-card__subtitle">Filter library</span>
-                <input
-                  class="u-input"
-                  type="search"
-                  id="library-search"
-                  placeholder="Search by title, file name, or type"
-                  autocomplete="off"
-                  data-library-search
-                />
-              </label>
-
-              <div class="library-card__table" role="region" aria-label="Document library table">
-                <table class="library-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Title</th>
-                      <th scope="col">Size</th>
-                      <th scope="col">Last updated</th>
-                      <th scope="col" class="library-table__actions-heading">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody data-library-rows></tbody>
-                </table>
-                <p class="library-card__empty" data-library-empty hidden>No documents uploaded yet.</p>
-              </div>
-            </div>
-          </article>
-
-          <div
-            class="split-pane__handle"
-            data-split-handle
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Drag to resize library and viewer panels"
-            aria-valuemin="15"
-            aria-valuemax="85"
-            aria-valuenow="45"
-            tabindex="0"
-          ></div>
-
-          <article class="u-card viewer-card" aria-labelledby="document-viewer">
-            <div class="u-card__header">
-              <div class="u-card__header-row">
-                <h2 class="u-card__title" id="document-viewer">Document viewer</h2>
-                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse viewer panel">Collapse</button>
-              </div>
-              <p class="u-card__subtitle">Preview uploaded documents inline or switch to immersive mode.</p>
-            </div>
-
-            <div class="viewer-card__toolbar" role="group" aria-label="Document viewer controls">
-              <label class="viewer-card__selector">
-                <span class="visually-hidden">Select a document to preview</span>
-                <select class="u-input viewer-card__select" data-viewer-select aria-label="Select document">
-                  <option value="" selected>Select a document…</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="viewer-card__preview" data-viewer-preview>
-              <div class="viewer-card__empty" data-viewer-empty>
-                <h3>Nothing selected yet</h3>
-                <p class="portal__lede" style="font-size: 0.95rem;">
-                  Choose an item from the library to load a preview, transcript, or streaming session.
-                </p>
-              </div>
-            </div>
-
-            <div class="viewer-card__meta" data-viewer-meta hidden>
-              <div class="stack">
-                <span class="u-card__subtitle">Document details</span>
-                <dl class="viewer-card__details">
-                  <div>
-                    <dt>Title</dt>
-                    <dd data-viewer-name>—</dd>
-                  </div>
-                  <div>
-                    <dt>File name</dt>
-                    <dd data-viewer-filename>—</dd>
-                  </div>
-                  <div>
-                    <dt>Type</dt>
-                    <dd data-viewer-type>—</dd>
-                  </div>
-                  <div>
-                    <dt>Size</dt>
-                    <dd data-viewer-size>—</dd>
-                  </div>
-                  <div>
-                    <dt>Last updated</dt>
-                    <dd data-viewer-updated>—</dd>
-                  </div>
-                </dl>
-                <p class="viewer-card__description" data-viewer-description hidden></p>
-              </div>
-
-              <div class="stack">
-                <span class="u-card__subtitle">Shareable link</span>
-                <div class="viewer-card__link">
-                  <input
-                    class="u-input viewer-card__link-input"
-                    type="text"
-                    readonly
-                    id="viewer-direct-link"
-                    data-viewer-link
-                    value=""
-                  />
-                  <button class="u-btn u-btn--ghost" type="button" data-viewer-copy>Copy</button>
-                  <a class="u-btn u-btn--primary" href="#" target="_blank" rel="noopener" data-viewer-open>
-                    Open in new tab
-                  </a>
-                </div>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <section class="image-portal" aria-labelledby="image-management">
-        <div class="image-portal__header">
-          <h2 class="portal__heading" id="image-management">Image management</h2>
-          <p class="portal__lede">
-          </p>
-        </div>
-
-        <!-- Image upload (full width) -->
-        <article class="u-card image-upload-card" aria-labelledby="image-upload-title">
-          <div class="u-card__header">
-            <div class="u-card__header-row">
-              <h2 class="u-card__title" id="image-upload-title">Image upload</h2>
-              <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse image upload panel">Collapse</button>
-            </div>
-            <p class="u-card__subtitle">
-              Drag and drop visual assets or browse your workstation.
-            </p>
-          </div>
-
-          <form class="stack stack--lg" data-image-form novalidate>
-            <div class="stack">
-              <div class="upload-card__dropzone" role="region" aria-label="Image upload dropzone" data-image-dropzone>
-                <svg viewBox="0 0 48 48" role="presentation" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M24 6a12 12 0 0 0-12 12v3H8a6 6 0 0 0 0 12h32a6 6 0 0 0 1-11.9V18A12 12 0 0 0 24 6Zm0 4a8 8 0 0 1 8 8v3h-4.5a1.5 1.5 0 0 0-1.07.44L24 23.86l-2.43-2.42A1.5 1.5 0 0 0 20.5 21H16v-3a8 8 0 0 1 8-8Zm-2 11.62 1.43 1.43a1.5 1.5 0 0 0 2.12 0L27 21.05l3.45 3.45a1.5 1.5 0 0 0 1.06.44H36a2 2 0 0 1 0 4H12a2 2 0 1 1 0-4h4.5l4.5-4.38Z"
-                  />
-                </svg>
-                <p class="portal__lede">
-                  Drag and drop visual assets or browse your workstation. Files are inspected before upload.
-                </p>
-                <div class="upload-card__actions">
-                  <label class="u-btn u-btn--primary" for="image-upload-input">Browse images</label>
-                  <span aria-hidden="true">or</span>
-                  <span class="u-card__subtitle">Drop anywhere to upload</span>
-                </div>
-                <p class="upload-card__accepted">
-                  JPEG, PNG, WebP, AVIF, GIF, and HEIC · Max dimension 8,192&nbsp;px on either side.
-                </p>
-              </div>
-              <input
-                class="u-input"
-                type="file"
-                id="image-upload-input"
-                name="images"
-                accept="image/*"
-                multiple
-                data-image-file-input
-              />
-            </div>
-
-            <div class="form-grid form-grid--split">
-              <label class="stack" for="image-title">
-                <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
-                <input
-                  class="u-input"
-                  type="text"
-                  id="image-title"
-                  placeholder="e.g. PagerDuty status overview"
-                  data-image-title
-                />
-              </label>
-              <label class="stack" for="image-alt">
-                <span class="u-card__subtitle">Alt text <span aria-hidden="true">(optional)</span></span>
-                <input
-                  class="u-input"
-                  type="text"
-                  id="image-alt"
-                  placeholder="Accessible description for screen readers"
-                  data-image-alt
-                />
-              </label>
-            </div>
-
-            <div class="stack">
-              <span class="u-card__subtitle">Upload progress</span>
-              <div class="upload-progress" data-image-progress hidden>
-                <div
-                  class="upload-progress__bar"
-                  role="progressbar"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                  aria-valuenow="0"
-                  data-image-progress-bar
-                >
-                  <span class="upload-progress__fill" data-image-progress-fill></span>
-                </div>
-                <p class="upload-progress__label" data-image-progress-label>Waiting for images…</p>
-              </div>
-            </div>
-
-            <p class="upload-feedback" data-image-feedback role="alert" hidden></p>
-
-            <div class="upload-card__actions" style="justify-content: flex-start;">
-              <button class="u-btn u-btn--primary" type="submit">Upload images</button>
-              <button class="u-btn u-btn--ghost" type="reset">Reset</button>
-            </div>
-          </form>
-        </article>
-
-        <!-- Image Gallery and Image Viewer side by side with resizable split -->
+        <!-- Image gallery + image viewer -->
         <div class="split-pane" data-split-id="img-split" style="--split-left: 40%;">
           <article class="u-card image-gallery-card" aria-labelledby="image-gallery">
             <div class="u-card__header">
@@ -2155,7 +1717,439 @@
             </div>
           </article>
         </div>
-      </section>
+
+        <!-- Asset library + document viewer -->
+        <div class="split-pane" data-split-id="doc-split" style="--split-left: 45%;">
+          <article class="u-card library-card" aria-labelledby="asset-library">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="asset-library">Asset library</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse library panel">Collapse</button>
+              </div>
+              <p class="u-card__subtitle">
+                Reference previously uploaded artifacts to accelerate triage.
+              </p>
+            </div>
+
+            <div class="stack" role="region" aria-live="polite">
+              <label class="stack" for="library-search">
+                <span class="u-card__subtitle">Filter library</span>
+                <input
+                  class="u-input"
+                  type="search"
+                  id="library-search"
+                  placeholder="Search by title, file name, or type"
+                  autocomplete="off"
+                  data-library-search
+                />
+              </label>
+
+              <div class="library-card__table" role="region" aria-label="Document library table">
+                <table class="library-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Title</th>
+                      <th scope="col">Size</th>
+                      <th scope="col">Last updated</th>
+                      <th scope="col" class="library-table__actions-heading">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody data-library-rows></tbody>
+                </table>
+                <p class="library-card__empty" data-library-empty hidden>No documents uploaded yet.</p>
+              </div>
+            </div>
+          </article>
+
+          <div
+            class="split-pane__handle"
+            data-split-handle
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Drag to resize library and viewer panels"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-valuenow="45"
+            tabindex="0"
+          ></div>
+
+          <article class="u-card viewer-card" aria-labelledby="document-viewer">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="document-viewer">Document viewer</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse viewer panel">Collapse</button>
+              </div>
+              <p class="u-card__subtitle">Preview uploaded documents inline or switch to immersive mode.</p>
+            </div>
+
+            <div class="viewer-card__toolbar" role="group" aria-label="Document viewer controls">
+              <label class="viewer-card__selector">
+                <span class="visually-hidden">Select a document to preview</span>
+                <select class="u-input viewer-card__select" data-viewer-select aria-label="Select document">
+                  <option value="" selected>Select a document…</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="viewer-card__preview" data-viewer-preview>
+              <div class="viewer-card__empty" data-viewer-empty>
+                <h3>Nothing selected yet</h3>
+                <p class="portal__lede" style="font-size: 0.95rem;">
+                  Choose an item from the library to load a preview, transcript, or streaming session.
+                </p>
+              </div>
+            </div>
+
+            <div class="viewer-card__meta" data-viewer-meta hidden>
+              <div class="stack">
+                <span class="u-card__subtitle">Document details</span>
+                <dl class="viewer-card__details">
+                  <div>
+                    <dt>Title</dt>
+                    <dd data-viewer-name>—</dd>
+                  </div>
+                  <div>
+                    <dt>File name</dt>
+                    <dd data-viewer-filename>—</dd>
+                  </div>
+                  <div>
+                    <dt>Type</dt>
+                    <dd data-viewer-type>—</dd>
+                  </div>
+                  <div>
+                    <dt>Size</dt>
+                    <dd data-viewer-size>—</dd>
+                  </div>
+                  <div>
+                    <dt>Last updated</dt>
+                    <dd data-viewer-updated>—</dd>
+                  </div>
+                </dl>
+                <p class="viewer-card__description" data-viewer-description hidden></p>
+              </div>
+
+              <div class="stack">
+                <span class="u-card__subtitle">Shareable link</span>
+                <div class="viewer-card__link">
+                  <input
+                    class="u-input viewer-card__link-input"
+                    type="text"
+                    readonly
+                    id="viewer-direct-link"
+                    data-viewer-link
+                    value=""
+                  />
+                  <button class="u-btn u-btn--ghost" type="button" data-viewer-copy>Copy</button>
+                  <a class="u-btn u-btn--primary" href="#" target="_blank" rel="noopener" data-viewer-open>
+                    Open in new tab
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Image upload + upload workflow -->
+        <div class="split-pane" data-split-id="upload-split" style="--split-left: 50%;">
+          <article class="u-card image-upload-card" aria-labelledby="image-upload-title">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="image-upload-title">Image upload</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse image upload panel">Collapse</button>
+              </div>
+              <p class="u-card__subtitle">
+                Drag and drop visual assets or browse your workstation.
+              </p>
+            </div>
+
+            <form class="stack stack--lg" data-image-form novalidate>
+              <div class="stack">
+                <div class="upload-card__dropzone" role="region" aria-label="Image upload dropzone" data-image-dropzone>
+                  <svg viewBox="0 0 48 48" role="presentation" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M24 6a12 12 0 0 0-12 12v3H8a6 6 0 0 0 0 12h32a6 6 0 0 0 1-11.9V18A12 12 0 0 0 24 6Zm0 4a8 8 0 0 1 8 8v3h-4.5a1.5 1.5 0 0 0-1.07.44L24 23.86l-2.43-2.42A1.5 1.5 0 0 0 20.5 21H16v-3a8 8 0 0 1 8-8Zm-2 11.62 1.43 1.43a1.5 1.5 0 0 0 2.12 0L27 21.05l3.45 3.45a1.5 1.5 0 0 0 1.06.44H36a2 2 0 0 1 0 4H12a2 2 0 1 1 0-4h4.5l4.5-4.38Z"
+                    />
+                  </svg>
+                  <p class="portal__lede">
+                    Drag and drop visual assets or browse your workstation. Files are inspected before upload.
+                  </p>
+                  <div class="upload-card__actions">
+                    <label class="u-btn u-btn--primary" for="image-upload-input">Browse images</label>
+                    <span aria-hidden="true">or</span>
+                    <span class="u-card__subtitle">Drop anywhere to upload</span>
+                  </div>
+                  <p class="upload-card__accepted">
+                    JPEG, PNG, WebP, AVIF, GIF, and HEIC · Max dimension 8,192&nbsp;px on either side.
+                  </p>
+                </div>
+                <input
+                  class="u-input"
+                  type="file"
+                  id="image-upload-input"
+                  name="images"
+                  accept="image/*"
+                  multiple
+                  data-image-file-input
+                />
+              </div>
+
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="image-title">
+                  <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
+                  <input
+                    class="u-input"
+                    type="text"
+                    id="image-title"
+                    placeholder="e.g. PagerDuty status overview"
+                    data-image-title
+                  />
+                </label>
+                <label class="stack" for="image-alt">
+                  <span class="u-card__subtitle">Alt text <span aria-hidden="true">(optional)</span></span>
+                  <input
+                    class="u-input"
+                    type="text"
+                    id="image-alt"
+                    placeholder="Accessible description for screen readers"
+                    data-image-alt
+                  />
+                </label>
+              </div>
+
+              <div class="stack">
+                <span class="u-card__subtitle">Upload progress</span>
+                <div class="upload-progress" data-image-progress hidden>
+                  <div
+                    class="upload-progress__bar"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                    data-image-progress-bar
+                  >
+                    <span class="upload-progress__fill" data-image-progress-fill></span>
+                  </div>
+                  <p class="upload-progress__label" data-image-progress-label>Waiting for images…</p>
+                </div>
+              </div>
+
+              <p class="upload-feedback" data-image-feedback role="alert" hidden></p>
+
+              <div class="upload-card__actions" style="justify-content: flex-start;">
+                <button class="u-btn u-btn--primary" type="submit">Upload images</button>
+                <button class="u-btn u-btn--ghost" type="reset">Reset</button>
+              </div>
+            </form>
+          </article>
+
+          <div
+            class="split-pane__handle"
+            data-split-handle
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Drag to resize image upload and upload workflow panels"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-valuenow="50"
+            tabindex="0"
+          ></div>
+
+        <article class="u-card upload-card" aria-labelledby="upload-workflow">
+          <div class="u-card__header">
+            <div class="u-card__header-row">
+              <h2 class="u-card__title" id="upload-workflow">Upload workflow</h2>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse upload panel">Collapse</button>
+            </div>
+            <p class="u-card__subtitle">
+              Centralize artifacts by dragging, dropping, or linking your diagnostic assets.
+            </p>
+          </div>
+
+          <form class="stack stack--lg" id="document-upload-form" aria-label="Document upload" novalidate>
+            <div
+              class="upload-card__dropzone"
+              role="region"
+              aria-label="Upload dropzone"
+              data-dropzone
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" role="presentation">
+                <path
+                  fill="currentColor"
+                  d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1Zm-7 9a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1 1-1Z"
+                />
+              </svg>
+              <div class="stack">
+                <p class="portal__lede" style="font-size: 1rem;">
+                  Drop files here or browse to upload.
+                </p>
+                <div class="upload-card__actions">
+                  <label class="u-btn u-btn--primary" for="primary-upload">Browse files</label>
+                  <span aria-hidden="true">or</span>
+                  <span class="u-card__subtitle">Paste from clipboard (⌘/Ctrl + V)</span>
+                </div>
+                <p class="upload-card__accepted">PDF, DOCX, PPTX, XLSX, images, CSV, and more.</p>
+              </div>
+              <input
+                class="u-input"
+                type="file"
+                id="primary-upload"
+                name="documents"
+                multiple
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.png,.jpg,.jpeg,.gif,.webp,.heic,.mp4,.mov,.json,.log,.zip"
+                aria-label="Upload files"
+                data-file-input
+              />
+            </div>
+
+            <section
+              class="upload-card__queue stack"
+              data-upload-queue
+              hidden
+              aria-live="polite"
+            >
+              <div class="upload-card__queue-header">
+                <span class="u-card__subtitle" data-i18n-key="upload.queueTitle"></span>
+                <button
+                  class="u-btn u-btn--ghost u-btn--sm"
+                  type="button"
+                  data-queue-clear
+                  data-i18n-key="upload.queueClear"
+                ></button>
+              </div>
+              <p class="upload-card__queue-summary" data-queue-summary hidden></p>
+              <p class="upload-card__queue-empty" data-queue-empty data-i18n-key="upload.queueEmpty"></p>
+              <ul class="upload-card__queue-list" data-queue-list></ul>
+            </section>
+
+            <div class="form-grid form-grid--split">
+              <label class="stack" for="document-title">
+                <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
+                <input
+                  class="u-input"
+                  type="text"
+                  id="document-title"
+                  name="title"
+                  placeholder="e.g. Database latency analysis"
+                  data-title-input
+                />
+              </label>
+              <label class="stack" for="document-description">
+                <span class="u-card__subtitle">Description <span aria-hidden="true">(optional)</span></span>
+                <input
+                  class="u-input"
+                  type="text"
+                  id="document-description"
+                  name="description"
+                  placeholder="Short note about the document"
+                  data-description-input
+                />
+              </label>
+            </div>
+
+            <div class="stack">
+              <span class="u-card__subtitle">Upload progress</span>
+              <div class="upload-progress" data-upload-progress hidden>
+                <div class="upload-progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <span class="upload-progress__fill" data-progress-fill></span>
+                </div>
+                <p class="upload-progress__label" data-progress-label>Waiting for files…</p>
+              </div>
+            </div>
+
+            <p class="upload-feedback" data-upload-feedback role="alert" hidden></p>
+
+            <div class="upload-card__actions" style="justify-content: flex-start;">
+              <button class="u-btn u-btn--primary" type="submit">Upload documents</button>
+              <button class="u-btn u-btn--ghost" type="reset">Reset</button>
+            </div>
+          </form>
+        </article>
+        </div>
+
+        <!-- Supabase storage + storage usage -->
+        <div class="portal__top-row">
+          <article class="u-card" aria-labelledby="supabase-storage">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="supabase-storage">Supabase storage</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse settings panel">Collapse</button>
+              </div>
+              <p class="u-card__subtitle">
+                Sign in with Supabase so uploads persist to private durable storage.
+              </p>
+            </div>
+
+            <form class="stack stack--lg" data-supabase-settings novalidate>
+              <div class="form-grid form-grid--split">
+                <div class="stack">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseProject"></span>
+                  <span class="u-copy__value" data-supabase-project-value>—</span>
+                </div>
+                <div class="stack">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseBucket"></span>
+                  <span class="u-copy__value" data-supabase-bucket-value>—</span>
+                </div>
+              </div>
+
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="supabase-email">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseEmail"></span>
+                  <input class="u-input" type="email" id="supabase-email" name="supabase-email" autocomplete="email" placeholder="you@example.com" data-supabase-email />
+                </label>
+                <label class="stack" for="supabase-limit">
+                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseStorageLimit"></span>
+                  <input class="u-input" type="number" min="1" step="1" id="supabase-limit" name="supabase-limit" data-supabase-limit />
+                </label>
+              </div>
+
+              <section class="stack" data-supabase-connection>
+                <p class="u-card__subtitle" data-i18n-key="labels.supabaseConnectionStatus"></p>
+                <p class="u-copy" data-supabase-connection-summary>
+                  <span class="u-copy__value" data-supabase-connection-value>—</span>
+                </p>
+                <div class="upload-card__actions" style="justify-content: flex-start;">
+                  <button class="u-btn u-btn--primary" type="button" data-supabase-signin data-i18n-key="labels.supabaseSendMagicLink"></button>
+                  <button class="u-btn u-btn--ghost" type="button" data-supabase-signout data-i18n-key="labels.supabaseSignOut" hidden></button>
+                </div>
+              </section>
+
+              <p class="upload-feedback" data-supabase-feedback hidden></p>
+
+              <div class="upload-card__actions" style="justify-content: flex-start;">
+                <button class="u-btn u-btn--primary" type="submit" data-i18n-key="common.save"></button>
+                <button class="u-btn u-btn--ghost" type="button" data-supabase-test data-i18n-key="labels.supabaseTestConnection"></button>
+              </div>
+            </form>
+          </article>
+  <section
+            class="storage-meter"
+            role="region"
+            aria-live="polite"
+            aria-label="Storage usage"
+            data-storage-meter
+          >
+            <div class="storage-meter__heading">
+              <span data-i18n-key="labels.storageUsed"></span>
+              <span data-storage-limit></span>
+            </div>
+            <div class="storage-meter__values">
+              <span data-storage-summary></span>
+              <button
+                class="u-btn u-btn--ghost storage-meter__button"
+                type="button"
+                data-storage-manage
+                data-i18n-key="labels.storageManageCta"
+              ></button>
+              <a href="subspace.html" class="u-btn u-btn--primary">SubSpace</a>
+            </div>
+            <div class="storage-meter__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-storage-progress>
+              <span class="storage-meter__progress-bar" data-storage-progress-bar></span>
+            </div>
+            <p class="storage-meter__warning" data-storage-warning hidden></p>
+          </section>
+        </div>
+      </div>
     </main>
 
     <div class="toast-stack" role="status" aria-live="polite" aria-atomic="false" data-toast-stack></div>
