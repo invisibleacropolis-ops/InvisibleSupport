@@ -255,19 +255,6 @@
         gap: var(--space-xl);
       }
 
-      .portal__top-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
-        gap: var(--space-xl);
-        align-items: start;
-      }
-
-      @media (max-width: 640px) {
-        .portal__top-row {
-          grid-template-columns: 1fr;
-        }
-      }
-
       /* Split-pane: two panels separated by a draggable handle */
       .split-pane {
         display: flex;
@@ -2054,8 +2041,7 @@
         </div>
 
         <!-- Supabase storage + storage usage -->
-        <div class="portal__top-row">
-          <article class="u-card" aria-labelledby="supabase-storage">
+        <article class="u-card" aria-labelledby="supabase-storage">
             <div class="u-card__header">
               <div class="u-card__header-row">
                 <h2 class="u-card__title" id="supabase-storage">Supabase storage</h2>
@@ -2103,35 +2089,34 @@
                 <button class="u-btn u-btn--primary" type="submit" data-i18n-key="common.save"></button>
                 <button class="u-btn u-btn--ghost" type="button" data-supabase-test data-i18n-key="labels.supabaseTestConnection"></button>
               </div>
+
+              <section
+                class="storage-meter"
+                role="region"
+                aria-live="polite"
+                aria-label="Storage usage"
+                data-storage-meter
+              >
+                <div class="storage-meter__heading">
+                  <span data-i18n-key="labels.storageUsed"></span>
+                  <span data-storage-limit></span>
+                </div>
+                <div class="storage-meter__values">
+                  <span data-storage-summary></span>
+                  <button
+                    class="u-btn u-btn--ghost storage-meter__button"
+                    type="button"
+                    data-storage-manage
+                    data-i18n-key="labels.storageManageCta"
+                  ></button>
+                </div>
+                <div class="storage-meter__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-storage-progress>
+                  <span class="storage-meter__progress-bar" data-storage-progress-bar></span>
+                </div>
+                <p class="storage-meter__warning" data-storage-warning hidden></p>
+              </section>
             </form>
-          </article>
-  <section
-            class="storage-meter"
-            role="region"
-            aria-live="polite"
-            aria-label="Storage usage"
-            data-storage-meter
-          >
-            <div class="storage-meter__heading">
-              <span data-i18n-key="labels.storageUsed"></span>
-              <span data-storage-limit></span>
-            </div>
-            <div class="storage-meter__values">
-              <span data-storage-summary></span>
-              <button
-                class="u-btn u-btn--ghost storage-meter__button"
-                type="button"
-                data-storage-manage
-                data-i18n-key="labels.storageManageCta"
-              ></button>
-              <a href="subspace.html" class="u-btn u-btn--primary">SubSpace</a>
-            </div>
-            <div class="storage-meter__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-storage-progress>
-              <span class="storage-meter__progress-bar" data-storage-progress-bar></span>
-            </div>
-            <p class="storage-meter__warning" data-storage-warning hidden></p>
-          </section>
-        </div>
+        </article>
       </div>
     </main>
 
