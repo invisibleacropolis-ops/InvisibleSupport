@@ -104,18 +104,6 @@
         box-sizing: border-box;
       }
 
-      /*
-        The `hidden` attribute is how every feature module shows and hides
-        panels (viewer placeholder, controls, metadata, upload progress and
-        queue, etc.). The UA rule `[hidden] { display: none }` has almost no
-        specificity, so any component that sets `display: grid|flex` on its
-        own class silently overrides it and the element never hides. Enforce
-        the attribute globally so `element.hidden = true` always wins.
-      */
-      [hidden] {
-        display: none !important;
-      }
-
       .visually-hidden {
         position: absolute;
         width: 1px;
@@ -1625,12 +1613,7 @@
 
             <div class="stack" data-image-viewer>
               <div class="image-viewer__canvas" data-image-canvas data-fit="contain">
-                <div class="image-viewer__empty" data-image-empty>
-                  <h3>Waiting for a selection</h3>
-                  <p class="portal__lede" style="font-size: 0.95rem;">
-                    Choose a thumbnail to open a rich preview with zoom controls and EXIF-aware metadata.
-                  </p>
-                </div>
+                <div class="image-viewer__empty" data-image-empty></div>
                 <img data-image-preview alt="" hidden />
               </div>
 
