@@ -2,6 +2,8 @@
 
 A static support upload portal built with vanilla ES modules and a vertical-slice structure. It runs directly from GitHub Pages with no build step, while durable private storage is provided by Supabase Auth, Supabase Storage, and a small metadata table.
 
+For a complete engineering, maintenance, and troubleshooting reference, see the [Code Manual](docs/CodeMan.md).
+
 ---
 
 ## Architecture
