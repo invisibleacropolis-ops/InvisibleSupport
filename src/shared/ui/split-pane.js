@@ -40,11 +40,55 @@ function clamp(pct) {
 }
 
 /**
+ * Keep the first panel capped to the live height of the viewer on the right.
+ * ResizeObserver also catches height changes caused by preview loading and by
+ * text reflow while the horizontal split is dragged.
+ */
+function initViewerHeightSync(container) {
+    if (!container.hasAttribute('data-match-viewer-height')) return () => {};
+
+    const cappedPanel = container.firstElementChild;
+    const viewerPanel = container.lastElementChild;
+    if (!(cappedPanel instanceof HTMLElement) || !(viewerPanel instanceof HTMLElement)) {
+        return () => {};
+    }
+
+    let animationFrame = 0;
+
+    function syncHeight() {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = requestAnimationFrame(() => {
+            const viewerHeight = Math.ceil(viewerPanel.getBoundingClientRect().height);
+            if (viewerHeight > 0) {
+                container.style.setProperty('--matched-viewer-height', `${viewerHeight}px`);
+            }
+        });
+    }
+
+    const observer = typeof ResizeObserver === 'function'
+        ? new ResizeObserver(syncHeight)
+        : null;
+
+    observer?.observe(viewerPanel);
+    window.addEventListener('resize', syncHeight);
+    syncHeight();
+
+    return () => {
+        cancelAnimationFrame(animationFrame);
+        observer?.disconnect();
+        window.removeEventListener('resize', syncHeight);
+        container.style.removeProperty('--matched-viewer-height');
+    };
+}
+
+/**
  * Initialize a single split-pane container.
  */
 function initPane(container) {
     const handle = container.querySelector('[data-split-handle]');
     if (!handle || instances.has(container)) return;
+
+    const cleanupViewerHeightSync = initViewerHeightSync(container);
 
     const paneId = container.dataset.splitId || '';
     const saved = paneId ? load(paneId) : null;
@@ -143,6 +187,7 @@ function initPane(container) {
             handle.removeEventListener('touchstart', startDrag);
             handle.removeEventListener('keydown', onKeydown);
             stopDrag();
+            cleanupViewerHeightSync();
         }
     });
 }

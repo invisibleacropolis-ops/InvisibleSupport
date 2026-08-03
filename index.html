@@ -275,6 +275,25 @@
         overflow: hidden;
       }
 
+      /* Gallery/library panes take their vertical cap from the viewer beside
+         them. The value is maintained by split-pane.js as viewer content and
+         horizontal widths change. */
+      .split-pane[data-match-viewer-height] {
+        align-items: flex-start;
+      }
+
+      .split-pane[data-match-viewer-height] > :first-child {
+        height: var(--matched-viewer-height, auto);
+      }
+
+      .split-pane[data-match-viewer-height] > :first-child.is-collapsed {
+        height: auto;
+      }
+
+      .split-pane[data-match-viewer-height] > .split-pane__handle {
+        align-self: stretch;
+      }
+
       .split-pane__handle {
         flex: 0 0 auto;
         width: 22px;
@@ -839,6 +858,18 @@
         align-items: center;
       }
 
+      .image-gallery-card,
+      .library-card {
+        min-height: 0;
+      }
+
+      .image-gallery__body,
+      .library-card__body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+      }
+
       .image-gallery__search {
         flex: 1 1 16rem;
       }
@@ -874,6 +905,35 @@
         padding: 0;
         display: grid;
         gap: var(--space-md);
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--color-accent) 55%, transparent 45%)
+          color-mix(in srgb, var(--color-surface-muted) 80%, transparent 20%);
+      }
+
+      .image-gallery__items:empty {
+        flex: 0 0 auto;
+      }
+
+      .image-gallery__items::-webkit-scrollbar,
+      .library-card__table::-webkit-scrollbar {
+        width: 0.75rem;
+        height: 0.75rem;
+      }
+
+      .image-gallery__items::-webkit-scrollbar-track,
+      .library-card__table::-webkit-scrollbar-track {
+        background: color-mix(in srgb, var(--color-surface-muted) 80%, transparent 20%);
+      }
+
+      .image-gallery__items::-webkit-scrollbar-thumb,
+      .library-card__table::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, var(--color-accent) 55%, transparent 45%);
+        border: 2px solid var(--color-surface-muted);
       }
 
       .image-gallery__items--grid {
@@ -1018,6 +1078,10 @@
         background: color-mix(in srgb, var(--color-surface) 85%, transparent 15%);
       }
 
+      .image-gallery__empty:not([hidden]) {
+        margin-block: auto;
+      }
+
       .image-viewer__toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -1157,8 +1221,14 @@
         border-radius: var(--radius-lg);
         border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent 20%);
         background: color-mix(in srgb, var(--color-surface) 92%, transparent 8%);
-        overflow-x: auto;
-        overflow-y: hidden;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--color-accent) 55%, transparent 45%)
+          color-mix(in srgb, var(--color-surface-muted) 80%, transparent 20%);
       }
 
       .library-table {
@@ -1170,6 +1240,9 @@
       .library-table thead {
         background: color-mix(in srgb, var(--color-surface) 70%, transparent 30%);
         color: color-mix(in srgb, var(--color-text) 90%, white 10%);
+        position: sticky;
+        top: 0;
+        z-index: 1;
       }
 
       .library-table th,
@@ -1558,7 +1631,7 @@
 
       <div class="portal__grid">
         <!-- Image gallery + image viewer -->
-        <div class="split-pane" data-split-id="img-split" style="--split-left: 40%;">
+        <div class="split-pane" data-split-id="img-split" data-match-viewer-height style="--split-left: 40%;">
           <article class="u-card image-gallery-card" aria-labelledby="image-gallery">
             <div class="u-card__header">
               <div class="u-card__header-row">
@@ -1567,7 +1640,7 @@
               </div>
             </div>
 
-            <div class="stack">
+            <div class="stack image-gallery__body">
               <div class="image-gallery__toolbar">
                 <label class="stack image-gallery__search" for="image-gallery-search">
                   <span class="u-card__subtitle">Filter images</span>
@@ -1607,7 +1680,6 @@
             <div class="u-card__header">
               <div class="u-card__header-row">
                 <h2 class="u-card__title" id="image-viewer">Image viewer</h2>
-                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse viewer panel">Collapse</button>
               </div>
             </div>
 
@@ -1697,7 +1769,7 @@
         </div>
 
         <!-- Document library + document viewer -->
-        <div class="split-pane" data-split-id="doc-split" style="--split-left: 45%;">
+        <div class="split-pane" data-split-id="doc-split" data-match-viewer-height style="--split-left: 45%;">
           <article class="u-card library-card" aria-labelledby="asset-library">
             <div class="u-card__header">
               <div class="u-card__header-row">
@@ -1706,7 +1778,7 @@
               </div>
             </div>
 
-            <div class="stack" role="region" aria-live="polite">
+            <div class="stack library-card__body" role="region" aria-live="polite">
               <label class="stack" for="library-search">
                 <span class="u-card__subtitle">Filter library</span>
                 <input
@@ -1752,7 +1824,6 @@
             <div class="u-card__header">
               <div class="u-card__header-row">
                 <h2 class="u-card__title" id="document-viewer">Document viewer</h2>
-                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse viewer panel">Collapse</button>
               </div>
             </div>
 
