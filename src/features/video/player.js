@@ -1,14 +1,14 @@
 /**
- * @fileoverview Audio-specific public API over the shared native media player.
+ * @fileoverview Video-specific public API over the shared native media player.
  */
 
 import { createMediaPlayer } from '../media/player-controller.js';
-import { isAudioDocument } from './types.js';
+import { isVideoDocument } from './types.js';
 
-const player = createMediaPlayer({ kind: 'audio', isMediaDocument: isAudioDocument });
+const player = createMediaPlayer({ kind: 'video', isMediaDocument: isVideoDocument });
 
 export const init = player.init;
-export const playTrack = player.playItem;
+export const playVideo = player.playItem;
 export const enqueue = player.enqueue;
 export const removeFromQueue = player.removeFromQueue;
 export const clearQueue = player.clearQueue;
@@ -18,7 +18,7 @@ export const getQueueIds = player.getQueueIds;
 
 export default {
     init,
-    playTrack,
+    playVideo,
     enqueue,
     removeFromQueue,
     clearQueue,

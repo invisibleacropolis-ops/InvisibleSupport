@@ -43,6 +43,14 @@ import * as ImageUpload from './features/images/upload.js';
 // =====================================================================
 import * as AudioPlayer from './features/audio/player.js';
 import * as AudioLibrary from './features/audio/library.js';
+import * as AudioUpload from './features/audio/upload.js';
+
+// =====================================================================
+// Phase VI: Feature Slices - Video
+// =====================================================================
+import * as VideoPlayer from './features/video/player.js';
+import * as VideoLibrary from './features/video/library.js';
+import * as VideoUpload from './features/video/upload.js';
 
 // =====================================================================
 // Phase VI: Feature Slices - Settings & Storage
@@ -74,6 +82,8 @@ window.ImageGallery = ImageGallery;
 window.LibraryView = LibraryView;
 window.AudioPlayer = AudioPlayer;
 window.AudioLibrary = AudioLibrary;
+window.VideoPlayer = VideoPlayer;
+window.VideoLibrary = VideoLibrary;
 
 // =====================================================================
 // Application Initialization
@@ -98,7 +108,7 @@ function initPanelToggles() {
  * Initialize the application once the DOM is ready
  */
 function init() {
-    console.log('[ESM] Invisible Support Portal initialized (18 modules loaded)');
+    console.log('[ESM] Invisible Support Portal initialized');
 
     // Apply translations to the DOM
     Localization.apply();
@@ -120,6 +130,10 @@ function init() {
     ImageUpload.init();
     AudioPlayer.init();
     AudioLibrary.init();
+    VideoPlayer.init();
+    VideoLibrary.init();
+    AudioUpload.init();
+    VideoUpload.init();
 
     // Initialize UI components
     SplitPane.init();

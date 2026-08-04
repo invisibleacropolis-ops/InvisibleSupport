@@ -13,7 +13,6 @@ const AUDIO_EXTENSIONS = new Set([
     'wav',
     'wave',
     'weba',
-    'webm',
 ]);
 
 export function getExtension(name) {
@@ -23,6 +22,7 @@ export function getExtension(name) {
 
 export function isAudioDocument(documentRecord) {
     const type = String(documentRecord?.type || '').toLowerCase();
+    if (type.startsWith('video/')) return false;
     return type.startsWith('audio/') || AUDIO_EXTENSIONS.has(getExtension(documentRecord?.name));
 }
 

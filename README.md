@@ -8,7 +8,7 @@ For a complete engineering, maintenance, and troubleshooting reference, see the 
 
 ## Architecture
 
-The app is organized by feature rather than by technical layer. Documents, images, audio playback, settings, storage UI, and shared services each live in their own modules under `src/`.
+The app is organized by feature rather than by technical layer. Documents, images, audio/video playback, dedicated media uploads, settings, storage UI, and shared services each live in their own modules under `src/`.
 
 ```mermaid
 graph TD
@@ -19,10 +19,14 @@ graph TD
     Main --> Documents[Documents Slice]
     Main --> Images[Images Slice]
     Main --> Audio[Audio Library and Player]
+    Main --> Video[Video Library and Player]
+    Main --> MediaUpload[Audio and Video Uploads]
     Main --> Settings[Supabase Settings]
     Documents --> Storage
     Images --> Storage
     Audio --> Documents
+    Video --> Documents
+    MediaUpload --> Documents
     Storage --> Supabase[(Supabase)]
 ```
 
@@ -38,6 +42,8 @@ graph TD
 - Documents: upload queue, metadata store, library table, and document previewer.
 - Images: image validation, upload flow, gallery, zoomable viewer, and metadata display.
 - Audio: searchable audio-only library, native streaming player, looping controls, and an optional reorderable queue over document assets.
+- Video: searchable video-only library, responsive native player, looping controls, and an optional reorderable queue over document assets.
+- Media uploads: dedicated queued Audio Upload and Video Upload panels with type validation, quota checks, progress, and drag-and-drop.
 - Settings: Supabase email sign-in, sign-out, storage limit, and connection test.
 
 ---

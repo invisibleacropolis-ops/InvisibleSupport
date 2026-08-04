@@ -10,7 +10,7 @@ This manual explains the current implementation of Invisible Support Portal for 
 
 - run the portal locally;
 - identify which module owns a visible behavior;
-- trace an image, document, or audio track from selection through Supabase and back to its viewer;
+- trace an image, document, audio track, or video from selection through Supabase and back to its viewer;
 - change a data field, viewer, upload rule, or panel without breaking adjacent features;
 - diagnose authentication, Row Level Security, Storage, quota, preview, and layout failures;
 - run the appropriate browser or real-backend checks before shipping a change.
@@ -40,7 +40,7 @@ flowchart LR
 Key characteristics:
 
 - The frontend is deployable directly to GitHub Pages or any static host.
-- JavaScript modules are organized into feature slices for images, documents, audio playback, settings, and storage UI.
+- JavaScript modules are organized into feature slices for images, documents, audio/video playback and upload, settings, and storage UI.
 - The Supabase publishable key is shipped to the browser. Security comes from authenticated sessions and RLS policies, not from hiding that key.
 - Uploaded files are private. The UI receives time-limited signed URLs for display and sharing.
 - The UI stores only small preferences in `localStorage`; durable asset records and file bytes live in Supabase.
@@ -96,6 +96,8 @@ npm run test:update
 | `src/features/images/` | Image model, upload controller, searchable gallery, and zoomable viewer |
 | `src/features/documents/` | Document model, upload queue, searchable library, and multi-format viewer |
 | `src/features/audio/` | Audio-file detection, searchable library, native player, loop modes, and optional playlist queue |
+| `src/features/video/` | Video-file detection, searchable library, responsive native player, loop modes, and optional playlist queue |
+| `src/features/media/` | Shared audio/video player, library, and queued-upload controller factories |
 | `src/features/settings/` | Supabase session and storage-budget form |
 | `src/features/storage/` | Usage meter and clear-all modal |
 | `src/shared/config/` | Checked-in Supabase project configuration |
@@ -135,9 +137,10 @@ The Supabase JavaScript client is not installed from `package.json`. It is dynam
 5. Initializes Supabase settings and the storage meter/modal.
 6. Initializes the document viewer, library, and upload controller.
 7. Initializes the image viewer, gallery, and upload controller.
-8. Initializes the audio player and audio library over the document-store snapshot.
-9. Initializes resizable split panes.
-10. Attaches generic collapse/expand behavior to remaining `data-panel-toggle` buttons.
+8. Initializes the audio and video players and libraries over the document-store snapshot.
+9. Initializes the dedicated audio and video upload controllers.
+10. Initializes resizable split panes.
+11. Attaches generic collapse/expand behavior to remaining `data-panel-toggle` buttons.
 
 The resource-store singletons are constructed when their modules are imported. Each store immediately starts a Supabase read. UI subscriptions receive an immediate snapshot, so the page can first render empty and then rerender when the asynchronous read finishes.
 
@@ -163,6 +166,8 @@ The following namespaces are exposed on `window`:
 - `LibraryView`
 - `AudioPlayer`
 - `AudioLibrary`
+- `VideoPlayer`
+- `VideoLibrary`
 
 `openStorageModal` and `closeStorageModal` are also exposed. New code should normally use ES imports. The globals are useful for interactive diagnostics and older integration points.
 
@@ -215,13 +220,15 @@ The main grid contains:
 1. Image Gallery and Image Viewer
 2. Document Library and Document Viewer
 3. Audio Library and Audio Player
-4. Image Upload and Document Upload
-5. Supabase Storage settings and usage meter
-6. Toast live region
-7. Clipboard confirmation markup
-8. Storage-management modal
+4. Video Library and Video Player
+5. Image Upload and Document Upload
+6. Audio Upload and Video Upload
+7. Supabase Storage settings and usage meter
+8. Toast live region
+9. Clipboard confirmation markup
+10. Storage-management modal
 
-The Image Viewer, Document Viewer, and Audio Player are permanently expanded and do not contain collapse buttons. Gallery, library, upload, and settings cards still use the generic collapse controller.
+The Image Viewer, Document Viewer, Audio Player, and Video Player are permanently expanded and do not contain collapse buttons. Gallery, library, upload, and settings cards still use the generic collapse controller.
 
 ### 6.5 Resizable split panes
 
@@ -608,28 +615,36 @@ The PDF preview surface uses a responsive vertical size of `min(105vh, 63rem)`, 
 
 The Adobe client ID is checked into the viewer module and may be restricted by configured domains. Adobe readiness times out after ten seconds. Mammoth and Office previews require their external services to be reachable.
 
-### 11.6 Audio Library and Audio Player
+### 11.6 Audio and video media slices
 
-Audio is deliberately stored as the existing document asset kind. There is no third Supabase `kind`, schema migration, second object, or duplicate metadata row. Upload an audio file through Document Upload; the audio feature filters the shared document-store snapshot by an `audio/*` MIME type or a recognized audio filename extension. The same record remains visible in Document Library and can still be opened in Document Viewer.
+Audio and video are deliberately stored as the existing document asset kind. There is no third Supabase `kind`, schema migration, second object, or duplicate metadata row. Upload through the dedicated Audio Upload or Video Upload panel; each feature filters the shared document-store snapshot by MIME type and recognized filename extensions. The same record remains visible in Document Library and can still be opened in Document Viewer.
 
-Recognized extensions are AAC, FLAC, M4A, MP3, OGA, OGG, OPUS, WAV/WAVE, WEBA, and WEBM. MIME inference exists in both the document model and Supabase upload adapter so files with a missing browser MIME type still receive an appropriate Storage content type.
+Recognized audio extensions are AAC, FLAC, M4A, MP3, OGA, OGG, OPUS, WAV/WAVE, and WEBA. Recognized video extensions are M4V, MOV, MP4, OGV, and WEBM. MIME inference exists in both the document model and Supabase upload adapter so files with a missing browser MIME type still receive an appropriate Storage content type. An explicit `audio/*` or `video/*` browser MIME type takes precedence when separating the two libraries.
 
-The Audio Library provides case-insensitive search over title, filename, MIME type, and description. Selecting a track sends its existing signed URL directly to a native HTML audio element. The player uses `preload="metadata"`, which asks the browser to preload metadata instead of the entire track; native range requests and buffering remain available when supported by Supabase Storage and the browser. This avoids the dedicated player's performing an up-front whole-file fetch and temporary Blob allocation.
+Both libraries provide case-insensitive search over title, filename, MIME type, and description. Selecting an item sends its existing signed URL directly to a native HTML audio or video element. Each player uses `preload="metadata"`, which asks the browser to preload metadata instead of the entire file; native range requests and buffering remain available when supported by Supabase Storage and the browser. This avoids the dedicated players performing an up-front whole-file fetch and temporary Blob allocation. Video uses a responsive 16:9 playback surface, `object-fit: contain`, and inline playback support.
+
+The media player factory owns the common transport, queue, event, preference, and store-subscription behavior. Thin audio and video modules retain media-specific public method names. The shared library factory owns filtering, selection, queue actions, deletion, and focus recovery. This keeps behavior identical while preserving separate DOM hooks, events, preferences, and queues for each media type.
 
 Transport behavior:
 
-- Native Play/Pause, seek, volume, mute, and playback-position controls come from the browser audio element.
-- Previous and Next traverse the filtered Audio Library when Playlist is off.
+- Native Play/Pause, seek, volume, mute, fullscreen/video options, and playback-position controls come from the browser media element as applicable.
+- Previous and Next traverse the corresponding filtered library when Playlist is off.
 - Loop Off stops at the current playback order boundary.
 - Loop Track sets native single-track looping.
 - Loop Playlist wraps from the final queued track to the first and enables wrapping for Previous/Next.
 - The Playlist switch shows or hides the queue. Queue actions are disabled in the library while Playlist is off.
-- The queue supports adding unique tracks, direct selection, moving entries earlier or later, removing entries, and clearing all entries.
-- When a queued track ends, playback advances automatically. Playlist loop wraps; otherwise the queue completes at its final entry.
+- The queue supports adding unique items, direct selection, moving entries earlier or later, removing entries, and clearing all entries.
+- When a queued item ends, playback advances automatically. Playlist loop wraps; otherwise the queue completes at its final entry.
 
-The Playlist enabled state and loop mode are small preferences persisted in `localStorage`. Queue membership and ordering are intentionally session-memory state and reset on a reload. Enabling Playlist while a track is selected inserts that track into the queue. Disabling Playlist does not delete the queue, so toggling it back on restores the session queue; it does disable Playlist loop mode.
+Audio and video have independent Playlist enabled and loop-mode preferences in `localStorage`. Queue membership and ordering are intentionally session-memory state and reset on a reload. Enabling Playlist while an item is selected inserts that item into its queue. Disabling Playlist does not delete the session queue, so toggling it back on restores the queue; it does disable Playlist loop mode.
 
-The Audio Library is height-matched to the Audio Player and scrolls internally. Their separator uses the shared pointer, touch, and keyboard resize implementation, with its own persisted split percentage.
+Each media library is height-matched to its player and scrolls internally. Each separator uses the shared pointer, touch, and keyboard resize implementation, with its own persisted split percentage.
+
+### 11.7 Dedicated media uploads
+
+Audio Upload and Video Upload are two cards in a separate resizable split row. Both use the shared queued-upload controller. The controller rejects files outside the media type, deduplicates by filename/size/last-modified timestamp, supports input selection and drag-and-drop, provides per-file removal and clear-all controls, checks the configured storage budget, uploads sequentially, and reports aggregate progress. A dropped valid file begins processing the current queue immediately; files selected with Browse remain queued until Submit.
+
+Successful uploads call `DocumentStore.createDocument()`, then select and focus the last item in the corresponding media player and library without autoplay. The upload cards do not introduce media stores: deleting the resulting record from any document-backed library removes the same Supabase object and metadata row.
 
 ## 12. Data lifecycle walkthroughs
 
@@ -791,12 +806,13 @@ The current functional checks verify:
 
 - signed-out Supabase settings state;
 - magic-link button availability and connection-test gating;
-- permanently expanded image/document/audio viewers;
+- permanently expanded image/document/audio/video viewers;
 - absence of viewer collapse buttons;
-- gallery/library height matching for all three split pairs;
+- gallery/library height matching for all four viewer split pairs;
 - internal vertical overflow configuration;
 - keyboard and mouse resizing of all collection/viewer dividers;
-- Audio Player native-control, metadata-preload, Playlist visibility, and loop-option state contracts.
+- Audio and Video native-control, metadata-preload, Playlist visibility, and loop-option state contracts;
+- dedicated media-upload type filters, hidden empty queues, and keyboard/mouse resizing of the upload split.
 
 Run:
 
@@ -860,14 +876,14 @@ The upload controllers map both configuration and authentication failures to the
 - Inspect Network requests for signed-URL creation and object fetch.
 - Check whether the viewer fell back to a direct authenticated download.
 
-### Audio file does not appear or play
+### Audio or video does not appear or play
 
-- Confirm it was uploaded through Document Upload and appears in Document Library.
-- Confirm its MIME type begins with `audio/` or its filename uses a recognized audio extension.
-- Inspect the audio element's media error in browser DevTools; codec support varies by browser even when the container extension is recognized.
+- Confirm it was uploaded through the matching media upload panel and appears in Document Library.
+- Confirm its MIME type begins with `audio/` or `video/`, or its filename uses a recognized extension.
+- Inspect the media element's error in browser DevTools; codec support varies by browser even when the container extension is recognized.
 - Request a fresh document-store load if the signed URL has expired.
 - Confirm the object responds to authenticated signed-URL reads and byte-range requests.
-- Use MP3, M4A/AAC, WAV, or browser-supported OGG/WebM for the broadest practical browser playback coverage.
+- For broad compatibility, prefer MP3 or M4A/AAC for audio and H.264/AAC MP4 or browser-supported WebM for video.
 
 ### PDF preview fails
 
@@ -928,8 +944,8 @@ Search the English dictionary for that key. Missing keys are returned verbatim. 
 - The dynamic Supabase import pins major version 2 but not a specific minor/patch release.
 - PDF, DOCX, and other Office previews depend on external services and network policy.
 - Signed URLs expire and are not permanent sharing links.
-- Audio queue membership is session-only; only Playlist enabled state and loop mode persist across reloads.
-- Audio codec support is browser-dependent; recognizing an extension does not guarantee that a browser can decode its codec.
+- Audio and video queue membership is session-only; only each Playlist enabled state and loop mode persist across reloads.
+- Media codec support is browser-dependent; recognizing a container extension does not guarantee that a browser can decode its streams.
 - The quota is client-side metadata accounting, not server-side enforcement.
 - Whole files are converted to data URLs/base64 in browser memory before upload.
 - Metadata persistence after object upload is not transactional.
@@ -1016,6 +1032,12 @@ Update all of these as one change:
 | Audio types | `getExtension()`, `isAudioDocument()` |
 | Audio library | `init()`, `focusItem()` |
 | Audio player | `init()`, `playTrack()`, `enqueue()`, `removeFromQueue()`, `clearQueue()`, `getSelectedId()`, `isPlaylistEnabled()`, `getQueueIds()` |
+| Audio upload | `init()` |
+| Video types | `getExtension()`, `isVideoDocument()` |
+| Video library | `init()`, `focusItem()` |
+| Video player | `init()`, `playVideo()`, `enqueue()`, `removeFromQueue()`, `clearQueue()`, `getSelectedId()`, `isPlaylistEnabled()`, `getQueueIds()` |
+| Video upload | `init()` |
+| Shared media controllers | `createMediaPlayer()`, `createMediaLibrary()`, `createMediaUpload()` |
 | Supabase settings | `init()` |
 | Storage UI | `init()`, `openModal()`, `closeModal()` |
 
@@ -1051,7 +1073,7 @@ Before handing off a code change:
 
 | Term | Meaning in this repository |
 | --- | --- |
-| Asset | An image or document (including audio stored as a document) plus its metadata row |
+| Asset | An image or document (including audio/video stored as documents) plus its metadata row |
 | Browser item | camelCase object consumed by feature stores and UI |
 | Metadata row | snake_case record in `public.assets` |
 | Object | Private file bytes in Supabase Storage |

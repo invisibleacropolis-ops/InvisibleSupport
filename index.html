@@ -1306,6 +1306,16 @@
         accent-color: var(--color-accent);
       }
 
+      .video-player__element {
+        display: block;
+        width: 100%;
+        max-height: min(62vh, 42rem);
+        aspect-ratio: 16 / 9;
+        object-fit: contain;
+        background: #000;
+        border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent 18%);
+      }
+
       .audio-player__transport {
         display: grid;
         grid-template-columns: auto auto minmax(10rem, 1fr) auto;
@@ -1348,6 +1358,12 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--space-sm);
+      }
+
+      .upload-card__queue[hidden],
+      .upload-progress[hidden],
+      .upload-feedback[hidden] {
+        display: none;
       }
 
       .audio-queue__heading {
@@ -2280,7 +2296,7 @@
 
               <ul class="audio-library__items" data-audio-library-items aria-live="polite"></ul>
               <p class="audio-library__empty" data-audio-library-empty>
-                No audio uploaded yet. Add MP3, WAV, M4A, OGG, FLAC, or WebM audio through Document Upload.
+                No audio uploaded yet. Add MP3, WAV, M4A, OGG, FLAC, or WebA through Audio Upload.
               </p>
             </div>
           </article>
@@ -2349,6 +2365,104 @@
               </div>
               <ol class="audio-queue__list" data-audio-queue-list></ol>
               <p class="audio-queue__empty" data-audio-queue-empty>Use Queue in the Audio Library to build a playlist.</p>
+            </section>
+          </article>
+        </div>
+
+        <!-- Video library + video player -->
+        <div class="split-pane" data-split-id="video-split" data-match-viewer-height style="--split-left: 42%;">
+          <article class="u-card audio-library-card video-library-card" aria-labelledby="video-library">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="video-library">Video Library</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse video library panel">Collapse</button>
+              </div>
+            </div>
+
+            <div class="stack audio-library__body video-library__body">
+              <label class="stack" for="video-library-search">
+                <span class="u-card__subtitle">Filter video</span>
+                <input
+                  class="u-input"
+                  type="search"
+                  id="video-library-search"
+                  placeholder="Search by title, file name, or type"
+                  autocomplete="off"
+                  data-video-search
+                />
+              </label>
+
+              <ul class="audio-library__items video-library__items" data-video-library-items aria-live="polite"></ul>
+              <p class="audio-library__empty video-library__empty" data-video-library-empty>
+                No video uploaded yet. Add MP4, WebM, OGV, M4V, or MOV video through Video Upload.
+              </p>
+            </div>
+          </article>
+
+          <div
+            class="split-pane__handle"
+            data-split-handle
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Drag to resize video library and player panels"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-valuenow="42"
+            tabindex="0"
+          ></div>
+
+          <article class="u-card audio-player-card video-player-card" aria-labelledby="video-player">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="video-player">Video Player</h2>
+              </div>
+            </div>
+
+            <div class="audio-player__deck video-player__deck">
+              <div class="audio-player__empty video-player__empty" data-video-player-empty>
+                <span class="audio-player__empty-symbol video-player__empty-symbol" aria-hidden="true">▣</span>
+                <p class="portal__lede" style="font-size: 0.95rem;">Choose a video from the Video Library.</p>
+              </div>
+
+              <div class="audio-player__active video-player__active" data-video-player-active hidden>
+                <div class="audio-player__now-playing video-player__now-playing">
+                  <span class="audio-player__eyebrow video-player__eyebrow">Now playing</span>
+                  <h3 class="audio-player__title video-player__title" data-video-title>—</h3>
+                  <p class="audio-player__filename video-player__filename" data-video-filename>—</p>
+                  <p class="audio-player__detail video-player__detail" data-video-detail>—</p>
+                </div>
+                <video class="video-player__element" controls preload="metadata" playsinline data-video-element></video>
+                <p class="audio-player__status video-player__status" data-video-status data-state="idle" aria-live="polite">Waiting for a video</p>
+              </div>
+            </div>
+
+            <div class="audio-player__transport video-player__transport" role="group" aria-label="Video transport and playback options">
+              <button class="u-btn u-btn--ghost" type="button" data-video-previous disabled>Previous</button>
+              <button class="u-btn u-btn--ghost" type="button" data-video-next disabled>Next</button>
+              <label class="audio-player__loop video-player__loop">
+                <span class="u-card__subtitle">Loop</span>
+                <select class="u-input" data-video-loop aria-label="Video loop mode">
+                  <option value="off">Off</option>
+                  <option value="track">Video</option>
+                  <option value="playlist">Playlist</option>
+                </select>
+              </label>
+              <label class="audio-player__playlist-toggle video-player__playlist-toggle">
+                <input type="checkbox" data-video-playlist-enabled />
+                <span>Playlist</span>
+              </label>
+            </div>
+
+            <section class="audio-queue video-queue" data-video-queue hidden aria-labelledby="video-queue-title">
+              <div class="audio-queue__header video-queue__header">
+                <div class="audio-queue__heading video-queue__heading">
+                  <h3 id="video-queue-title">Playlist queue</h3>
+                  <p data-video-queue-count>0 queued</p>
+                </div>
+                <button class="u-btn u-btn--ghost" type="button" data-video-queue-clear disabled>Clear queue</button>
+              </div>
+              <ol class="audio-queue__list video-queue__list" data-video-queue-list></ol>
+              <p class="audio-queue__empty video-queue__empty" data-video-queue-empty>Use Queue in the Video Library to build a playlist.</p>
             </section>
           </article>
         </div>
@@ -2563,6 +2677,171 @@
             </div>
           </form>
         </article>
+        </div>
+
+        <!-- Audio upload + video upload -->
+        <div class="split-pane" data-split-id="media-upload-split" style="--split-left: 50%;">
+          <article class="u-card upload-card audio-upload-card" aria-labelledby="audio-upload-title">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="audio-upload-title">Audio Upload</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse audio upload panel">Collapse</button>
+              </div>
+            </div>
+
+            <form class="stack stack--lg" data-audio-upload-form aria-label="Audio upload" novalidate>
+              <div class="stack">
+                <div class="upload-card__dropzone" role="region" aria-label="Audio upload dropzone" data-media-dropzone>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" role="presentation">
+                    <path fill="currentColor" d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1Zm-7 9a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1 1-1Z" />
+                  </svg>
+                  <div class="stack">
+                    <p class="portal__lede" style="font-size: 1rem;">Drop audio here or browse to build an upload queue.</p>
+                    <div class="upload-card__actions">
+                      <label class="u-btn u-btn--primary" for="audio-upload-input">Browse audio</label>
+                      <span aria-hidden="true">or</span>
+                      <span class="u-card__subtitle">Drop files to upload</span>
+                    </div>
+                    <p class="upload-card__accepted">MP3, M4A/AAC, WAV, FLAC, OGG/OPUS, and WebA.</p>
+                  </div>
+                  <input
+                    class="u-input"
+                    type="file"
+                    id="audio-upload-input"
+                    name="audio"
+                    multiple
+                    accept="audio/*,.aac,.flac,.m4a,.mp3,.oga,.ogg,.opus,.wav,.wave,.weba"
+                    aria-label="Upload audio files"
+                    data-media-file-input
+                  />
+                </div>
+              </div>
+
+              <section class="upload-card__queue stack" data-media-upload-queue hidden aria-live="polite">
+                <div class="upload-card__queue-header">
+                  <span class="u-card__subtitle">Audio queue</span>
+                  <button class="u-btn u-btn--ghost u-btn--sm" type="button" data-media-queue-clear>Clear queue</button>
+                </div>
+                <p class="upload-card__queue-summary" data-media-queue-summary hidden></p>
+                <p class="upload-card__queue-empty" data-media-queue-empty>No audio queued.</p>
+                <ul class="upload-card__queue-list" data-media-queue-list></ul>
+              </section>
+
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="audio-upload-title-input">
+                  <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
+                  <input class="u-input" type="text" id="audio-upload-title-input" placeholder="e.g. Incident bridge recording" data-media-title />
+                </label>
+                <label class="stack" for="audio-upload-description">
+                  <span class="u-card__subtitle">Description <span aria-hidden="true">(optional)</span></span>
+                  <input class="u-input" type="text" id="audio-upload-description" placeholder="Short note about the audio" data-media-description />
+                </label>
+              </div>
+
+              <div class="stack">
+                <span class="u-card__subtitle">Upload progress</span>
+                <div class="upload-progress" data-media-progress hidden>
+                  <div class="upload-progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span class="upload-progress__fill" data-media-progress-fill></span>
+                  </div>
+                  <p class="upload-progress__label" data-media-progress-label>Waiting for audio…</p>
+                </div>
+              </div>
+
+              <p class="upload-feedback" data-media-feedback role="alert" hidden></p>
+              <div class="upload-card__actions" style="justify-content: flex-start;">
+                <button class="u-btn u-btn--primary" type="submit">Upload audio</button>
+                <button class="u-btn u-btn--ghost" type="reset">Reset</button>
+              </div>
+            </form>
+          </article>
+
+          <div
+            class="split-pane__handle"
+            data-split-handle
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Drag to resize audio and video upload panels"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-valuenow="50"
+            tabindex="0"
+          ></div>
+
+          <article class="u-card upload-card video-upload-card" aria-labelledby="video-upload-title">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="video-upload-title">Video Upload</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse video upload panel">Collapse</button>
+              </div>
+            </div>
+
+            <form class="stack stack--lg" data-video-upload-form aria-label="Video upload" novalidate>
+              <div class="stack">
+                <div class="upload-card__dropzone" role="region" aria-label="Video upload dropzone" data-media-dropzone>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" role="presentation">
+                    <path fill="currentColor" d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1Zm-7 9a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4a1 1 0 1 1 2 0v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4a1 1 0 0 1 1-1Z" />
+                  </svg>
+                  <div class="stack">
+                    <p class="portal__lede" style="font-size: 1rem;">Drop video here or browse to build an upload queue.</p>
+                    <div class="upload-card__actions">
+                      <label class="u-btn u-btn--primary" for="video-upload-input">Browse video</label>
+                      <span aria-hidden="true">or</span>
+                      <span class="u-card__subtitle">Drop files to upload</span>
+                    </div>
+                    <p class="upload-card__accepted">MP4, WebM, OGV, M4V, and compatible MOV files.</p>
+                  </div>
+                  <input
+                    class="u-input"
+                    type="file"
+                    id="video-upload-input"
+                    name="video"
+                    multiple
+                    accept="video/*,.m4v,.mov,.mp4,.ogv,.webm"
+                    aria-label="Upload video files"
+                    data-media-file-input
+                  />
+                </div>
+              </div>
+
+              <section class="upload-card__queue stack" data-media-upload-queue hidden aria-live="polite">
+                <div class="upload-card__queue-header">
+                  <span class="u-card__subtitle">Video queue</span>
+                  <button class="u-btn u-btn--ghost u-btn--sm" type="button" data-media-queue-clear>Clear queue</button>
+                </div>
+                <p class="upload-card__queue-summary" data-media-queue-summary hidden></p>
+                <p class="upload-card__queue-empty" data-media-queue-empty>No video queued.</p>
+                <ul class="upload-card__queue-list" data-media-queue-list></ul>
+              </section>
+
+              <div class="form-grid form-grid--split">
+                <label class="stack" for="video-upload-title-input">
+                  <span class="u-card__subtitle">Title <span aria-hidden="true">(optional)</span></span>
+                  <input class="u-input" type="text" id="video-upload-title-input" placeholder="e.g. Deployment walkthrough" data-media-title />
+                </label>
+                <label class="stack" for="video-upload-description">
+                  <span class="u-card__subtitle">Description <span aria-hidden="true">(optional)</span></span>
+                  <input class="u-input" type="text" id="video-upload-description" placeholder="Short note about the video" data-media-description />
+                </label>
+              </div>
+
+              <div class="stack">
+                <span class="u-card__subtitle">Upload progress</span>
+                <div class="upload-progress" data-media-progress hidden>
+                  <div class="upload-progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span class="upload-progress__fill" data-media-progress-fill></span>
+                  </div>
+                  <p class="upload-progress__label" data-media-progress-label>Waiting for video…</p>
+                </div>
+              </div>
+
+              <p class="upload-feedback" data-media-feedback role="alert" hidden></p>
+              <div class="upload-card__actions" style="justify-content: flex-start;">
+                <button class="u-btn u-btn--primary" type="submit">Upload video</button>
+                <button class="u-btn u-btn--ghost" type="reset">Reset</button>
+              </div>
+            </form>
+          </article>
         </div>
 
         <!-- Supabase storage + storage usage -->
