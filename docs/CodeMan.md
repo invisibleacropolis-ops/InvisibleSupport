@@ -124,7 +124,7 @@ The page loads the Adobe Document Cloud View SDK with a deferred script and load
 
 Some imports contain query-string versions such as `?v=20260706-2`. These are cache-busting suffixes for static hosting. The browser still resolves them to the same source files.
 
-The Supabase JavaScript client is not installed from `package.json`. It is dynamically imported at runtime from `https://esm.sh/@supabase/supabase-js@2`. Large-video uploads dynamically import `tus-js-client@4` from the same CDN. DOCX rendering dynamically loads Mammoth from jsDelivr. Office previews use Microsoft Office Online. A browser or Content Security Policy that blocks those origins will lose the corresponding functionality.
+The Supabase JavaScript client is not installed from `package.json`. It is dynamically imported at runtime from `https://esm.sh/@supabase/supabase-js@2`. Large-video uploads dynamically import the pinned `tus-js-client@4.3.1` browser ESM entry from the same CDN; do not replace it with the package's generic ESM entry because that entry defaults to the Node adapter. DOCX rendering dynamically loads Mammoth from jsDelivr. Office previews use Microsoft Office Online. A browser or Content Security Policy that blocks those origins will lose the corresponding functionality.
 
 ### 5.2 Initialization order
 

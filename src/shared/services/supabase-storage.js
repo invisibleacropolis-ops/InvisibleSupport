@@ -7,7 +7,7 @@ import { SUPABASE_CONFIG, isConfigured as hasSupabaseConfig } from '../config/su
 import { getSupabaseClient } from './supabase-client.js?v=20260706-2';
 
 const CONFIG_KEY = 'invisibleSupport.supabaseConfig';
-const TUS_CLIENT_URL = 'https://esm.sh/tus-js-client@4';
+const TUS_CLIENT_URL = 'https://esm.sh/tus-js-client@4.3.1/lib.esm/browser/index.js';
 const RESUMABLE_UPLOAD_THRESHOLD_BYTES = 6 * 1024 * 1024;
 const RESUMABLE_UPLOAD_CHUNK_BYTES = 6 * 1024 * 1024;
 const configListeners = new Set();
