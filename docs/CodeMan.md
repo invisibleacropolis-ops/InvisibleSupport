@@ -599,6 +599,8 @@ Text previews are truncated after 100,000 characters.
 
 The resource cache is keyed by document ID and a revision derived from `sha` or `updatedAt`. It stores a Blob, object URL, MIME type, and cleanup function. Cache entries are discarded when a document disappears. A render token prevents a slow previous selection from overwriting a newer selection.
 
+The PDF preview surface uses a responsive vertical size of `min(140vh, 84rem)`, twice the original preview height. Its width remains fluid at 100%. The paired Document Library follows the resulting Document Viewer height through the split-pane height observer.
+
 The Adobe client ID is checked into the viewer module and may be restricted by configured domains. Adobe readiness times out after ten seconds. Mammoth and Office previews require their external services to be reachable.
 
 ## 12. Data lifecycle walkthroughs

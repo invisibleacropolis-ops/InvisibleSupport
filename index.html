@@ -1444,7 +1444,8 @@
       .viewer-card__pdf {
         position: relative;
         width: 100%;
-        min-height: min(70vh, 42rem);
+        height: min(140vh, 84rem);
+        min-height: min(140vh, 84rem);
         border-radius: var(--radius-md);
         background: white;
         box-shadow: var(--shadow-sm);
@@ -1455,6 +1456,12 @@
         color: var(--color-text-muted);
         font-size: 0.95rem;
         text-align: center;
+      }
+
+      .viewer-card__pdf iframe,
+      .viewer-card__pdf object,
+      .viewer-card__pdf embed {
+        height: 100%;
       }
 
       .viewer-card__pdf[data-state="ready"] {
