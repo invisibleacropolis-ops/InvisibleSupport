@@ -859,12 +859,14 @@
       }
 
       .image-gallery-card,
-      .library-card {
+      .library-card,
+      .audio-library-card {
         min-height: 0;
       }
 
       .image-gallery__body,
-      .library-card__body {
+      .library-card__body,
+      .audio-library__body {
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
@@ -920,18 +922,24 @@
       }
 
       .image-gallery__items::-webkit-scrollbar,
-      .library-card__table::-webkit-scrollbar {
+      .library-card__table::-webkit-scrollbar,
+      .audio-library__items::-webkit-scrollbar,
+      .audio-queue__list::-webkit-scrollbar {
         width: 0.75rem;
         height: 0.75rem;
       }
 
       .image-gallery__items::-webkit-scrollbar-track,
-      .library-card__table::-webkit-scrollbar-track {
+      .library-card__table::-webkit-scrollbar-track,
+      .audio-library__items::-webkit-scrollbar-track,
+      .audio-queue__list::-webkit-scrollbar-track {
         background: color-mix(in srgb, var(--color-surface-muted) 80%, transparent 20%);
       }
 
       .image-gallery__items::-webkit-scrollbar-thumb,
-      .library-card__table::-webkit-scrollbar-thumb {
+      .library-card__table::-webkit-scrollbar-thumb,
+      .audio-library__items::-webkit-scrollbar-thumb,
+      .audio-queue__list::-webkit-scrollbar-thumb {
         background: color-mix(in srgb, var(--color-accent) 55%, transparent 45%);
         border: 2px solid var(--color-surface-muted);
       }
@@ -1080,6 +1088,352 @@
 
       .image-gallery__empty:not([hidden]) {
         margin-block: auto;
+      }
+
+      .audio-library__items {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        flex-direction: column;
+        gap: var(--space-xs);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--color-accent) 55%, transparent 45%)
+          color-mix(in srgb, var(--color-surface-muted) 80%, transparent 20%);
+      }
+
+      .audio-library__items:empty {
+        flex: 0 0 auto;
+      }
+
+      .audio-library__item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--space-sm);
+        align-items: center;
+        border: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent 22%);
+        background: color-mix(in srgb, var(--color-surface) 90%, transparent 10%);
+        padding: var(--space-xs);
+      }
+
+      .audio-library__item.is-current {
+        border-color: var(--color-accent);
+        box-shadow: inset 3px 0 0 var(--color-accent);
+      }
+
+      .audio-library__track {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--color-text);
+        min-width: 0;
+        min-height: 2.75rem;
+        padding: var(--space-xs);
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: var(--space-sm);
+        align-items: center;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .audio-library__track:hover,
+      .audio-library__track:focus-visible {
+        color: var(--color-accent-strong);
+        outline: 1px solid var(--color-accent);
+        outline-offset: -1px;
+      }
+
+      .audio-library__marker {
+        width: 1.5rem;
+        color: var(--color-accent);
+        text-align: center;
+      }
+
+      .audio-library__text {
+        display: grid;
+        min-width: 0;
+        gap: var(--space-2xs);
+      }
+
+      .audio-library__text strong,
+      .audio-library__text span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .audio-library__text span {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+      }
+
+      .audio-library__actions,
+      .audio-queue__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2xs);
+        justify-content: flex-end;
+      }
+
+      .audio-library__action,
+      .audio-queue__action {
+        appearance: none;
+        border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent 25%);
+        background: transparent;
+        color: var(--color-text-muted);
+        min-height: 2.5rem;
+        padding: var(--space-xs) var(--space-sm);
+        font: inherit;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+
+      .audio-library__action:hover:not(:disabled),
+      .audio-library__action:focus-visible,
+      .audio-queue__action:hover:not(:disabled),
+      .audio-queue__action:focus-visible {
+        color: var(--color-accent-strong);
+        border-color: var(--color-accent);
+        outline: none;
+      }
+
+      .audio-library__action:disabled,
+      .audio-queue__action:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .audio-library__action--remove,
+      .audio-queue__action--remove {
+        color: var(--color-danger);
+      }
+
+      .audio-library__empty {
+        margin: auto 0;
+        padding: var(--space-lg);
+        color: var(--color-text-muted);
+        text-align: center;
+        border: 1px dashed color-mix(in srgb, var(--color-border) 70%, transparent 30%);
+      }
+
+      .audio-player-card {
+        min-width: 0;
+      }
+
+      .audio-player__deck {
+        min-height: 18rem;
+        border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent 18%);
+        background:
+          linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 8%, transparent 92%) 1px, transparent 1px),
+          linear-gradient(color-mix(in srgb, var(--color-accent) 8%, transparent 92%) 1px, transparent 1px);
+        background-size: 2rem 2rem;
+        display: grid;
+        align-content: center;
+        padding: var(--space-xl);
+      }
+
+      .audio-player__empty {
+        display: grid;
+        place-items: center;
+        gap: var(--space-sm);
+        color: var(--color-text-muted);
+        text-align: center;
+      }
+
+      .audio-player__empty-symbol {
+        color: var(--color-accent);
+        font-size: 2.5rem;
+        line-height: 1;
+      }
+
+      .audio-player__active {
+        display: grid;
+        gap: var(--space-lg);
+      }
+
+      .audio-player__active[hidden],
+      .audio-queue[hidden] {
+        display: none;
+      }
+
+      .audio-player__now-playing {
+        display: grid;
+        gap: var(--space-xs);
+      }
+
+      .audio-player__eyebrow {
+        color: var(--color-accent);
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .audio-player__title {
+        margin: 0;
+        font-size: clamp(1.25rem, 3vw, 2rem);
+        overflow-wrap: anywhere;
+      }
+
+      .audio-player__filename,
+      .audio-player__detail,
+      .audio-player__status {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-size: 0.8rem;
+        overflow-wrap: anywhere;
+      }
+
+      .audio-player__status[data-state="playing"] {
+        color: var(--color-success);
+      }
+
+      .audio-player__status[data-state="loading"] {
+        color: var(--color-accent-strong);
+      }
+
+      .audio-player__status[data-state="error"] {
+        color: var(--color-danger);
+      }
+
+      .audio-player__element {
+        width: 100%;
+        color-scheme: dark;
+        accent-color: var(--color-accent);
+      }
+
+      .audio-player__transport {
+        display: grid;
+        grid-template-columns: auto auto minmax(10rem, 1fr) auto;
+        gap: var(--space-sm);
+        align-items: end;
+      }
+
+      .audio-player__loop {
+        display: grid;
+        gap: var(--space-2xs);
+        min-width: 0;
+      }
+
+      .audio-player__playlist-toggle {
+        min-height: 2.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: var(--space-xs) var(--space-sm);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        cursor: pointer;
+      }
+
+      .audio-player__playlist-toggle input {
+        width: 1rem;
+        height: 1rem;
+        accent-color: var(--color-accent);
+      }
+
+      .audio-queue {
+        display: grid;
+        gap: var(--space-sm);
+        border-top: 1px solid var(--color-border);
+        padding-top: var(--space-lg);
+      }
+
+      .audio-queue__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+      }
+
+      .audio-queue__heading {
+        display: grid;
+        gap: var(--space-2xs);
+      }
+
+      .audio-queue__heading h3,
+      .audio-queue__heading p {
+        margin: 0;
+      }
+
+      .audio-queue__heading p,
+      .audio-queue__empty {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+      }
+
+      .audio-queue__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-height: 16rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        display: grid;
+        gap: var(--space-2xs);
+      }
+
+      .audio-queue__item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: var(--space-sm);
+        align-items: center;
+        padding: var(--space-xs);
+        border: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent 35%);
+      }
+
+      .audio-queue__item.is-current {
+        border-color: var(--color-accent);
+      }
+
+      .audio-queue__number {
+        color: var(--color-accent);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .audio-queue__track {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--color-text);
+        min-height: 2.5rem;
+        padding: var(--space-xs);
+        text-align: left;
+        overflow-wrap: anywhere;
+        cursor: pointer;
+      }
+
+      .audio-queue__track:hover,
+      .audio-queue__track:focus-visible {
+        color: var(--color-accent-strong);
+        outline: 1px solid var(--color-accent);
+      }
+
+      @media (max-width: 640px) {
+        .audio-library__item,
+        .audio-queue__item {
+          grid-template-columns: 1fr;
+        }
+
+        .audio-library__actions,
+        .audio-queue__actions {
+          justify-content: flex-start;
+        }
+
+        .audio-player__transport {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .audio-player__loop,
+        .audio-player__playlist-toggle {
+          grid-column: 1 / -1;
+        }
       }
 
       .image-viewer__toolbar {
@@ -1898,6 +2252,104 @@
                 </div>
               </div>
             </div>
+          </article>
+        </div>
+
+        <!-- Audio library + audio player -->
+        <div class="split-pane" data-split-id="audio-split" data-match-viewer-height style="--split-left: 42%;">
+          <article class="u-card audio-library-card" aria-labelledby="audio-library">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="audio-library">Audio Library</h2>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-label="Collapse audio library panel">Collapse</button>
+              </div>
+            </div>
+
+            <div class="stack audio-library__body">
+              <label class="stack" for="audio-library-search">
+                <span class="u-card__subtitle">Filter audio</span>
+                <input
+                  class="u-input"
+                  type="search"
+                  id="audio-library-search"
+                  placeholder="Search by title, file name, or type"
+                  autocomplete="off"
+                  data-audio-search
+                />
+              </label>
+
+              <ul class="audio-library__items" data-audio-library-items aria-live="polite"></ul>
+              <p class="audio-library__empty" data-audio-library-empty>
+                No audio uploaded yet. Add MP3, WAV, M4A, OGG, FLAC, or WebM audio through Document Upload.
+              </p>
+            </div>
+          </article>
+
+          <div
+            class="split-pane__handle"
+            data-split-handle
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Drag to resize audio library and player panels"
+            aria-valuemin="15"
+            aria-valuemax="85"
+            aria-valuenow="42"
+            tabindex="0"
+          ></div>
+
+          <article class="u-card audio-player-card" aria-labelledby="audio-player">
+            <div class="u-card__header">
+              <div class="u-card__header-row">
+                <h2 class="u-card__title" id="audio-player">Audio Player</h2>
+              </div>
+            </div>
+
+            <div class="audio-player__deck">
+              <div class="audio-player__empty" data-audio-player-empty>
+                <span class="audio-player__empty-symbol" aria-hidden="true">♫</span>
+                <p class="portal__lede" style="font-size: 0.95rem;">Choose a track from the Audio Library.</p>
+              </div>
+
+              <div class="audio-player__active" data-audio-player-active hidden>
+                <div class="audio-player__now-playing">
+                  <span class="audio-player__eyebrow">Now playing</span>
+                  <h3 class="audio-player__title" data-audio-title>—</h3>
+                  <p class="audio-player__filename" data-audio-filename>—</p>
+                  <p class="audio-player__detail" data-audio-detail>—</p>
+                </div>
+                <audio class="audio-player__element" controls preload="metadata" data-audio-element></audio>
+                <p class="audio-player__status" data-audio-status data-state="idle" aria-live="polite">Waiting for a track</p>
+              </div>
+            </div>
+
+            <div class="audio-player__transport" role="group" aria-label="Audio transport and playback options">
+              <button class="u-btn u-btn--ghost" type="button" data-audio-previous disabled>Previous</button>
+              <button class="u-btn u-btn--ghost" type="button" data-audio-next disabled>Next</button>
+              <label class="audio-player__loop">
+                <span class="u-card__subtitle">Loop</span>
+                <select class="u-input" data-audio-loop aria-label="Loop mode">
+                  <option value="off">Off</option>
+                  <option value="track">Track</option>
+                  <option value="playlist">Playlist</option>
+                </select>
+              </label>
+              <label class="audio-player__playlist-toggle">
+                <input type="checkbox" data-audio-playlist-enabled />
+                <span>Playlist</span>
+              </label>
+            </div>
+
+            <section class="audio-queue" data-audio-queue hidden aria-labelledby="audio-queue-title">
+              <div class="audio-queue__header">
+                <div class="audio-queue__heading">
+                  <h3 id="audio-queue-title">Playlist queue</h3>
+                  <p data-audio-queue-count>0 queued</p>
+                </div>
+                <button class="u-btn u-btn--ghost" type="button" data-audio-queue-clear disabled>Clear queue</button>
+              </div>
+              <ol class="audio-queue__list" data-audio-queue-list></ol>
+              <p class="audio-queue__empty" data-audio-queue-empty>Use Queue in the Audio Library to build a playlist.</p>
+            </section>
           </article>
         </div>
 

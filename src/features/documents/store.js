@@ -23,6 +23,17 @@ class DocumentStore extends BaseResourceStore {
         if (!name) return fallback;
         const extension = name.split('.').pop()?.toLowerCase();
         const lookup = {
+            aac: 'audio/aac',
+            flac: 'audio/flac',
+            m4a: 'audio/mp4',
+            mp3: 'audio/mpeg',
+            oga: 'audio/ogg',
+            ogg: 'audio/ogg',
+            opus: 'audio/ogg; codecs=opus',
+            wav: 'audio/wav',
+            wave: 'audio/wav',
+            weba: 'audio/webm',
+            webm: 'audio/webm',
             pdf: 'application/pdf',
             doc: 'application/msword',
             docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

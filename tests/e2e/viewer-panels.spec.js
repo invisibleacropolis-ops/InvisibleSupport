@@ -2,19 +2,23 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Viewer panels', () => {
-  test('keeps the image and document viewers expanded without panel toggles', async ({ page }) => {
+  test('keeps the image, document, and audio viewers expanded without panel toggles', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     const imageViewer = page.locator('article[aria-labelledby="image-viewer"]');
     const documentViewer = page.locator('article[aria-labelledby="document-viewer"]');
+    const audioPlayer = page.locator('article[aria-labelledby="audio-player"]');
 
     await expect(imageViewer).toBeVisible();
     await expect(documentViewer).toBeVisible();
+    await expect(audioPlayer).toBeVisible();
     await expect(imageViewer).not.toHaveClass(/\bis-collapsed\b/);
     await expect(documentViewer).not.toHaveClass(/\bis-collapsed\b/);
+    await expect(audioPlayer).not.toHaveClass(/\bis-collapsed\b/);
     await expect(imageViewer.locator('[data-panel-toggle]')).toHaveCount(0);
     await expect(documentViewer.locator('[data-panel-toggle]')).toHaveCount(0);
+    await expect(audioPlayer.locator('[data-panel-toggle]')).toHaveCount(0);
   });
 
   test('caps collection panels to their viewers and preserves horizontal resizing', async ({ page }) => {
@@ -33,6 +37,12 @@ test.describe('Viewer panels', () => {
         collection: page.locator('article[aria-labelledby="asset-library"]'),
         viewer: page.locator('article[aria-labelledby="document-viewer"]'),
         scrollRegion: page.locator('.library-card__table'),
+      },
+      {
+        split: page.locator('[data-split-id="audio-split"]'),
+        collection: page.locator('article[aria-labelledby="audio-library"]'),
+        viewer: page.locator('article[aria-labelledby="audio-player"]'),
+        scrollRegion: page.locator('[data-audio-library-items]'),
       },
     ];
 
@@ -76,5 +86,38 @@ test.describe('Viewer panels', () => {
         return Math.abs((collectionBox?.height ?? 0) - (viewerBox?.height ?? 0));
       }).toBeLessThanOrEqual(1);
     }
+  });
+
+  test('provides native audio transport and an optional playlist queue', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    const player = page.locator('article[aria-labelledby="audio-player"]');
+    const audio = player.locator('[data-audio-element]');
+    const playlistToggle = player.locator('[data-audio-playlist-enabled]');
+    const playlistLoop = player.locator('[data-audio-loop] option[value="playlist"]');
+    const queue = player.locator('[data-audio-queue]');
+
+    await expect(audio).toHaveAttribute('controls', '');
+    await expect(audio).toHaveAttribute('preload', 'metadata');
+    await expect(playlistToggle).not.toBeChecked();
+    await expect(playlistLoop).toHaveAttribute('disabled', '');
+    await expect(queue).toBeHidden();
+
+    await playlistToggle.check();
+
+    await expect(playlistToggle).toBeChecked();
+    await expect(playlistLoop).not.toHaveAttribute('disabled', '');
+    await expect(queue).toBeVisible();
+    await expect(queue.locator('[data-audio-queue-count]')).toHaveText('0 queued');
+
+    await player.locator('[data-audio-loop]').selectOption('playlist');
+    await expect(player.locator('[data-audio-loop]')).toHaveValue('playlist');
+
+    await playlistToggle.uncheck();
+
+    await expect(queue).toBeHidden();
+    await expect(playlistLoop).toHaveAttribute('disabled', '');
+    await expect(player.locator('[data-audio-loop]')).toHaveValue('off');
   });
 });

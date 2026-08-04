@@ -39,6 +39,12 @@ import * as ImageGallery from './features/images/gallery.js';
 import * as ImageUpload from './features/images/upload.js';
 
 // =====================================================================
+// Phase VI: Feature Slices - Audio
+// =====================================================================
+import * as AudioPlayer from './features/audio/player.js';
+import * as AudioLibrary from './features/audio/library.js';
+
+// =====================================================================
 // Phase VI: Feature Slices - Settings & Storage
 // =====================================================================
 import * as SupabaseSettings from './features/settings/supabase-settings.js?v=20260706-2';
@@ -66,6 +72,8 @@ window.DocumentViewer = DocumentViewer;
 window.ImageViewer = ImageViewer;
 window.ImageGallery = ImageGallery;
 window.LibraryView = LibraryView;
+window.AudioPlayer = AudioPlayer;
+window.AudioLibrary = AudioLibrary;
 
 // =====================================================================
 // Application Initialization
@@ -110,6 +118,8 @@ function init() {
     ImageViewer.init();
     ImageGallery.init();
     ImageUpload.init();
+    AudioPlayer.init();
+    AudioLibrary.init();
 
     // Initialize UI components
     SplitPane.init();
