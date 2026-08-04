@@ -7,9 +7,13 @@ import { SUPABASE_CONFIG, isConfigured as hasSupabaseConfig } from '../config/su
 import { getSupabaseClient } from './supabase-client.js?v=20260706-2';
 
 const CONFIG_KEY = 'invisibleSupport.supabaseConfig';
+const TUS_CLIENT_URL = 'https://esm.sh/tus-js-client@4';
+const RESUMABLE_UPLOAD_THRESHOLD_BYTES = 6 * 1024 * 1024;
+const RESUMABLE_UPLOAD_CHUNK_BYTES = 6 * 1024 * 1024;
 const configListeners = new Set();
 
 let config = loadConfigFromStorage();
+let tusClientPromise = null;
 
 function loadConfigFromStorage() {
     try {
@@ -94,6 +98,100 @@ function decodeBase64ToBlob(base64, type) {
         bytes[i] = binary.charCodeAt(i);
     }
     return new Blob([bytes], { type: type || 'application/octet-stream' });
+}
+
+function getTusClient() {
+    if (!tusClientPromise) {
+        tusClientPromise = import(TUS_CLIENT_URL);
+    }
+    return tusClientPromise;
+}
+
+function getResumableUploadEndpoint() {
+    const projectUrl = new URL(SUPABASE_CONFIG.projectUrl);
+    const projectId = projectUrl.hostname.split('.')[0];
+    return `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
+}
+
+function createUploadError(error) {
+    const response = error?.originalResponse;
+    const status = response?.getStatus?.() || error?.statusCode || error?.status || null;
+    let message = error?.message || t('errors.supabaseRequestFailed');
+
+    try {
+        const body = response?.getBody?.();
+        if (body) {
+            const parsed = JSON.parse(body);
+            message = parsed?.message || parsed?.error || message;
+        }
+    } catch {
+        // Keep the original transport error when the response is not JSON.
+    }
+
+    const uploadError = new Error(message);
+    uploadError.code = 'request';
+    uploadError.status = status;
+    uploadError.cause = error;
+    return uploadError;
+}
+
+async function requireAccessToken(client) {
+    const { data, error } = await client.auth.getSession();
+    const accessToken = data?.session?.access_token;
+    if (error || !accessToken) {
+        const authError = new Error(t('errors.supabaseAuthRequired'));
+        authError.code = 'auth';
+        authError.cause = error;
+        throw authError;
+    }
+    return accessToken;
+}
+
+async function uploadResumableFile(file, storagePath, mimeType, client, progressCallback) {
+    const [{ Upload }, accessToken] = await Promise.all([
+        getTusClient(),
+        requireAccessToken(client),
+    ]);
+
+    let resolveUpload;
+    let rejectUpload;
+    const completed = new Promise((resolve, reject) => {
+        resolveUpload = resolve;
+        rejectUpload = reject;
+    });
+
+    const upload = new Upload(file, {
+        endpoint: getResumableUploadEndpoint(),
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        headers: {
+            authorization: `Bearer ${accessToken}`,
+            apikey: SUPABASE_CONFIG.publishableKey,
+            'x-upsert': 'false',
+        },
+        uploadDataDuringCreation: true,
+        removeFingerprintOnSuccess: true,
+        chunkSize: RESUMABLE_UPLOAD_CHUNK_BYTES,
+        metadata: {
+            bucketName: SUPABASE_CONFIG.bucket,
+            objectName: storagePath,
+            contentType: mimeType,
+            cacheControl: '3600',
+        },
+        onError: error => rejectUpload(createUploadError(error)),
+        onProgress: (bytesUploaded, bytesTotal) => {
+            if (typeof progressCallback === 'function' && bytesTotal > 0) {
+                progressCallback(bytesUploaded / bytesTotal);
+            }
+        },
+        onSuccess: () => resolveUpload(),
+    });
+
+    try {
+        upload.start();
+        await completed;
+    } catch (error) {
+        throw error?.code ? error : createUploadError(error);
+    }
 }
 
 async function requireUser(client) {
@@ -302,6 +400,45 @@ export async function uploadFile(path, base64Content) {
     };
 }
 
+/**
+ * Uploads a browser File/Blob without base64 expansion. Files above Supabase's
+ * recommended standard-upload threshold use TUS so interrupted transfers can resume.
+ */
+export async function uploadFileObject(path, file, progressCallback) {
+    if (!(file instanceof Blob)) {
+        const invalidError = new Error('A File or Blob is required for direct upload.');
+        invalidError.code = 'invalid';
+        throw invalidError;
+    }
+
+    const client = await getSupabaseClient();
+    const user = await requireUser(client);
+    const parsed = parseLegacyUploadPath(path);
+    const mimeType = file.type || inferMimeType(parsed.name);
+    const storagePath = makeStoragePath(user.id, parsed.kind, parsed.id, parsed.name);
+
+    if (typeof progressCallback === 'function') progressCallback(0);
+
+    if (file.size > RESUMABLE_UPLOAD_THRESHOLD_BYTES) {
+        await uploadResumableFile(file, storagePath, mimeType, client, progressCallback);
+    } else {
+        const { error } = await client.storage
+            .from(SUPABASE_CONFIG.bucket)
+            .upload(storagePath, file, {
+                contentType: mimeType,
+                upsert: false,
+            });
+        if (error) throw createUploadError(error);
+        if (typeof progressCallback === 'function') progressCallback(1);
+    }
+
+    return {
+        path: storagePath,
+        sha: '',
+        downloadUrl: await signedUrlFor(client, storagePath),
+    };
+}
+
 export async function deleteFile(path) {
     if (!path) return;
     const client = await getSupabaseClient();
@@ -369,6 +506,7 @@ export default {
     writeManifest,
     deleteManifest,
     uploadFile,
+    uploadFileObject,
     deleteFile,
     testConnection,
     getStorageLimitBytes,

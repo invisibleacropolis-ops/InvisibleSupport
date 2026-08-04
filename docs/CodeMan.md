@@ -124,7 +124,7 @@ The page loads the Adobe Document Cloud View SDK with a deferred script and load
 
 Some imports contain query-string versions such as `?v=20260706-2`. These are cache-busting suffixes for static hosting. The browser still resolves them to the same source files.
 
-The Supabase JavaScript client is not installed from `package.json`. It is dynamically imported at runtime from `https://esm.sh/@supabase/supabase-js@2`. DOCX rendering dynamically loads Mammoth from jsDelivr. Office previews use Microsoft Office Online. A browser or Content Security Policy that blocks those origins will lose the corresponding functionality.
+The Supabase JavaScript client is not installed from `package.json`. It is dynamically imported at runtime from `https://esm.sh/@supabase/supabase-js@2`. Large-video uploads dynamically import `tus-js-client@4` from the same CDN. DOCX rendering dynamically loads Mammoth from jsDelivr. Office previews use Microsoft Office Online. A browser or Content Security Policy that blocks those origins will lose the corresponding functionality.
 
 ### 5.2 Initialization order
 
@@ -382,7 +382,7 @@ This creates one signed-URL request per returned item. Large libraries may there
 
 Writing a collection upserts all supplied rows by `id`. An empty array is a no-op in `writeItems`; explicit delete and clear paths perform removal.
 
-Uploading a file:
+Uploading an image, document, or audio file through the compatibility path:
 
 1. The feature store reads the browser `File` into a data URL.
 2. The base64 payload is passed to `uploadFile()` with a legacy-style path.
@@ -391,6 +391,8 @@ Uploading a file:
 5. It decodes base64 into a Blob and uploads with `upsert: false`.
 6. It returns the object path and a signed URL.
 7. The feature store then persists the metadata collection.
+
+Uploading a video uses `uploadFileObject()` instead. The original browser `File` is sent without data-URL/base64 expansion. Files at or below 6 MiB use the standard Supabase Storage upload API; larger files use the Supabase resumable-upload endpoint through `tus-js-client`, with 6 MiB chunks and bounded automatic retries. Both routes retain `upsert: false`, use the same authenticated owner path and metadata persistence, and report transfer progress to the shared media-upload controller.
 
 The MIME type used during object upload is inferred from the filename in the storage adapter. The feature record retains the browser MIME type or its feature-specific fallback.
 
@@ -644,7 +646,7 @@ Each media library is height-matched to its player and scrolls internally. Each 
 
 Audio Upload and Video Upload are two cards in a separate resizable split row. Both use the shared queued-upload controller. The controller rejects files outside the media type, deduplicates by filename/size/last-modified timestamp, supports input selection and drag-and-drop, provides per-file removal and clear-all controls, checks the configured storage budget, uploads sequentially, and reports aggregate progress. A dropped valid file begins processing the current queue immediately; files selected with Browse remain queued until Submit.
 
-Successful uploads call `DocumentStore.createDocument()`, then select and focus the last item in the corresponding media player and library without autoplay. The upload cards do not introduce media stores: deleting the resulting record from any document-backed library removes the same Supabase object and metadata row.
+Successful audio uploads call `DocumentStore.createDocument()`. Successful video uploads call `DocumentStore.createDocumentFromFile()` so the original `File` reaches the direct/resumable Storage route without base64 conversion. Both then select and focus the last item in the corresponding media player and library without autoplay. The upload cards do not introduce media stores: deleting the resulting record from any document-backed library removes the same Supabase object and metadata row.
 
 ## 12. Data lifecycle walkthroughs
 
@@ -885,6 +887,14 @@ The upload controllers map both configuration and authentication failures to the
 - Confirm the object responds to authenticated signed-URL reads and byte-range requests.
 - For broad compatibility, prefer MP3 or M4A/AAC for audio and H.264/AAC MP4 or browser-supported WebM for video.
 
+### Video upload fails
+
+- Read the inline upload error first. The controller distinguishes account/bucket size limits, disallowed MIME types, duplicates, authentication, and other Supabase request messages.
+- Compare the file size with both the client-configured storage budget and the project/bucket maximum file-size setting. The client budget is not proof that Supabase will accept a file of that size.
+- Files larger than 6 MiB require access to `https://esm.sh` for `tus-js-client` and to the project's `*.storage.supabase.co` resumable-upload endpoint. Check Content Security Policy, filtering, and browser Network errors for either origin.
+- Confirm the private bucket allows the video's MIME type. MP4 should normally arrive as `video/mp4`; WebM as `video/webm`; MOV as `video/quicktime`.
+- If the object arrives but no library record appears, investigate metadata persistence and remove any confirmed orphan only after checking `public.assets`.
+
 ### PDF preview fails
 
 - Confirm the object can be downloaded.
@@ -947,7 +957,7 @@ Search the English dictionary for that key. Missing keys are returned verbatim. 
 - Audio and video queue membership is session-only; only each Playlist enabled state and loop mode persist across reloads.
 - Media codec support is browser-dependent; recognizing a container extension does not guarantee that a browser can decode its streams.
 - The quota is client-side metadata accounting, not server-side enforcement.
-- Whole files are converted to data URLs/base64 in browser memory before upload.
+- Image, document, and audio uploads still convert whole files to data URLs/base64 in browser memory. Video uses the direct/resumable File path.
 - Metadata persistence after object upload is not transactional.
 - Store reloads are not directly driven by auth-state subscriptions.
 - Storage reads create a signed URL request for every asset.
@@ -1013,7 +1023,7 @@ Update all of these as one change:
 | Supabase config | `SUPABASE_CONFIG`, `isConfigured()` |
 | Supabase client | `isSupabaseConfigured()`, `getSupabaseClient()`, `getRedirectUrl()` |
 | Auth client | `getState()`, `isConnected()`, `getUserId()`, `subscribe()`, `initAuth()`, `fetchSession()`, `sendMagicLink()`, `signOut()`, `AuthError` |
-| Supabase storage | config subscription/update, item read/write/clear, manifest compatibility methods, upload/delete/download, connection test, budget conversion, legacy stubs |
+| Supabase storage | config subscription/update, item read/write/clear, manifest compatibility methods, base64 and direct/resumable upload, delete/download, connection test, budget conversion, legacy stubs |
 | Storage manager | `persist()`, `read()`, `clear()`, `clearAll()`, `subscribe()`, `getSnapshot()`, `estimateImpact()`, `getRemainingCapacity()`, `canStore()` |
 | Base resource store | subscription, load/persist, add/remove/clear, item access, duplicate naming, and Supabase upload methods for subclasses |
 

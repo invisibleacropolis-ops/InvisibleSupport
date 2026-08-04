@@ -176,7 +176,22 @@ export function createMediaUpload({ kind, isMediaDocument, selectItem, focusItem
             return 'Configure Supabase storage and sign in before uploading.';
         }
         if (error?.code === 'quota') return 'The upload exceeds the configured storage limit.';
-        return `Unable to upload ${file?.name || `${kind} file`}.`;
+
+        const status = Number(error?.status || error?.cause?.statusCode || error?.cause?.status || 0);
+        const detail = String(error?.message || error?.cause?.message || '').trim();
+        if (status === 413 || /too large|maximum.*size|exceeds.*limit|entity too large/i.test(detail)) {
+            return `${file?.name || `${displayName} file`} is larger than the Supabase account or bucket upload limit.`;
+        }
+        if (status === 415 || /mime|content.?type|media type/i.test(detail)) {
+            return `${file?.name || `${displayName} file`} has a file type that this Supabase bucket does not allow.`;
+        }
+        if (status === 409 || /already exists|duplicate/i.test(detail)) {
+            return `${file?.name || `${displayName} file`} already exists in storage. Remove it or rename the file before retrying.`;
+        }
+        if (detail) {
+            return `Unable to upload ${file?.name || `${kind} file`}: ${detail}`;
+        }
+        return `Unable to upload ${file?.name || `${kind} file`}. Check the connection and try again.`;
     }
 
     async function processFiles(fileList) {
@@ -218,7 +233,10 @@ export function createMediaUpload({ kind, isMediaDocument, selectItem, focusItem
 
                 updateProgress((index / files.length) * 100, `Preparing ${file.name}…`);
                 try {
-                    lastRecord = await DocumentStore.createDocument(file, {
+                    const createDocument = kind === 'video'
+                        ? DocumentStore.createDocumentFromFile
+                        : DocumentStore.createDocument;
+                    lastRecord = await createDocument(file, {
                         title: baseTitle
                             ? (files.length > 1 ? `${baseTitle} (${index + 1})` : baseTitle)
                             : undefined,

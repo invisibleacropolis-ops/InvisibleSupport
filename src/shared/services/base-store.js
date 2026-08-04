@@ -237,14 +237,7 @@ export class BaseResourceStore {
         return [...this.items];
     }
 
-    /**
-     * Uploads a file to Supabase and adds it to the store
-     * @param {string} id 
-     * @param {string} name 
-     * @param {string} base64Content 
-     * @returns {Promise<Object>} Supabase upload response partial { path, sha, downloadUrl }
-     */
-    async uploadToSupabase(id, name, base64Content) {
+    async runSupabaseUpload(id, name, upload) {
         if (!SupabaseStorage.isConfigured()) {
             const error = new Error(t('errors.supabaseConfigMissing'));
             error.code = 'config';
@@ -254,19 +247,16 @@ export class BaseResourceStore {
         const repoPath = `${this.baseUploadPath}/${id}/${encodeURIComponent(name)}`;
 
         try {
-            const upload = await SupabaseStorage.uploadFile(
-                repoPath,
-                base64Content,
-                `Add ${name}`
-            );
+            const result = await upload(repoPath);
             return {
-                repoPath: upload.path,
-                sha: upload.sha ?? '',
-                downloadUrl: upload.downloadUrl ?? '',
+                repoPath: result.path,
+                sha: result.sha ?? '',
+                downloadUrl: result.downloadUrl ?? '',
             };
         } catch (error) {
             const failure =
-                error?.code === 'config' || error?.code === 'auth' || error?.code === 'quota' || error?.code === 'persist'
+                error?.code === 'config' || error?.code === 'auth' || error?.code === 'quota' ||
+                error?.code === 'persist' || error?.code === 'request' || error?.code === 'invalid'
                     ? error
                     : new Error(t('errors.persistFailure'));
 
@@ -276,5 +266,27 @@ export class BaseResourceStore {
             }
             throw failure;
         }
+    }
+
+    /**
+     * Uploads base64 content to Supabase.
+     */
+    async uploadToSupabase(id, name, base64Content) {
+        return this.runSupabaseUpload(
+            id,
+            name,
+            repoPath => SupabaseStorage.uploadFile(repoPath, base64Content)
+        );
+    }
+
+    /**
+     * Uploads a browser File/Blob to Supabase without converting it to base64.
+     */
+    async uploadFileToSupabase(id, name, file, progressCallback) {
+        return this.runSupabaseUpload(
+            id,
+            name,
+            repoPath => SupabaseStorage.uploadFileObject(repoPath, file, progressCallback)
+        );
     }
 }

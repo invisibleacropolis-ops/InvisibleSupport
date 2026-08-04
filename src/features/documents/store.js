@@ -107,6 +107,32 @@ class DocumentStore extends BaseResourceStore {
         return documentRecord;
     }
 
+    /**
+     * Creates a document while sending the original File directly to Supabase.
+     * Intended for large media that should not be expanded into base64 in memory.
+     */
+    async createDocumentFromFile(file, extras = {}, progressCallback) {
+        if (!(file instanceof File)) {
+            const error = new Error(t('errors.invalidDocument'));
+            error.code = 'invalid';
+            throw error;
+        }
+
+        const documentRecord = this.normalizeDocument(file, extras);
+        const uploadInfo = await this.uploadFileToSupabase(
+            documentRecord.id,
+            documentRecord.name,
+            file,
+            progressCallback
+        );
+
+        Object.assign(documentRecord, uploadInfo);
+        documentRecord.blobUrl = documentRecord.downloadUrl;
+
+        await this.add(documentRecord);
+        return documentRecord;
+    }
+
     // Helper methods to maintain compatibility with existing API
 
     /**
@@ -137,6 +163,7 @@ const store = new DocumentStore();
 // Export bound methods for compatibility
 export const subscribe = store.subscribe.bind(store);
 export const createDocument = store.createDocument.bind(store);
+export const createDocumentFromFile = store.createDocumentFromFile.bind(store);
 export const removeDocument = store.removeDocument.bind(store);
 export const getDocument = store.getDocument.bind(store);
 export const getDocuments = store.getDocuments.bind(store);
@@ -146,6 +173,7 @@ export const clearAll = store.clearAll.bind(store);
 export default {
     subscribe,
     createDocument,
+    createDocumentFromFile,
     removeDocument,
     getDocument,
     getDocuments,
