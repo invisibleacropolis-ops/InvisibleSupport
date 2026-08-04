@@ -101,7 +101,7 @@ npm run test:update
 | `src/features/settings/` | Supabase session and storage-budget form |
 | `src/features/storage/` | Usage meter and clear-all modal |
 | `src/shared/config/` | Checked-in Supabase project configuration |
-| `src/shared/services/` | Supabase client, auth, object/metadata adapter, quota manager, and base resource store |
+| `src/shared/services/` | Supabase client, auth, object/metadata adapter, usage manager, and base resource store |
 | `src/shared/ui/` | Toasts, inline feedback, and resizable split panes |
 | `src/shared/infrastructure/` | General event bus and reactive proxy store |
 | `src/shared/localization/` | English strings and translation helpers |
@@ -288,12 +288,11 @@ The general `EventBus` provides `subscribe`, `emit`, `once`, `clear`, and `clear
 | `publishableKey` | Browser-safe publishable key |
 | `bucket` | Private bucket name, currently `invisible-support-assets` |
 | `assetsTable` | Metadata table name, currently `assets` |
-| `storageLimitMb` | Default application-level storage budget, currently 200 MB |
 | `signedUrlExpiresInSeconds` | Signed-link lifetime, currently 3600 seconds |
 
 Never place a service-role key in browser code, HTML, committed configuration, screenshots, or test fixtures. The publishable key is safe to expose only because the database and bucket are protected by RLS.
 
-The settings form can change the storage budget. It cannot change the project URL, publishable key, bucket, or table at runtime. The budget is stored under `invisibleSupport.supabaseConfig` in `localStorage`.
+The settings form exposes the checked-in project and bucket and manages authentication. It cannot change the project URL, publishable key, bucket, table, or a storage budget at runtime. The former `invisibleSupport.supabaseConfig` budget preference is removed on startup and is not used for upload decisions.
 
 ### 8.2 Supabase client
 
@@ -408,19 +407,19 @@ Signed URLs expire after one hour under the current configuration. A record can 
 
 In the current Supabase model, `repoPath` means the private Supabase object path, not a Git repository path. `sha` is retained for compatibility but is normally empty. `blobUrl` generally mirrors the signed `downloadUrl` until a viewer creates a temporary local object URL.
 
-### 8.8 Application storage budget
+### 8.8 Storage usage accounting
 
-`StorageManager` tracks the sum of item `size` values for documents and images. It compares that total with the configured budget and publishes:
+`StorageManager` tracks the sum of item `size` values for documents and images so the portal can display how much user content is represented by loaded metadata. It publishes:
 
 - `used`
-- `limit`
-- `ratio`
-- `isWarning` at 80% through less than 100%
-- `isExceeded` at 100% or more
+- `limit: null`
+- `ratio: 0`
+- `isWarning: false`
+- `isExceeded: false`
 
-Uploads also show a large-file warning when the projected ratio reaches 85%.
+The portal deliberately imposes no per-file or aggregate byte limit. `canStore()` always returns true and `getRemainingCapacity()` returns positive infinity for compatibility with older callers. Image, document, audio, and video controllers do not perform a client-side capacity rejection.
 
-This is an application policy, not the actual Supabase plan quota. It depends on metadata loaded into the browser and can differ from physical bucket usage if rows and objects are out of sync. Server-side enforcement would require an additional backend policy or function.
+Supabase plan, bucket, network, and browser constraints remain authoritative. The usage total depends on metadata loaded into the browser and can differ from physical bucket usage if rows and objects are out of sync.
 
 ## 9. Shared service and UI modules
 
@@ -470,7 +469,7 @@ Missing keys are returned literally. If the UI displays a string such as `upload
 
 ### 9.5 Storage UI
 
-The storage UI subscribes to quota, document, and image snapshots. It renders the meter, warning state, per-kind totals, available bytes, and clear-all modal.
+The storage UI subscribes to usage, document, and image snapshots. It renders total represented bytes, an explicit `No portal limit` status, per-kind totals, and the clear-all modal. It does not render a capacity progress bar or warning state.
 
 Clear All calls both feature stores concurrently. Each store attempts to remove its objects and then clears its metadata kind. This is a destructive operation with no undo.
 
@@ -644,7 +643,7 @@ Each media library is height-matched to its player and scrolls internally. Each 
 
 ### 11.7 Dedicated media uploads
 
-Audio Upload and Video Upload are two cards in a separate resizable split row. Both use the shared queued-upload controller. The controller rejects files outside the media type, deduplicates by filename/size/last-modified timestamp, supports input selection and drag-and-drop, provides per-file removal and clear-all controls, checks the configured storage budget, uploads sequentially, and reports aggregate progress. A dropped valid file begins processing the current queue immediately; files selected with Browse remain queued until Submit.
+Audio Upload and Video Upload are two cards in a separate resizable split row. Both use the shared queued-upload controller. The controller rejects files outside the media type, deduplicates by filename/size/last-modified timestamp, supports input selection and drag-and-drop, provides per-file removal and clear-all controls, uploads sequentially, and reports aggregate progress. It does not impose a client-side byte limit. A dropped valid file begins processing the current queue immediately; files selected with Browse remain queued until Submit.
 
 Successful audio uploads call `DocumentStore.createDocument()`. Successful video uploads call `DocumentStore.createDocumentFromFile()` so the original `File` reaches the direct/resumable Storage route without base64 conversion. Both then select and focus the last item in the corresponding media player and library without autoplay. The upload cards do not introduce media stores: deleting the resulting record from any document-backed library removes the same Supabase object and metadata row.
 
@@ -890,7 +889,7 @@ The upload controllers map both configuration and authentication failures to the
 ### Video upload fails
 
 - Read the inline upload error first. The controller distinguishes account/bucket size limits, disallowed MIME types, duplicates, authentication, and other Supabase request messages.
-- Compare the file size with both the client-configured storage budget and the project/bucket maximum file-size setting. The client budget is not proof that Supabase will accept a file of that size.
+- Compare the file size with the Supabase project and bucket maximum file-size settings. The portal intentionally has no client-configured byte limit.
 - Files larger than 6 MiB require access to `https://esm.sh` for `tus-js-client` and to the project's `*.storage.supabase.co` resumable-upload endpoint. Check Content Security Policy, filtering, and browser Network errors for either origin.
 - Confirm the private bucket allows the video's MIME type. MP4 should normally arrive as `video/mp4`; WebM as `video/webm`; MOV as `video/quicktime`.
 - If the object arrives but no library record appears, investigate metadata persistence and remove any confirmed orphan only after checking `public.assets`.
@@ -956,7 +955,7 @@ Search the English dictionary for that key. Missing keys are returned verbatim. 
 - Signed URLs expire and are not permanent sharing links.
 - Audio and video queue membership is session-only; only each Playlist enabled state and loop mode persist across reloads.
 - Media codec support is browser-dependent; recognizing a container extension does not guarantee that a browser can decode its streams.
-- The quota is client-side metadata accounting, not server-side enforcement.
+- The portal has no client-side upload or aggregate storage cap; Supabase and browser constraints are authoritative.
 - Image, document, and audio uploads still convert whole files to data URLs/base64 in browser memory. Video uses the direct/resumable File path.
 - Metadata persistence after object upload is not transactional.
 - Store reloads are not directly driven by auth-state subscriptions.
@@ -1070,7 +1069,7 @@ Before handing off a code change:
 - Check that DOM hooks and module selectors still agree.
 - Check signed-out and signed-in implications.
 - Check both metadata rows and private objects for storage changes.
-- Check quota accounting for create/delete/clear changes.
+- Check usage accounting for create/delete/clear changes; it must never block an upload.
 - Preserve object-URL cleanup and stale-render protection.
 - Preserve keyboard operation, focus recovery, labels, and live feedback.
 - Run `npm run test:e2e`.
@@ -1088,7 +1087,7 @@ Before handing off a code change:
 | Metadata row | snake_case record in `public.assets` |
 | Object | Private file bytes in Supabase Storage |
 | Signed URL | Temporary URL granting time-limited access to a private object |
-| Storage budget | Client-configured limit used by the portal, not the Supabase plan quota |
+| Storage usage | Sum of asset sizes represented by loaded metadata; informational only and never an upload cap |
 | `repoPath` | Compatibility property that now contains a Supabase object path |
 | Feature slice | Store, controller, and view modules grouped around one user capability |
 | RLS | Row Level Security policies that bind metadata and objects to `auth.uid()` |

@@ -6,7 +6,6 @@
 import * as Utils from '../../shared/utils.js';
 import { t } from '../../shared/localization/index.js';
 import * as Notifications from '../../shared/ui/notifications.js';
-import * as StorageManager from '../../shared/services/storage-manager.js';
 import * as DocumentStore from './store.js';
 import * as DocumentViewer from './viewer.js';
 import * as LibraryView from './library-view.js';
@@ -92,19 +91,14 @@ async function processFiles(fileList) {
     const files = Array.from(fileList ?? []).filter(f => f instanceof File);
     if (!files.length) { const msg = t('upload.errorSelectDocuments'); showFeedback(msg, 'error'); Notifications.toast(msg, 'error'); return; }
     resetFeedback(); isUploading = true; renderQueue();
-    let lastDoc = null; const baseTitle = titleInput?.value.trim() ?? ''; const desc = descriptionInput?.value.trim() ?? ''; let warnedLarge = false;
+    let lastDoc = null; const baseTitle = titleInput?.value.trim() ?? ''; const desc = descriptionInput?.value.trim() ?? '';
     try {
         for (const [i, file] of files.entries()) {
-            const impact = StorageManager.estimateImpact(file.size);
-            const snap = StorageManager.getSnapshot();
-            if (!StorageManager.canStore(impact)) { const msg = t('notifications.storageQuotaExceeded'); showFeedback(msg, 'error'); Notifications.toast(msg, 'error'); hideProgress(); return; }
-            const ratio = snap.limit ? Math.round(((snap.used + impact) / snap.limit) * 100) : 100;
-            if (!warnedLarge && ratio >= 85) { Notifications.toast(t('notifications.largeFileWarning'), 'info'); warnedLarge = true; }
             updateProgress((i / files.length) * 100, t('upload.progress', { name: file.name, percent: 0 }));
             try {
                 const rec = await DocumentStore.createDocument(file, { title: baseTitle ? (files.length > 1 ? `${baseTitle} (${i + 1})` : baseTitle) : undefined, description: desc }, p => updateProgress(((i + p) / files.length) * 100, t('upload.progress', { name: file.name, percent: Math.round(p * 100) })));
                 lastDoc = rec;
-            } catch (err) { console.error('Upload failed', err); const msg = err?.code === 'config' || err?.code === 'auth' ? t('upload.errorMissingConfiguration') : err?.code === 'quota' ? t('notifications.storageQuotaExceeded') : err?.code === 'persist' ? t('errors.persistFailure') : t('upload.errorUploadFailed', { name: file?.name ?? t('common.unknownFile') }); showFeedback(msg, 'error'); Notifications.toast(msg, 'error'); hideProgress(); return; }
+            } catch (err) { console.error('Upload failed', err); const msg = err?.code === 'config' || err?.code === 'auth' ? t('upload.errorMissingConfiguration') : err?.code === 'persist' ? t('errors.persistFailure') : t('upload.errorUploadFailed', { name: file?.name ?? t('common.unknownFile') }); showFeedback(msg, 'error'); Notifications.toast(msg, 'error'); hideProgress(); return; }
         }
         const summary = files.length > 1 ? t('upload.summaryDocumentsMultiple', { count: files.length }) : t('upload.summaryDocumentsSingle', { name: files[0]?.name ?? t('common.unknownFile') });
         updateProgress(100, summary); showFeedback(t('upload.complete'), 'success'); Notifications.toast(t('notifications.documentUploadSuccess'), 'success');

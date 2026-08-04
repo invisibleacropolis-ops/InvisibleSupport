@@ -1,13 +1,9 @@
 /**
- * @fileoverview Storage quota manager that tracks usage across manifests.
- * Provides quota checking, persistence, and storage usage notifications.
+ * @fileoverview Storage usage manager that tracks bytes across manifests.
+ * The portal intentionally imposes no client-side storage limit.
  */
 
-import { t } from '../localization/index.js';
 import * as SupabaseStorage from './supabase-storage.js?v=20260706-2';
-
-// Warning threshold (80% of quota)
-const WARNING_THRESHOLD = 0.8;
 
 // Track sizes by storage key
 const trackedSizes = new Map();
@@ -50,14 +46,12 @@ function buildSnapshot(overrideKey, overrideSize) {
     if (overrideKey && !trackedSizes.has(overrideKey) && typeof overrideSize === 'number') {
         used += overrideSize;
     }
-    const limit = SupabaseStorage.getStorageLimitBytes();
-    const ratio = limit > 0 ? used / limit : 0;
     return {
         used,
-        limit,
-        ratio,
-        isWarning: ratio >= WARNING_THRESHOLD && ratio < 1,
-        isExceeded: ratio >= 1,
+        limit: null,
+        ratio: 0,
+        isWarning: false,
+        isExceeded: false,
     };
 }
 
@@ -84,13 +78,6 @@ export async function persist(key, value) {
         return value;
     }
     const size = calculateSize(value);
-    const snapshot = buildSnapshot(key, size);
-    if (snapshot.isExceeded) {
-        const error = new Error(t('errors.quotaExceeded'));
-        error.code = 'quota';
-        error.snapshot = snapshot;
-        throw error;
-    }
     try {
         const result = await SupabaseStorage.writeItems(kind, value);
         manifestMeta.set(key, { sha: result.sha });
@@ -187,23 +174,15 @@ export function estimateImpact(bytes) {
  * Gets remaining storage capacity in bytes
  */
 export function getRemainingCapacity() {
-    const snapshot = buildSnapshot();
-    return Math.max(snapshot.limit - snapshot.used, 0);
+    return Number.POSITIVE_INFINITY;
 }
 
 /**
  * Checks if additional bytes can be stored
  */
 export function canStore(additionalBytes) {
-    if (!Number.isFinite(additionalBytes) || additionalBytes <= 0) return true;
-    const snapshot = buildSnapshot();
-    return snapshot.used + additionalBytes <= snapshot.limit;
+    return true;
 }
-
-// Subscribe to Supabase config changes to update notifications
-SupabaseStorage.subscribe(() => {
-    notify();
-});
 
 // Default export
 export default {

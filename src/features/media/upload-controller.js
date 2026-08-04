@@ -4,7 +4,6 @@
 
 import * as Utils from '../../shared/utils.js';
 import * as Notifications from '../../shared/ui/notifications.js';
-import * as StorageManager from '../../shared/services/storage-manager.js';
 import * as DocumentStore from '../documents/store.js';
 
 /**
@@ -175,8 +174,6 @@ export function createMediaUpload({ kind, isMediaDocument, selectItem, focusItem
         if (error?.code === 'config' || error?.code === 'auth') {
             return 'Configure Supabase storage and sign in before uploading.';
         }
-        if (error?.code === 'quota') return 'The upload exceeds the configured storage limit.';
-
         const status = Number(error?.status || error?.cause?.statusCode || error?.cause?.status || 0);
         const detail = String(error?.message || error?.cause?.message || '').trim();
         if (status === 413 || /too large|maximum.*size|exceeds.*limit|entity too large/i.test(detail)) {
@@ -209,28 +206,9 @@ export function createMediaUpload({ kind, isMediaDocument, selectItem, focusItem
         let lastRecord = null;
         const baseTitle = titleInput?.value.trim() ?? '';
         const description = descriptionInput?.value.trim() ?? '';
-        let warnedLarge = false;
 
         try {
             for (const [index, file] of files.entries()) {
-                const impact = StorageManager.estimateImpact(file.size);
-                const snapshot = StorageManager.getSnapshot();
-                if (!StorageManager.canStore(impact)) {
-                    const message = 'The upload exceeds the configured storage limit.';
-                    showFeedback(message, 'error');
-                    Notifications.toast(message, 'error');
-                    hideProgress();
-                    return;
-                }
-
-                const ratio = snapshot.limit
-                    ? Math.round(((snapshot.used + impact) / snapshot.limit) * 100)
-                    : 100;
-                if (!warnedLarge && ratio >= 85) {
-                    Notifications.toast('This upload will use most of the configured storage budget.', 'info');
-                    warnedLarge = true;
-                }
-
                 updateProgress((index / files.length) * 100, `Preparing ${file.name}…`);
                 try {
                     const createDocument = kind === 'video'

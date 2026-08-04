@@ -10,7 +10,6 @@ export const SUPABASE_CONFIG = {
     publishableKey: 'sb_publishable_ed-VTx2u60tI9SnQeVbGRQ_IEHA36FO',
     bucket: 'invisible-support-assets',
     assetsTable: 'assets',
-    storageLimitMb: 200,
     signedUrlExpiresInSeconds: 60 * 60,
 };
 

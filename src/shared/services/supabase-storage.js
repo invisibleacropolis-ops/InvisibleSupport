@@ -6,38 +6,16 @@ import { t } from '../localization/index.js';
 import { SUPABASE_CONFIG, isConfigured as hasSupabaseConfig } from '../config/supabase.js?v=20260706-2';
 import { getSupabaseClient } from './supabase-client.js?v=20260706-2';
 
-const CONFIG_KEY = 'invisibleSupport.supabaseConfig';
+const LEGACY_CONFIG_KEY = 'invisibleSupport.supabaseConfig';
 const TUS_CLIENT_URL = 'https://esm.sh/tus-js-client@4.3.1/lib.esm/browser/index.js';
 const RESUMABLE_UPLOAD_THRESHOLD_BYTES = 6 * 1024 * 1024;
 const RESUMABLE_UPLOAD_CHUNK_BYTES = 6 * 1024 * 1024;
-const configListeners = new Set();
-
-let config = loadConfigFromStorage();
 let tusClientPromise = null;
 
-function loadConfigFromStorage() {
-    try {
-        const stored = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null');
-        const limit = Number(stored?.storageLimitMb);
-        return {
-            storageLimitMb: Number.isFinite(limit) && limit > 0
-                ? limit
-                : SUPABASE_CONFIG.storageLimitMb,
-        };
-    } catch {
-        return { storageLimitMb: SUPABASE_CONFIG.storageLimitMb };
-    }
-}
-
-function notifyConfigListeners() {
-    const snapshot = getConfig();
-    configListeners.forEach((listener) => {
-        try {
-            listener(snapshot);
-        } catch (error) {
-            console.warn('Supabase config listener error', error);
-        }
-    });
+try {
+    localStorage.removeItem(LEGACY_CONFIG_KEY);
+} catch {
+    // Storage access can be unavailable in restricted browser contexts.
 }
 
 function mapStorageKeyToKind(keyOrPath) {
@@ -287,29 +265,14 @@ export function getConfig() {
         projectUrl: SUPABASE_CONFIG.projectUrl,
         bucket: SUPABASE_CONFIG.bucket,
         assetsTable: SUPABASE_CONFIG.assetsTable,
-        storageLimitMb: config.storageLimitMb,
         configured: hasSupabaseConfig(),
     };
 }
 
 export function subscribe(listener) {
     if (typeof listener !== 'function') return () => {};
-    configListeners.add(listener);
     listener(getConfig());
-    return () => configListeners.delete(listener);
-}
-
-export function updateConfig(partial = {}) {
-    const limit = Number(partial.storageLimitMb);
-    config = {
-        storageLimitMb: Number.isFinite(limit) && limit > 0 ? limit : config.storageLimitMb,
-    };
-    try {
-        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-    } catch (error) {
-        console.warn('Unable to persist Supabase configuration', error);
-    }
-    notifyConfigListeners();
+    return () => {};
 }
 
 export function isConfigured() {
@@ -484,11 +447,6 @@ export async function testConnection() {
     return true;
 }
 
-export function getStorageLimitBytes() {
-    const limitMb = Number(config.storageLimitMb);
-    return (Number.isFinite(limitMb) && limitMb > 0 ? limitMb : SUPABASE_CONFIG.storageLimitMb) * 1024 * 1024;
-}
-
 export function buildRawUrl() {
     return '';
 }
@@ -499,7 +457,6 @@ export function looksLikePat() {
 
 export default {
     getConfig,
-    updateConfig,
     subscribe,
     isConfigured,
     readManifest,
@@ -509,7 +466,6 @@ export default {
     uploadFileObject,
     deleteFile,
     testConnection,
-    getStorageLimitBytes,
     buildRawUrl,
     downloadFile,
     looksLikePat,

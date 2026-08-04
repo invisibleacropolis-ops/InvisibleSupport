@@ -2865,14 +2865,10 @@
                 </div>
               </div>
 
-              <div class="form-grid form-grid--split">
+              <div class="form-grid">
                 <label class="stack" for="supabase-email">
                   <span class="u-card__subtitle" data-i18n-key="labels.supabaseEmail"></span>
                   <input class="u-input" type="email" id="supabase-email" name="supabase-email" autocomplete="email" placeholder="you@example.com" data-supabase-email />
-                </label>
-                <label class="stack" for="supabase-limit">
-                  <span class="u-card__subtitle" data-i18n-key="labels.supabaseStorageLimit"></span>
-                  <input class="u-input" type="number" min="1" step="1" id="supabase-limit" name="supabase-limit" data-supabase-limit />
                 </label>
               </div>
 
@@ -2890,7 +2886,6 @@
               <p class="upload-feedback" data-supabase-feedback hidden></p>
 
               <div class="upload-card__actions" style="justify-content: flex-start;">
-                <button class="u-btn u-btn--primary" type="submit" data-i18n-key="common.save"></button>
                 <button class="u-btn u-btn--ghost" type="button" data-supabase-test data-i18n-key="labels.supabaseTestConnection"></button>
               </div>
 
@@ -2913,9 +2908,6 @@
                     data-storage-manage
                     data-i18n-key="labels.storageManageCta"
                   ></button>
-                </div>
-                <div class="storage-meter__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-storage-progress>
-                  <span class="storage-meter__progress-bar" data-storage-progress-bar></span>
                 </div>
                 <p class="storage-meter__warning" data-storage-warning hidden></p>
               </section>

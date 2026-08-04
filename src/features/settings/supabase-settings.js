@@ -16,7 +16,6 @@ export function init() {
     if (!form) return;
 
     const emailInput = form.querySelector('[data-supabase-email]');
-    const limitInput = form.querySelector('[data-supabase-limit]');
     const projectValue = form.querySelector('[data-supabase-project-value]');
     const bucketValue = form.querySelector('[data-supabase-bucket-value]');
     const feedback = form.querySelector('[data-supabase-feedback]');
@@ -41,10 +40,6 @@ export function init() {
         if (bucketValue) {
             bucketValue.textContent = config.bucket || '—';
         }
-        if (limitInput && document.activeElement !== limitInput) {
-            const limit = Number(config.storageLimitMb);
-            limitInput.value = Number.isFinite(limit) && limit > 0 ? String(limit) : '';
-        }
     }
 
     function renderAuthState(state) {
@@ -67,22 +62,6 @@ export function init() {
         }
         if (testButton) testButton.disabled = !configured || !connected;
     }
-
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        clearFeedback();
-        const limitValue = Number(limitInput?.value);
-        try {
-            if (Number.isFinite(limitValue) && limitValue > 0) {
-                SupabaseStorage.updateConfig({ storageLimitMb: limitValue });
-            }
-            showFeedback(t('notifications.supabaseConfigSaved'), 'success');
-            Notifications.toast(t('notifications.supabaseConfigSaved'), 'success');
-        } catch (error) {
-            console.error('Failed to save Supabase configuration', error);
-            showFeedback(error?.message || t('errors.supabaseRequestFailed'), 'error');
-        }
-    });
 
     signInButton?.addEventListener('click', async (event) => {
         event.preventDefault();

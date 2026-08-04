@@ -25,4 +25,27 @@ test.describe('Supabase auth UI', () => {
     await expect(page.locator('[data-supabase-signin]')).toBeEnabled();
     await expect(page.locator('[data-supabase-test]')).toBeDisabled();
   });
+
+  test('does not impose a portal upload or storage limit', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('[data-supabase-limit]')).toHaveCount(0);
+    await expect(page.locator('[data-storage-limit]')).toHaveText('No portal limit');
+
+    const storagePolicy = await page.evaluate(async () => {
+      const manager = await import('/src/shared/services/storage-manager.js');
+      return {
+        canStoreLargeFile: manager.canStore(Number.MAX_SAFE_INTEGER),
+        remainingCapacity: manager.getRemainingCapacity(),
+        limit: manager.getSnapshot().limit,
+      };
+    });
+
+    expect(storagePolicy).toEqual({
+      canStoreLargeFile: true,
+      remainingCapacity: Number.POSITIVE_INFINITY,
+      limit: null,
+    });
+  });
 });

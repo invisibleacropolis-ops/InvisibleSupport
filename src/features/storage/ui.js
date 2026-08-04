@@ -23,8 +23,6 @@ export function init() {
     const meter = document.querySelector('[data-storage-meter]');
     const summaryEl = meter?.querySelector('[data-storage-summary]');
     const limitEl = meter?.querySelector('[data-storage-limit]');
-    const progress = meter?.querySelector('[data-storage-progress]');
-    const progressBar = meter?.querySelector('[data-storage-progress-bar]');
     const warningEl = meter?.querySelector('[data-storage-warning]');
     const manageButton = meter?.querySelector('[data-storage-manage]');
     const storageModal = document.getElementById('storage-modal');
@@ -40,13 +38,6 @@ export function init() {
     let documents = DocumentStore.getDocuments();
     let images = ImageStore.getImages();
 
-    function formatLimit(limitBytes) {
-        if (!Number.isFinite(limitBytes) || limitBytes <= 0) {
-            return t('labels.storageLimitUnset');
-        }
-        return Utils.formatBytes(limitBytes);
-    }
-
     function describeCollection(count, singularKey, pluralKey, bytes) {
         const label = count === 1 ? t(singularKey) : t(pluralKey);
         const sizeText = Utils.formatBytes(bytes);
@@ -56,37 +47,18 @@ export function init() {
     function renderMeter() {
         if (!meter) return;
         const usedText = Utils.formatBytes(snapshot.used);
-        const limitText = formatLimit(snapshot.limit);
-        const percent = snapshot.limit > 0 ? Math.min(100, Math.round((snapshot.used / snapshot.limit) * 100)) : 0;
 
         if (summaryEl) {
-            summaryEl.textContent = t('common.usageSummary', { used: usedText, limit: limitText });
+            summaryEl.textContent = t('common.usageSummary', { used: usedText });
         }
         if (limitEl) {
-            limitEl.textContent = limitText;
+            limitEl.textContent = t('labels.storageLimitUnset');
         }
-        if (progress) {
-            progress.setAttribute('aria-valuemin', '0');
-            progress.setAttribute('aria-valuemax', '100');
-            progress.setAttribute('aria-valuenow', String(percent));
-        }
-        if (progressBar) {
-            progressBar.style.width = `${percent}%`;
-        }
-        meter.classList.toggle('is-warning', snapshot.isWarning || snapshot.isExceeded);
-        meter.classList.toggle('is-exceeded', snapshot.isExceeded);
+        meter.classList.remove('is-warning', 'is-exceeded');
 
         if (warningEl) {
-            if (snapshot.isExceeded) {
-                warningEl.hidden = false;
-                warningEl.textContent = t('notifications.storageQuotaExceeded');
-            } else if (snapshot.isWarning) {
-                warningEl.hidden = false;
-                warningEl.textContent = t('notifications.storageWarning', { percent });
-            } else {
-                warningEl.hidden = true;
-                warningEl.textContent = '';
-            }
+            warningEl.hidden = true;
+            warningEl.textContent = '';
         }
     }
 
@@ -94,15 +66,11 @@ export function init() {
         if (!storageModal) return;
         const docBytes = documents.reduce((total, doc) => total + (Number(doc?.size) || 0), 0);
         const imageBytes = images.reduce((total, image) => total + (Number(image?.size) || 0), 0);
-        const availableBytes = snapshot.limit > 0 ? Math.max(snapshot.limit - snapshot.used, 0) : 0;
-
         if (modalUsed) {
             modalUsed.textContent = Utils.formatBytes(snapshot.used);
         }
         if (modalAvailable) {
-            modalAvailable.textContent = snapshot.limit > 0
-                ? Utils.formatBytes(availableBytes)
-                : t('labels.storageLimitUnset');
+            modalAvailable.textContent = t('labels.storageLimitUnset');
         }
         if (modalDocuments) {
             modalDocuments.textContent = describeCollection(

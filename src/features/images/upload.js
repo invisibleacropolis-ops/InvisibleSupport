@@ -5,7 +5,6 @@
 
 import { t } from '../../shared/localization/index.js';
 import * as Notifications from '../../shared/ui/notifications.js';
-import * as StorageManager from '../../shared/services/storage-manager.js';
 import * as ImageStore from './store.js';
 import * as ImageViewer from './viewer.js';
 import * as ImageGallery from './gallery.js';
@@ -51,7 +50,6 @@ function describeError(file, error) {
         case 'type': return t('upload.errorUnsupportedImage', { name: fileName });
         case 'max-dimensions': return t('upload.errorImageTooLarge', { name: fileName, limit: MAX_IMAGE_DIMENSION });
         case 'dimensions': return t('upload.errorImageDimensions', { name: fileName });
-        case 'quota': return t('notifications.storageQuotaExceeded');
         case 'persist': return t('errors.persistFailure');
         default: return t('upload.errorUploadFailed', { name: fileName });
     }
@@ -65,14 +63,8 @@ async function processFiles(fileList) {
     let lastImage = null;
     const baseTitle = titleInput?.value.trim() ?? '';
     const baseAlt = altInput?.value.trim() ?? '';
-    let warnedLarge = false;
 
     for (const [index, file] of files.entries()) {
-        const impact = StorageManager.estimateImpact(file.size);
-        const snap = StorageManager.getSnapshot();
-        if (!StorageManager.canStore(impact)) { const msg = t('notifications.storageQuotaExceeded'); showFeedback(msg, 'error'); Notifications.toast(msg, 'error'); hideProgress(); return; }
-        const ratio = snap.limit ? Math.round(((snap.used + impact) / snap.limit) * 100) : 100;
-        if (!warnedLarge && ratio >= 85) { Notifications.toast(t('notifications.largeFileWarning'), 'info'); warnedLarge = true; }
         updateProgress((index / files.length) * 100, t('upload.validating', { name: file.name }));
         try {
             const rec = await ImageStore.createImage(file, {
